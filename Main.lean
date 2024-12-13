@@ -65,7 +65,7 @@ def twoOrThreeOrFour : CGen (λ v => v = 2 ∨ v = 3 ∨ v = 4) := by
 attribute [simp] guard in
 attribute [-simp] Prod.forall in -- FIXME: See if we can avoid this
 def allTwos : CGen (λ v => List.foldrM (λ x () => guard (x == 2)) () v = Option.some ()) := by
-  aesop (add safe apply synth_match)
+  aesop (add safe synth_match)
 
 def lengthK {k : Nat} :
     @CGen (List Unit) (λ v => List.foldrM (λ _ len_xs => pure (len_xs + 1)) 0 v = Option.some k) := by
