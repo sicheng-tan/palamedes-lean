@@ -1,4 +1,5 @@
 import Aesop
+import Palamedes.W
 
 inductive ListF (α β : Type) : Type where
   | nil
@@ -9,6 +10,7 @@ inductive Gen : Type → Type 1 where
   | bind : Gen α → (α → Gen β) → Gen β
   | choose : (lo : Nat) → (hi : Nat) → lo ≤ hi → Gen Nat
   | unfoldr : (β → Gen (ListF α β)) → β → Gen (List α)
+  | unfoldW {α γ : Type} {β : α → Type} : (γ → Gen (Σ a : α, β a → γ)) → γ → Gen (W β)
   | fail : Gen α
 
 instance [Inhabited α] : Inhabited (Gen α) where
