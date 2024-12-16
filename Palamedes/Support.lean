@@ -11,10 +11,11 @@ def support_unfoldW
     {α γ : Type}
     {β : α → Type}
     (P : γ → (Σ a : α, β a → γ) → Prop) (b : γ) (f : W β) : Prop :=
-  @W.elim _ _ (γ → Prop) (λ ⟨a, result⟩ => λ b =>
-    ∃ (b' : β a → γ),
-    P b ⟨a, λ c' => b' c'⟩ ∧
-    ∀ (c : β a), result c (b' c)) f b
+  @W.elim _ _ (γ → Prop)
+    (λ ⟨a, result⟩ =>
+      λ b =>
+        ∃ (b' : β a → γ),
+        P b ⟨a, b'⟩ ∧ ∀ (c : β a), result c (b' c)) f b
 
 theorem support_unfoldW_valid
     {α β : Type}
@@ -76,6 +77,14 @@ def support : Gen α → α → Prop
 @[simp]
 abbrev CGen {α : Type} (P : α → Prop) :=
   {g : Gen α // ∀ v, support g v ↔ P v}
+
+@[simp]
+abbrev CompleteGen {α : Type} (P : α → Prop) :=
+  {g : Gen α // ∀ v, P v → support g v}
+
+@[simp]
+abbrev SoundGen {α : Type} (P : α → Prop) :=
+  {g : Gen α // ∀ v, support g v → P v}
 
 class Arbitrary (α : Type) where
   arbitrary : @CGen α (λ _ => True)

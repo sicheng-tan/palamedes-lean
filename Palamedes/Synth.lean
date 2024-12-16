@@ -39,6 +39,52 @@ theorem unfoldr_foldrM
           exact h_foldr
         . exact (ih h_nil).mpr h_match
 
+theorem unfoldW_elim
+    {α γ : Type}
+    {β : α → Type}
+    [Traversable (PFunctor β)]
+    [LawfulTraversable (PFunctor β)]
+    {f : PFunctor β γ → Option γ}
+    {f' : γ → Gen (PFunctor β γ)}
+    {c : γ}
+    {t : W β}
+    (hrec : ∀ {p c'}, support (f' c') p ↔ f p = some c') :
+    (support (.unfoldW f' c) t ↔ W.elimM f t = .some c) := by
+  simp [support, W.elimM]
+  conv => rhs; rw [elim_eq]
+  simp_all
+  induction t generalizing c with
+  | mk a res ih =>
+    simp_all [W.elim]
+    apply Iff.intro
+    . rintro ⟨b', hb'1, hb'2⟩
+      exists .some ∘ b'
+      simp_all
+      have hmap : (⟨a, .some ∘ b'⟩ : PFunctor β (Option γ)) =
+                  (Option.some <$> ⟨a, b'⟩ : PFunctor β (Option γ)) := by
+        simp [Functor.map]
+      rw [hmap]
+      rw [←sequence_pfunctor_some' ⟨a, b'⟩]
+      simp
+      assumption
+    . rintro ⟨b', hb'1, hb'2⟩
+      simp [Option.bind] at hb'1
+      generalize hd : @sequence (PFunctor β) _ _ _ _ (⟨a, b'⟩ : PFunctor β (Option γ)) = d at hb'1
+      match hd' : d with
+      | .none => simp_all
+      | .some d' =>
+        simp_all
+        have hd' := hd
+        rw [sequence_pfunctor_some' d'] at hd
+        have h'' := sequence_pfunctor_option_injective hd
+        match h'' with
+        | .inl h'' =>
+          rw [hd'] at h''
+          contradiction
+        | .inr h'' =>
+          obtain ⟨rfl, rfl⟩ := h''
+          exists d'.snd
+
 @[aesop unsafe apply]
 def synth_cut
     {P Q : α → Prop}
