@@ -147,21 +147,34 @@ instance : LawfulTraversable (PFunctor (Listβ α)) where
   naturality := sorry
 
 theorem sequence_pfunctor_some
-    {α γ : Type}
-    {β : α → Type}
-    [Traversable (PFunctor β)]
-    [LawfulTraversable (PFunctor β)]
-    (t : PFunctor β (Option γ))
-    (t' : PFunctor β γ) :
+    {γ : Type}
+    {F : Type → Type}
+    [Functor F]
+    [Traversable F]
+    [LawfulTraversable F]
+    (t : F (Option γ))
+    (t' : F γ) :
     sequence t = Option.some t' ↔ t = Option.some <$> t' := by
   apply Iff.intro
   . intro h
+    /-
+    case mp
+    ...
+    h : sequence t = some t'
+    ⊢ t = some <$> t'
+    NOTE: Might not be true?
+    -/
     sorry
   . intro h
     subst h
     rw [Eq.comm]
-    -- f . sequenceA = sequenceA . fmap f
-    sorry -- TODO: This should follow from naturality
+    /-
+    case mpr
+    ...
+    ⊢ some t' = sequence (some <$> t')
+    NOTE: Should follow by naturality?
+    -/
+    sorry
 
 theorem sequence_pfunctor_some'
     {α γ : Type}
@@ -171,8 +184,8 @@ theorem sequence_pfunctor_some'
     (t : PFunctor β γ) :
     Option.some t = sequence (Option.some <$> t) := by
   rw [Eq.comm]
-  apply (sequence_pfunctor_some _ _).mpr
-  simp
+  apply (sequence_pfunctor_some (Option.some <$> t) t).mpr
+  rfl
 
   -- let appSome := @ApplicativeTransformation.mk Id _ Option _ (λ (_ : Type) x => Option.some x) ?_ ?_
   -- have : (sequence : Id (PFunctor β γ) → (PFunctor β (Id γ))) t = t := by
