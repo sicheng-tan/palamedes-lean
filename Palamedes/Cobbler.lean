@@ -15,16 +15,6 @@ example :
     withDefault 0 (.map (λ x => f (f x)) mx) := by
   aesop
 
--- @[aesop safe constructors]
--- inductive Syntax : Type → Type 1 where
---   | map {α : Type} : (α → α) → Option α → Syntax (Option α)
---   | withDefault {α : Type} : α → Syntax (Option α) → Syntax α
-
--- @[simp]
--- def interp : Syntax α → α
---   | .map f x => Option.map f x
---   | .withDefault a o => withDefault a (interp o)
-
 theorem deforest_option
     {α β γ : Type}
     {mx : Option α}
@@ -40,19 +30,49 @@ theorem deforest_option
   | .none => simp
   | .some x => simp
 
-def synthesized_program
-    (f : Int → Int)
-    (mx : Option Int) :
-    {p : (Int → Int) → Option Int → Int // p f mx = ex1_main f mx} := by
-  refine ⟨λ f mx => Option.getD (Option.map (?b : Int → Int) ?c) ?a, ?proof⟩
+@[simp]
+def synth_fn
+    {q : α → β}
+    {h : (x : α) → {p' : β // p' = q x}} :
+    {p : α → β // ∀ x, p x = q x} := by
+  exists λ x => h x
+  intro x
+  exact (h x).property
+
+@[simp]
+def synth_fn2
+    {q : α → β → γ}
+    {h : (x : α) → (y : β) → {p' : γ // p' = q x y}} :
+    {p : α → β → γ // ∀ x y, p x y = q x y} := by
+  exists λ x y => h x y
+  intro x y
+  exact (h x y).property
+
+@[simp]
+def synth_withDefault
+    (dflt : α)
+    (h : {p : Option α // p = opt}) :
+    {p : α // p = match opt with | some x => x | none => dflt} := by
+  exists withDefault dflt h.val
+  rw [h.property]
+  simp [Option.getD]
+  unfold Option.getD.match_1
+  unfold synth_withDefault.match_1
+  match opt with
+  | .none => simp
+  | .some x => simp
+
+def synthesized_program :
+    {p : (Int → Int) → Option Int → Int // ∀ f mx, p f mx = ex1_main f mx} := by
+  apply synth_fn2
+  intro f mx
+  refine ⟨withDefault ?a (Option.map (?b : Int → Int) ?c), ?proof⟩
   case proof =>
     simp [Option.map, Option.getD]
     unfold Option.getD.match_1
     unfold ex1_main.match_1
     rw [deforest_option]
     exact Eq.refl _
-
-#print synthesized_program
 
 @[simp]
 def ex2_main (p : Int → Bool) (f : Int → Int) (xs : List Int) :=
