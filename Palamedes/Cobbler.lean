@@ -40,21 +40,19 @@ theorem deforest_option
   | .none => simp
   | .some x => simp
 
-attribute [local simp] Option.map Option.getD in
-def foo
+def synthesized_program
     (f : Int → Int)
     (mx : Option Int) :
     {p : (Int → Int) → Option Int → Int // p f mx = ex1_main f mx} := by
-  refine ⟨λ f mx =>
-    Option.getD (Option.map (?b : Int → Int) ?c) ?a,
-    ?proof⟩
+  refine ⟨λ f mx => Option.getD (Option.map (?b : Int → Int) ?c) ?a, ?proof⟩
   case proof =>
-    simp
+    simp [Option.map, Option.getD]
     unfold Option.getD.match_1
     unfold ex1_main.match_1
     rw [deforest_option]
-    simp
     exact Eq.refl _
+
+#print synthesized_program
 
 @[simp]
 def ex2_main (p : Int → Bool) (f : Int → Int) (xs : List Int) :=
