@@ -48,21 +48,7 @@ def synth_fn2
   intro x y
   exact (h x y).property
 
-@[simp]
-def synth_withDefault
-    (dflt : α)
-    (h : {p : Option α // p = opt}) :
-    {p : α // p = match opt with | some x => x | none => dflt} := by
-  exists withDefault dflt h.val
-  rw [h.property]
-  simp [Option.getD]
-  unfold Option.getD.match_1
-  unfold synth_withDefault.match_1
-  match opt with
-  | .none => simp
-  | .some x => simp
-
-def synthesized_program :
+def synthesized_program1 :
     {p : (Int → Int) → Option Int → Int // ∀ f mx, p f mx = ex1_main f mx} := by
   apply synth_fn2
   intro f mx
@@ -75,7 +61,7 @@ def synthesized_program :
     exact Eq.refl _
 
 @[simp]
-def ex2_main (p : Int → Bool) (f : Int → Int) (xs : List Int) :=
+def ex2_main (p : Int → Bool) (f : Int → Int) (xs : List Int) : List Int :=
   match xs with
   | [] => []
   | hd :: tl =>
@@ -85,3 +71,33 @@ example :
     ex2_main p f xs =
     List.map (λ x => f (f x)) (List.filter p xs) := by
   induction xs <;> aesop
+
+def synth_fn3
+    {q : α₁ → α₂ → α₃ → β}
+    {h : (x : α₁) → (y : α₂) → (z : α₃) → {p' : β // p' = q x y z}} :
+    {p : α₁ → α₂ → α₃ → β // ∀ x y z, p x y z = q x y z} := by
+  exists λ x y z => h x y z
+  intro x y z
+  exact (h x y z).property
+
+theorem map_foldr :
+  List.map f xs = List.foldr (λ x xs => f x :: xs) [] xs := by
+  induction xs <;> aesop
+
+theorem filter_foldr :
+  List.filter f xs = List.foldr (λ x xs => if f x then x :: xs else xs) [] xs := by
+  induction xs <;> aesop
+
+def synthesized_program2 :
+    {p : (Int → Bool) → (Int → Int) → List Int → List Int // ∀ pred f xs, p pred f xs = ex2_main pred f xs} := by
+  apply synth_fn3
+  intro pred f xs
+  refine ⟨List.map (?a : Int → Int) (List.filter ?b ?c), ?proof⟩
+  case proof =>
+    delta List.map
+    delta List.filter
+    delta ex2_main
+    simp
+    -- TODO: Implement deforestation
+    all_goals sorry
+  all_goals sorry
