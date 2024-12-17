@@ -86,7 +86,7 @@ theorem unfoldW_elim
           exists d'.snd
 
 @[aesop unsafe apply]
-def synth_cut
+abbrev synth_cut
     {P Q : α → Prop}
     {hequiv : ∀ v, P v ↔ Q v}
     (g : CGen P) :
@@ -97,12 +97,12 @@ def synth_cut
   simp_all only
 
 @[aesop safe apply]
-def synth_pure {v' : α} : CGen (λ v => v = v') := by
+abbrev synth_pure {v' : α} : CGen (λ v => v = v') := by
   exists (pure v')
   simp
 
 @[aesop safe apply]
-def synth_or
+abbrev synth_or
     {P Q : α → Prop}
     (x : CGen P)
     (y : CGen Q) :
@@ -129,7 +129,7 @@ def ListF.match (f : α → β → γ) (c : γ) : ListF α β → γ
   | .cons a b => f a b
 
 @[aesop safe apply]
-def synth_unfold
+abbrev synth_unfold
     {α β : Type}
     {f : α → β → Option β}
     {b z : β}
@@ -146,7 +146,7 @@ def synth_unfold
       have ⟨g, hg⟩ := g b''
       apply hg (.cons x b')
 
-def synth_match
+abbrev synth_match
     {P : Prop}
     {Q : α → β → Prop}
     {h_nil : CGen (λ () => P)}
@@ -192,7 +192,7 @@ def synth_match
         exact (h_cons _).mpr h
 
 @[aesop safe apply]
-def synth_tuple
+abbrev synth_tuple
     {P : α → Prop}
     {Q : β → Prop}
     (x : CGen P)
@@ -215,7 +215,7 @@ def synth_tuple
     simp_all only [Prod.mk.injEq, exists_eq_right_right']
 
 @[aesop safe apply]
-def synth_tuple1
+abbrev synth_tuple1
     [Arbitrary β]
     {P : α → Prop}
     (hx : CGen P) :
@@ -228,7 +228,7 @@ def synth_tuple1
   apply synth_tuple hx arb
 
 @[aesop safe apply]
-def synth_tuple2
+abbrev synth_tuple2
     [Arbitrary α]
     {Q : β → Prop}
     (hy : CGen Q) :
@@ -241,11 +241,11 @@ def synth_tuple2
   apply synth_tuple arb hy
 
 @[aesop safe apply]
-def synth_true [Arbitrary α] :
+abbrev synth_true [Arbitrary α] :
   @CGen α (λ _ => True) := Arbitrary.arbitrary
 
 @[aesop 10% apply]
-def synth_and_true
+abbrev synth_and_true
     {P : α → Prop}
     {g : CGen (λ v => P v ∧ True)} :
     CGen P := by
@@ -256,14 +256,14 @@ def synth_and_true
   exact g
 
 @[aesop safe apply]
-def synth_true' [Arbitrary α] : {g : Gen α // ∀ v, support g v} := by
+abbrev synth_true' [Arbitrary α] : {g : Gen α // ∀ v, support g v} := by
   have ⟨val, property⟩ := (Arbitrary.arbitrary : @CGen α _)
   exists val
   intro v
   simp_all only [iff_true]
 
 @[aesop safe apply]
-def synth_bind
+abbrev synth_bind
     {P : α → Prop}
     {Q : α → β → Prop}
     (hb : CGen P)
