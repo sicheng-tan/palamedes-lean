@@ -14,19 +14,22 @@ example : CGen (λ v => v = 1 ∨ v = 2) := by
   . apply synth_pure
   . apply synth_pure
 
+#print synth_or
+
 @[simp]
 abbrev genOneOrTwo : CGen (λ v => v = 1 ∨ v = 2) := by
   aesop
 
 #eval traceConstWithTransparency .reducible ``genOneOrTwo
 
-def isAllTwos (v : List Int) :  Prop :=
+def isAllTwos (v : List Nat) : Option Unit :=
   List.foldrM
     (λ x () => guard (x == 2))
     ()
-    v = Option.some ()
+    v
 
-abbrev genAllTwos : CGen isAllTwos := by
+abbrev genAllTwos : CGen (λ v => isAllTwos v = Option.some ()) := by
+  delta isAllTwos
   aesop
 
 #eval traceConstWithTransparency .reducible ``genAllTwos

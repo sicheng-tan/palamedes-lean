@@ -74,6 +74,8 @@ def support : Gen α → α → Prop
   | .bind x f => λ v => ∃ v', support x v' ∧ support (f v') v
   | .fail => λ _ => False
 
+notation v " ∈ 〚" g "〛" => support g v
+
 @[simp]
 abbrev CGen {α : Type} (P : α → Prop) :=
   {g : Gen α // ∀ v, support g v ↔ P v}
