@@ -9,27 +9,25 @@ attribute [aesop safe apply] synth_match
 
 #print CGen
 
-example : CGen (λ v => v = 1 ∨ v = 2) := by
+example : CGen (λ x => x = 1 ∨ x = 2) := by
   apply synth_or
   . apply synth_pure
   . apply synth_pure
 
 #print synth_or
 
-@[simp]
-abbrev genOneOrTwo : CGen (λ v => v = 1 ∨ v = 2) := by
+abbrev genOneOrTwo : CGen (λ x => x = 1 ∨ x = 2) := by
   aesop
 
 #eval traceConstWithTransparency .reducible ``genOneOrTwo
 
-def isAllTwos (v : List Nat) : Option Unit :=
+def isAllTwos (xs : List Nat) : Option Unit :=
   List.foldrM
     (λ x () => guard (x == 2))
     ()
-    v
+    xs
 
-abbrev genAllTwos : CGen (λ v => isAllTwos v = Option.some ()) := by
-  delta isAllTwos
+abbrev genAllTwos : CGen (λ xs => isAllTwos xs = Option.some ()) := by
   aesop
 
 #eval traceConstWithTransparency .reducible ``genAllTwos

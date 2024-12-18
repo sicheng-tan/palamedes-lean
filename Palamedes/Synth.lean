@@ -43,6 +43,7 @@ theorem unfoldW_elim
     {α γ : Type}
     {β : α → Type}
     [Traversable (PFunctor β)]
+    [LawfulFunctor (PFunctor β)]
     [LawfulTraversable (PFunctor β)]
     {f : PFunctor β γ → Option γ}
     {f' : γ → Gen (PFunctor β γ)}

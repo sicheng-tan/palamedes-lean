@@ -151,6 +151,7 @@ theorem sequence_pfunctor_some
     {F : Type → Type}
     [Functor F]
     [Traversable F]
+    [LawfulFunctor F]
     [LawfulTraversable F]
     (t : F (Option γ))
     (t' : F γ) :
@@ -176,10 +177,12 @@ theorem sequence_pfunctor_some
     -/
     sorry
 
+
 theorem sequence_pfunctor_some'
     {α γ : Type}
     {β : α → Type}
     [Traversable (PFunctor β)]
+    [LawfulFunctor (PFunctor β)]
     [LawfulTraversable (PFunctor β)]
     (t : PFunctor β γ) :
     Option.some t = sequence (Option.some <$> t) := by
@@ -187,42 +190,11 @@ theorem sequence_pfunctor_some'
   apply (sequence_pfunctor_some (Option.some <$> t) t).mpr
   rfl
 
-  -- let appSome := @ApplicativeTransformation.mk Id _ Option _ (λ (_ : Type) x => Option.some x) ?_ ?_
-  -- have : (sequence : Id (PFunctor β γ) → (PFunctor β (Id γ))) t = t := by
-  --   simp [sequence, traverse]
-  -- conv =>
-  --   lhs
-  --   arg 1
-  --   rw [←this]
-  -- simp [sequence]
-  -- have foo := LawfulTraversable.naturality appSome id t
-  -- have : @Option.some = (λ {α} => appSome.app α) := by
-  --   simp
-  -- conv =>
-  --   lhs
-  --   rw [this]
- --
-  --   let appSome := @ApplicativeTransformation.mk Id _ Option _ (λ (_ : Type) x => Option.some x) ?_ ?_
-  -- have : ∀ (α : Type), @Option.some α = (λ _ x => Option.some x) α := by
-  --   simp
-  -- conv =>
-  --   lhs
-  --   rw [←LawfulTraversable.id_traverse t]
-  --   rw [this]
-  --   rw [LawfulTraversable.naturality appSome _ _]
-  -- have :
-  --   (Option.some <$> t : PFunctor β (Option γ)) =
-  --   traverse ((pure : Option γ → Id (Option γ)) ∘ Option.some) t := by
-  --   sorry
-  -- conv =>
-  --   rhs
-  --   simp [sequence]
-  --   arg 2
-
 theorem sequence_pfunctor_option_injective
     {α γ : Type}
     {β : α → Type}
     [Traversable (PFunctor β)]
+    [LawfulFunctor (PFunctor β)]
     [LawfulTraversable (PFunctor β)]
     {t t' : PFunctor β (Option γ)} :
     sequence t = sequence t' →
