@@ -2,12 +2,6 @@ import Palamedes.Free
 import Palamedes.Support
 import Palamedes.Util
 
-attribute [simp] guard
-attribute [-simp] Prod.forall
-attribute [-simp] CGen
-attribute [-aesop] Subtype
-
-@[simp]
 theorem deforest_decidable_bind
     {α β : Type}
     {p : Prop}
@@ -21,7 +15,6 @@ theorem deforest_decidable_bind
   | isFalse h => simp
   | isTrue h => simp
 
-@[simp]
 theorem deforest_decidable_eq
     {α : Type}
     {p : Prop}
@@ -35,7 +28,6 @@ theorem deforest_decidable_eq
   | isFalse h => simp
   | isTrue h => simp
 
-@[simp]
 theorem decidable_or
     {P : Prop}
     {Q : Prop}
@@ -46,23 +38,28 @@ theorem decidable_or
   | isFalse h => simp_all
   | isTrue h => simp_all
 
-@[simp]
 theorem ListF_or
     {α β : Type}
     {P : Prop}
     {Q : α → β → Prop}
     {t : ListF α β} :
-    ListF.rec P Q t ↔ (P ∧ t = .nil) ∨ (∃ x b, t = .cons x b ∧ Q x b):= by
+    ListF.rec P Q t ↔ (P ∧ t = .nil) ∨ (∃ x b, t = .cons x b ∧ Q x b) := by
   match t with
   | .nil => simp
   | .cons x b => aesop
 
-@[aesop 90% apply]
-abbrev synth_pure (v' : α) : CGen (λ v => v = v') := by
+abbrev synth_pure
+  (v' : α) :
+  CGen (λ v => v = v') := by
   exists (pure v')
   simp
 
-@[aesop 50% apply]
+abbrev synth_pure'
+  (v' : α) :
+  CGen (λ v => v' = v) := by
+  exists (pure v')
+  simp_all [Eq.comm]
+
 abbrev synth_bind
     {P : α → Prop}
     {Q : α → β → Prop}
@@ -75,7 +72,6 @@ abbrev synth_bind
   apply Iff.intro <;>
     (rintro ⟨a, ha⟩; exists a; have := (hf a).property; simp_all only [and_self])
 
-@[aesop 50% apply]
 abbrev synth_bind_arb
     [Arbitrary α]
     {Q : α → β → Prop}
@@ -95,7 +91,6 @@ abbrev synth_bind_arb
     exists v'
     simp_all
 
-@[aesop 2% apply]
 abbrev synth_tuple
     {P : α → Prop}
     {Q : α → β → Prop}
@@ -109,13 +104,11 @@ abbrev synth_tuple
     let x ← gx_val
     let y ← (gy x).val
     pure (x, y))
-  simp_all
+  simp_all [-Prod.forall]
   intro ⟨x, y⟩
   have gy_prop := (gy x).property
   simp_all
-  rw [←h (x, y)]
 
-@[aesop 50% apply]
 abbrev synth_or
     {P Q : α → Prop}
     (x : CGen P)
@@ -137,7 +130,6 @@ abbrev synth_or
     | .inl h => exists 0; simp; exact (hx _).mpr h
     | .inr h => exists 1; simp; exact (hy _).mpr h
 
-@[aesop 50% apply]
 abbrev synth_unfold
     {α β : Type}
     {f : α → β → Option β}
@@ -158,18 +150,43 @@ abbrev synth_unfold
     | .none => simp_all
     | .some b' => aesop
 
-@[aesop 50% apply]
 abbrev synth_true
     [Arbitrary α] :
     CGen (λ (_ : α) => True) := by
   obtain ⟨g, p⟩ := @Arbitrary.arbitrary α _
   exists g
 
+attribute [simp]
+  guard
+  failure
+  ite
+  deforest_decidable_bind
+  deforest_decidable_eq
+  decidable_or
+  ListF_or
+attribute [-simp]
+  Prod.forall
+  CGen
+attribute [-aesop]
+  Subtype
+add_aesop_rules unsafe [
+  cases Nat,
+  cases Bool,
+  apply synth_bind,
+  apply synth_bind_arb,
+  apply synth_or,
+  apply synth_pure,
+  apply synth_pure',
+  apply synth_true,
+  apply synth_tuple,
+  apply synth_unfold
+]
+
 def genTwo : CGen (λ v => v = 2) := by
   aesop
 
 def genTwo' : CGen (2 = .) := by
-  aesop (add simp Eq.comm)
+  aesop
 
 def genTwoOrThree : CGen (λ v => v = 2 ∨ v = 3) := by
   aesop
@@ -177,10 +194,10 @@ def genTwoOrThree : CGen (λ v => v = 2 ∨ v = 3) := by
 def genTwoOrThreeOrFour : CGen (λ v => v = 2 ∨ v = 3 ∨ v = 4) := by
   aesop
 
-abbrev genTwoAndThree : CGen (λ (v : Int × Int) => v.fst = 2 ∧ v.snd = 3) := by
+def genTwoAndThree : CGen (λ (v : Int × Int) => v.fst = 2 ∧ v.snd = 3) := by
   aesop
 
-abbrev genTwoAndThree' : CGen (λ (v : Int × Int) => v.snd = 3 ∧ v.fst = 2) := by
+def genTwoAndThree' : CGen (λ (v : Int × Int) => v.snd = 3 ∧ v.fst = 2) := by
   aesop
 
 def genAllTwos : CGen (λ v => List.foldrM (λ x () => guard (x == 2)) () v = Option.some ()) := by
@@ -188,13 +205,12 @@ def genAllTwos : CGen (λ v => List.foldrM (λ x () => guard (x == 2)) () v = Op
 
 def genLengthK {k : Nat} :
     @CGen (List Unit) (λ v => List.foldrM (λ _ len_xs => pure (len_xs + 1)) 0 v = Option.some k) := by
-  aesop (add unsafe cases Nat)
+  aesop
 
 def genEvenLength :
     @CGen (List Unit) (λ v => List.foldrM (λ _ b => pure (not b)) true v = Option.some true) := by
-  aesop (add unsafe cases Bool)
+  aesop
 
-attribute [local simp] failure ite in
 def genEvenLengthTwos :
     @CGen (List Nat) (λ v => List.foldrM (λ x b => do guard (x == 2); pure (not b)) true v = Option.some true) := by
-  aesop (add unsafe cases Bool)
+  aesop
