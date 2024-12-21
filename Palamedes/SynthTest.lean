@@ -48,6 +48,36 @@ theorem ListF_or
   | .nil => simp
   | .cons x b => aesop
 
+theorem fold_foldM
+    {α β : Type}
+    {f : α → β → β}
+    {z b : β}
+    {xs : List α} :
+    List.foldr f z xs = b ↔ List.foldrM (λ x b => Option.some (f x b)) z xs = Option.some b := by
+  induction xs generalizing b with
+  | nil => simp_all
+  | cons x xs ih =>
+    simp_all only [List.foldr_cons, List.foldrM_cons, Option.bind_eq_bind]
+    apply Iff.intro
+    · intro a
+      subst a
+      generalize List.foldrM (fun x b => some (f x b)) z xs = o at *
+      match o with
+      | .none => simp_all
+      | .some v =>
+        simp_all
+        rw [ih.mp]
+        simp
+    · intro a
+      generalize List.foldrM (fun x b => some (f x b)) z xs = o at *
+      match o with
+      | .none => simp_all
+      | .some v =>
+        simp_all
+        rw [(@ih v).mpr]
+        simp_all
+        rfl
+
 abbrev synth_pure
   (v' : α) :
   CGen (λ v => v = v') := by
@@ -130,7 +160,7 @@ abbrev synth_or
     | .inl h => exists 0; simp; exact (hx _).mpr h
     | .inr h => exists 1; simp; exact (hy _).mpr h
 
-abbrev synth_unfold
+abbrev synth_unfoldM
     {α β : Type}
     {f : α → β → Option β}
     {b z : β}
@@ -164,6 +194,7 @@ attribute [simp]
   deforest_decidable_eq
   decidable_or
   ListF_or
+  fold_foldM
 attribute [-simp]
   Prod.forall
   CGen
@@ -179,7 +210,7 @@ add_aesop_rules unsafe [
   apply synth_pure',
   apply synth_true,
   apply synth_tuple,
-  apply synth_unfold
+  apply synth_unfoldM
 ]
 
 def genTwo : CGen (λ v => v = 2) := by
@@ -203,14 +234,14 @@ def genTwoAndThree' : CGen (λ (v : Int × Int) => v.snd = 3 ∧ v.fst = 2) := b
 def genAllTwos : CGen (λ v => List.foldrM (λ x () => guard (x == 2)) () v = Option.some ()) := by
   aesop
 
-def genLengthK {k : Nat} :
-    @CGen (List Unit) (λ v => List.foldrM (λ _ len_xs => pure (len_xs + 1)) 0 v = Option.some k) := by
+def genEvenLength [Arbitrary α] :
+    CGen (λ (v : List α) => List.foldr (λ _ b => not b) true v) := by
   aesop
 
-def genEvenLength :
-    @CGen (List Unit) (λ v => List.foldrM (λ _ b => pure (not b)) true v = Option.some true) := by
+def genLengthK {k : Nat} [Arbitrary α] :
+    CGen (λ (v : List α) => List.foldr (λ _ len_xs => len_xs + 1) 0 v = k) := by
   aesop
 
 def genEvenLengthTwos :
-    @CGen (List Nat) (λ v => List.foldrM (λ x b => do guard (x == 2); pure (not b)) true v = Option.some true) := by
+    CGen (λ (v : List Nat) => List.foldrM (λ x b => do guard (x == 2); pure (not b)) true v = Option.some true) := by
   aesop
