@@ -125,27 +125,6 @@ instance : Traversable (PFunctor (Listβ α)) where
     | .nil => pure ⟨Listα.nil, Empty.elim⟩
     | .cons x => Functor.map (λ y => ⟨Listα.cons x, λ () => y⟩) (f (result ()))
 
-instance : LawfulFunctor (PFunctor (Listβ α)) where
-  map_const := sorry
-  id_map := sorry
-  comp_map := sorry
-
-instance : LawfulTraversable (PFunctor (Listβ α)) where
-  id_traverse := by
-    intro α x
-    match x with
-    | .mk .nil _ =>
-      simp [traverse]
-      congr
-      conv =>
-        rhs
-        intro x
-        tactic => contradiction
-    | .mk (.cons x) f => simp [traverse]; congr
-  comp_traverse := sorry
-  traverse_eq_map_id := sorry
-  naturality := sorry
-
 theorem sequence_pfunctor_some
     {γ : Type}
     {F : Type → Type}
@@ -176,7 +155,6 @@ theorem sequence_pfunctor_some
     NOTE: Should follow by naturality?
     -/
     sorry
-
 
 theorem sequence_pfunctor_some'
     {α γ : Type}

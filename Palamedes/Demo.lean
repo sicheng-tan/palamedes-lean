@@ -14,8 +14,6 @@ example : CGen (λ x => x = 1 ∨ x = 2) := by
   . apply synth_pure
   . apply synth_pure
 
-#print synth_or
-
 abbrev genOneOrTwo : CGen (λ x => x = 1 ∨ x = 2) := by
   aesop
 

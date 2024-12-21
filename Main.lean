@@ -75,8 +75,8 @@ def lengthK {k : Nat} :
   | n + 1 => exists pure (.cons () n); aesop
 
 example :
-  List.foldrM (λ _ len_xs => pure (len_xs + 1)) 0 xs = Option.some n ↔
-  xs.length = n := by
+    List.foldrM (λ _ len_xs => pure (len_xs + 1)) 0 xs = Option.some n ↔
+    xs.length = n := by
   have always_some :
       List.foldrM (λ _ len_xs => pure (len_xs + 1)) 0 xs = Option.some n
       ↔ List.foldr (λ _ len_xs => len_xs + 1) 0 xs = n := by

@@ -7,6 +7,15 @@ def support_unfoldr (P : β → ListF α β → Prop) (b : β) (xs : List α) : 
   | x :: xs => ∃ b', P b (.cons x b') ∧ support_unfoldr P b' xs
 
 @[simp]
+def support_unfoldTree (P : β → TreeF α β → Prop) (b : β) (t : Tree α) : Prop :=
+  match t with
+  | .leaf => P b .leaf
+  | .node l x r => ∃ bl br,
+    P b (.node bl x br) ∧
+    support_unfoldTree P bl l ∧
+    support_unfoldTree P br r
+
+@[simp]
 def support_unfoldW
     {α γ : Type}
     {β : α → Type}
@@ -70,6 +79,7 @@ def support : Gen α → α → Prop
   | .ret v' => (. = v')
   | .choose lo hi _ => λ v => lo ≤ v ∧ v ≤ hi
   | .unfoldr f b => support_unfoldr (λ b' => support (f b')) b
+  | .unfoldTree f b => support_unfoldTree (λ b' => support (f b')) b
   | .unfoldW f b => support_unfoldW (λ b' => support (f b')) b
   | .bind x f => λ v => ∃ v', support x v' ∧ support (f v') v
   | .fail => λ _ => False
