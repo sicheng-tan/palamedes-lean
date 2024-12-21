@@ -78,6 +78,49 @@ theorem fold_foldM
         simp_all
         rfl
 
+theorem merge_foldM
+    {α β₁ β₂: Type}
+    {f₁ : α → β₁ → Option β₁}
+    {f₂ : α → β₂ → Option β₂}
+    {z₁ b₁ : β₁}
+    {z₂ b₂ : β₂}
+    {xs : List α} :
+    (List.foldrM f₁ z₁ xs = some b₁ ∧ List.foldrM f₂ z₂ xs = some b₂) ↔
+    List.foldrM (λ x b => do (← f₁ x b.fst, ← f₂ x b.snd)) (z₁, z₂) xs = some (b₁, b₂) := by
+  induction xs generalizing b₁ b₂ with
+  | nil => simp_all
+  | cons x xs ih =>
+    simp_all
+    apply Iff.intro
+    . intro h
+      generalize List.foldrM f₁ z₁ xs = mx₁ at *
+      generalize List.foldrM f₂ z₂ xs = mx₂ at *
+      match mx₁, mx₂ with
+      | .none, _ => simp_all
+      | _, .none => simp_all
+      | .some x₁, .some x₂ =>
+        rw [(@ih x₁ x₂).mp (by simp_all)]
+        simp_all
+    . intro h
+      generalize List.foldrM
+        (fun x b =>
+          (f₁ x b.fst).bind fun __do_lift => (f₂ x b.snd).bind fun __do_lift_1 => some (__do_lift, __do_lift_1))
+        (z₁, z₂) xs = o at *
+      match o with
+      | .none => simp_all
+      | .some (b₁, b₂) =>
+        simp_all
+        have ⟨h₁, h₂⟩ := (@ih b₁ b₂).mpr (by simp_all)
+        rw [h₁]
+        rw [h₂]
+        simp_all
+        generalize f₁ x b₁ = o₁ at *
+        generalize f₂ x b₂ = o₂ at *
+        match o₁, o₂ with
+        | .none, _ => simp_all
+        | _, .none => simp_all
+        | .some x₁, .some x₂ => simp_all
+
 abbrev synth_pure
   (v' : α) :
   CGen (λ v => v = v') := by
@@ -195,6 +238,7 @@ attribute [simp]
   decidable_or
   ListF_or
   fold_foldM
+  merge_foldM
 attribute [-simp]
   Prod.forall
   CGen
@@ -244,4 +288,10 @@ def genLengthK {k : Nat} [Arbitrary α] :
 
 def genEvenLengthTwos :
     CGen (λ (v : List Nat) => List.foldrM (λ x b => do guard (x == 2); pure (not b)) true v = Option.some true) := by
+  aesop
+
+def genLengthKTwos {k : Nat} :
+    CGen (λ (v : List Nat) =>
+      List.foldr (λ _ l => l + 1) 0 v = k ∧
+      List.foldrM (λ x () => guard (x == 2)) () v = Option.some ()) := by
   aesop
