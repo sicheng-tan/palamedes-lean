@@ -78,11 +78,11 @@ theorem support_unfoldW_valid
 def support : Gen α → α → Prop
   | .ret v' => (. = v')
   | .choose lo hi _ => λ v => lo ≤ v ∧ v ≤ hi
+  | .sized f => λ v => ∃ n, support (f n) (some v)
   | .unfoldr f b => support_unfoldr (λ b' => support (f b')) b
   | .unfoldTree f b => support_unfoldTree (λ b' => support (f b')) b
   | .unfoldW f b => support_unfoldW (λ b' => support (f b')) b
   | .bind x f => λ v => ∃ v', support x v' ∧ support (f v') v
-  | .fail => λ _ => False
 
 notation v " ∈ 〚" g "〛" => support g v
 
@@ -113,3 +113,68 @@ instance : Arbitrary Bool where
       . exists 1
       . exists 0
   ⟩
+
+def unfoldr' (n : Nat) (f : β → Gen (ListF α β)) (b : β) : Gen (Option (List α)) :=
+  match n with
+  | 0 => pure none
+  | n + 1 => do
+    match (← f b) with
+    | .nil => pure (some [])
+    | .cons x b' => .map (x :: .) <$> unfoldr' n f b'
+
+theorem support_unfoldr' :
+    support (.sized (λ n => unfoldr' n f b)) = support_unfoldr (λ b' => support (f b')) b := by
+  funext xs
+  induction xs generalizing b with
+  | nil =>
+    simp_all
+    apply Iff.intro
+    . intro ⟨n, h⟩
+      match n with
+      | 0 => simp_all
+      | n + 1 =>
+        simp_all
+        have ⟨v', hv'1, hv'2⟩ := h
+        match v' with
+        | .nil => simp_all
+        | .cons _ _ =>
+          simp_all
+          have ⟨v'', hv''⟩ := hv'2
+          match v'' with
+          | .none => simp_all
+          | .some [] => simp_all [Option.map]
+          | .some (x :: xs) => simp_all
+    . intro h
+      exists 1
+      simp [unfoldr']
+      exists .nil
+  | cons x xs ih =>
+    simp_all
+    apply Iff.intro
+    . intro ⟨n, h⟩
+      match n with
+      | 0 => simp_all
+      | n + 1 =>
+        simp_all
+        have ⟨v', hv'1, hv'2⟩ := h
+        match v' with
+        | .nil => simp_all
+        | .cons _ b'' =>
+          simp_all
+          have ⟨v'', hv''⟩ := hv'2
+          match v'' with
+          | .none => simp_all
+          | .some ys =>
+            simp_all
+            obtain ⟨hv'', rfl, rfl⟩ := hv''
+            exists b''
+            apply And.intro hv'1
+            apply (@ih b'').mp
+            exists n
+    . intro ⟨b', hx, hxs⟩
+      have ⟨n, h⟩ := ih.mpr hxs
+      exists n + 1
+      simp_all
+      exists ListF.cons x b'
+      simp_all
+      exists some xs

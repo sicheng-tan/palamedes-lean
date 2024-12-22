@@ -209,13 +209,13 @@ abbrev synth_unfoldM
     {b z : β}
     (g : (b : β) → CGen (ListF.rec (b = z) (λ a b' => f a b' = some b))) :
     CGen (λ v => List.foldrM f z v = .some b) := by
-  exists .unfoldr (λ b => (g b).val) b
+  exists (.sized (λ n => unfoldr' n (λ b => (g b).val) b))
+  rw [support_unfoldr']
   intro v
   induction v generalizing b with
   | nil =>
-    have := (g b).property
-    simp_all
-    rw [Eq.comm]
+    have := (g b).property .nil
+    simp_all [Eq.comm]
   | cons x xs ih =>
     have := (g b).property
     simp_all
@@ -232,7 +232,7 @@ abbrev synth_true
 attribute [simp]
   guard
   failure
-  ite
+  ite -- NOTE This may be a problem
   deforest_decidable_bind
   deforest_decidable_eq
   decidable_or
@@ -254,7 +254,7 @@ add_aesop_rules unsafe [
   apply synth_pure',
   apply synth_true,
   apply synth_tuple,
-  apply synth_unfoldM
+  apply synth_unfoldM,
 ]
 
 def genTwo : CGen (λ v => v = 2) := by

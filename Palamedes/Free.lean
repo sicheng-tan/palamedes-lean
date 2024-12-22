@@ -21,13 +21,10 @@ inductive Gen : Type → Type 1 where
   | ret : α → Gen α
   | bind : Gen α → (α → Gen β) → Gen β
   | choose : (lo : Nat) → (hi : Nat) → lo ≤ hi → Gen Nat
+  | sized : (Nat → Gen (Option α)) → Gen α
   | unfoldr : (β → Gen (ListF α β)) → β → Gen (List α)
   | unfoldTree : (β → Gen (TreeF α β)) → β → Gen (Tree α)
   | unfoldW {α γ : Type} {β : α → Type} : (γ → Gen (Σ a : α, β a → γ)) → γ → Gen (W β)
-  | fail : Gen α
-
-instance [Inhabited α] : Inhabited (Gen α) where
-  default := .fail
 
 instance : Monad Gen where
   pure := .ret
