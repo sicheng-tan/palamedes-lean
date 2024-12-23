@@ -2,6 +2,56 @@ import Palamedes.Free
 import Palamedes.Support
 import Palamedes.Util
 
+def List.accu
+    {α β σ : Type}
+    (st : α → σ → σ)
+    (f : α → β → σ → β)
+    (z : σ → β)
+    (xs : List α)
+    (s : σ) :
+    β :=
+  match xs with
+  | [] => z s
+  | x :: xs => f x (List.accu st f z xs (st x s)) s
+
+theorem foldr_accu
+    {α β σ : Type}
+    {st : α → σ → σ}
+    {s : σ}
+    {xs : List α}
+    {z : σ → β}
+    {f : α → β → σ → β}
+    {f' : α → (σ → β) → σ → β} :
+    f' = (λ x b => λ s => f x (b (st x s)) s) →
+    List.foldr f' z xs s = List.accu st f z xs s := by
+  induction xs generalizing s <;> simp_all [List.accu]
+
+def List.accuM
+    [Monad m]
+    {α β σ : Type}
+    (st : α → σ → σ)
+    (f : α → β → σ → m β)
+    (z : σ → m β)
+    (xs : List α)
+    (s : σ) :
+    m β :=
+  match xs with
+  | [] => z s
+  | x :: xs => do f x (← List.accuM st f z xs (st x s)) s
+
+theorem foldr_accuM
+    [Monad m]
+    {α β σ : Type}
+    {st : α → σ → σ}
+    {s : σ}
+    {xs : List α}
+    {z : σ → m β}
+    {f : α → β → σ → m β}
+    {f' : α → (σ → m β) → σ → m β} :
+    f' = (λ x b => λ s => do f x (← b (st x s)) s) →
+    List.foldr f' z xs s = List.accuM st f z xs s := by
+  induction xs generalizing s <;> simp_all [List.accuM]
+
 theorem deforest_decidable_bind
     {α β : Type}
     {p : Prop}
@@ -223,6 +273,73 @@ abbrev synth_unfoldM
     | .none => simp_all
     | .some b' => aesop
 
+abbrev synth_accu
+    {α β σ : Type}
+    {st : α → σ → σ}
+    {f : α → β → σ → β}
+    {z : σ → β}
+    {s : σ}
+    {b : β}
+    (g : (b : β) → (s : σ) → CGen (ListF.rec (z s = b) (λ a b' => f a b' s = b))) :
+    CGen (λ v => List.accu st f z v s = b) := by
+  exists (.sized (λ n => unfoldr' n (λ (b, s) => do
+    match (← (g b s).val) with
+    | .nil => pure .nil
+    | .cons x b' => pure (.cons x (b', st x s))) (b, s)))
+  rw [support_unfoldr']
+  simp_all
+  intro v
+  rw [←foldr_accu]
+  on_goal 2 => exact Eq.refl _
+  induction v generalizing s b with
+  | nil =>
+    have := (g b s).property .nil
+    aesop
+  | cons x xs ih =>
+    have := (g b s).property (.cons x (List.foldr (fun x b s => f x (b (st x s)) s) z xs (st x s)))
+    aesop
+
+abbrev synth_accuM
+    {α β σ : Type}
+    {st : α → σ → σ}
+    {f : α → β → σ → Option β}
+    {z : σ → Option β}
+    {s : σ}
+    {b : β}
+    (g : (b : β) → (s : σ) → CGen (ListF.rec (z s = some b) (λ a b' => f a b' s = some b))) :
+    CGen (λ v => List.accuM st f z v s = some b) := by
+  exists (.sized (λ n => unfoldr' n (λ (b, s) => do
+    match (← (g b s).val) with
+    | .nil => pure .nil
+    | .cons x b' => pure (.cons x (b', st x s))) (b, s)))
+  rw [support_unfoldr']
+  simp_all
+  intro xs
+  rw [←foldr_accuM]
+  on_goal 2 => exact Eq.refl _
+  induction xs generalizing s b with
+  | nil =>
+    have := (g b s).property .nil
+    aesop
+  | cons x xs ih =>
+    simp_all
+    clear ih
+    aesop (config := {warnOnNonterminal := false})
+    . have := (g b s).property
+      simp_all
+    . have := (g b s).property
+      simp_all
+      generalize ho : List.foldr (fun x b s => do f x (← b (st x s)) s) z xs (st x s) = o at *
+      match o with
+      | .none => simp_all
+      | .some b' =>
+        simp_all
+        exists b'
+        exists st x s
+        apply And.intro
+        . exists .cons x b'
+        . rw [ho]
+
 abbrev synth_true
     [Arbitrary α] :
     CGen (λ (_ : α) => True) := by
@@ -255,6 +372,7 @@ add_aesop_rules unsafe [
   apply synth_true,
   apply synth_tuple,
   apply synth_unfoldM,
+  apply synth_accuM,
 ]
 
 def genTwo : CGen (λ v => v = 2) := by
@@ -294,4 +412,13 @@ def genLengthKTwos {k : Nat} :
     CGen (λ (v : List Nat) =>
       List.foldr (λ _ l => l + 1) 0 v = k ∧
       List.foldrM (λ x () => guard (x == 2)) () v = Option.some ()) := by
+  aesop
+
+def genIncreasingByOne :
+    CGen (λ v =>
+      List.accuM (λ x _ => x)
+                (λ x () => λ (prev : Int) => do guard (x == prev + 1))
+                (λ _ => pure ())
+                v
+                0 = some ()) := by
   aesop
