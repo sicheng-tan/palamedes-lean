@@ -1,18 +1,7 @@
 import Palamedes.Free
 import Palamedes.Support
 import Palamedes.Util
-
-def List.accu
-    {α β σ : Type}
-    (st : α → σ → σ)
-    (f : α → β → σ → β)
-    (z : σ → β)
-    (xs : List α)
-    (s : σ) :
-    β :=
-  match xs with
-  | [] => z s
-  | x :: xs => f x (List.accu st f z xs (st x s)) s
+import Palamedes.List
 
 theorem foldr_accu
     {α β σ : Type}
@@ -25,19 +14,6 @@ theorem foldr_accu
     f' = (λ x b => λ s => f x (b (st x s)) s) →
     List.foldr f' z xs s = List.accu st f z xs s := by
   induction xs generalizing s <;> simp_all [List.accu]
-
-def List.accuM
-    [Monad m]
-    {α β σ : Type}
-    (st : α → σ → σ)
-    (f : α → β → σ → m β)
-    (z : σ → m β)
-    (xs : List α)
-    (s : σ) :
-    m β :=
-  match xs with
-  | [] => z s
-  | x :: xs => do f x (← List.accuM st f z xs (st x s)) s
 
 theorem foldr_accuM
     [Monad m]

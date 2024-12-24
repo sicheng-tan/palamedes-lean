@@ -1,15 +1,5 @@
 import Palamedes.Free
 
-inductive ListF (α β : Type) where
-  | nil : ListF α β
-  | cons : (a : α) → (b : β) → ListF α β
-
-@[simp]
-def support_unfoldr (P : β → ListF α β → Prop) (b : β) (xs : List α) : Prop :=
-  match xs with
-  | [] => P b .nil
-  | x :: xs => ∃ b', P b (.cons x b') ∧ support_unfoldr P b' xs
-
 @[simp]
 def support : Gen α → α → Prop
   | .ret v' => (. = v')
@@ -44,67 +34,28 @@ instance : Arbitrary Bool where
       . exists 0
   ⟩
 
-def unfoldr' (n : Nat) (f : β → Gen (ListF α β)) (b : β) : Gen (Option (List α)) :=
-  match n with
+def arbNat (fuel : Nat) : Gen (Option Nat) :=
+  match fuel with
   | 0 => pure none
-  | n + 1 => do
-    match (← f b) with
-    | .nil => pure (some [])
-    | .cons x b' => .map (x :: .) <$> unfoldr' n f b'
+  | n + 1 =>
+    pick (pure (some 0))
+         (.map (1 + .) <$> arbNat n)
 
-theorem support_unfoldr' :
-    support (.sized (λ n => unfoldr' n f b)) = support_unfoldr (λ b' => support (f b')) b := by
-  funext xs
-  induction xs generalizing b with
-  | nil =>
-    simp_all
-    apply Iff.intro
-    . intro ⟨n, h⟩
-      match n with
-      | 0 => simp_all
-      | n + 1 =>
-        simp_all
-        have ⟨v', hv'1, hv'2⟩ := h
-        match v' with
-        | .nil => simp_all
-        | .cons _ _ =>
+instance : Arbitrary Nat where
+  arbitrary :=  ⟨
+      Gen.sized arbNat,
+      by
+        intro v
+        induction v with
+        | zero => simp; exists 1; simp; exists 0
+        | succ n ih =>
           simp_all
-          have ⟨v'', hv''⟩ := hv'2
-          match v'' with
-          | .none => simp_all
-          | .some [] => simp_all [Option.map]
-          | .some (x :: xs) => simp_all
-    . intro h
-      exists 1
-      simp [unfoldr']
-      exists .nil
-  | cons x xs ih =>
-    simp_all
-    apply Iff.intro
-    . intro ⟨n, h⟩
-      match n with
-      | 0 => simp_all
-      | n + 1 =>
-        simp_all
-        have ⟨v', hv'1, hv'2⟩ := h
-        match v' with
-        | .nil => simp_all
-        | .cons _ b'' =>
-          simp_all
-          have ⟨v'', hv''⟩ := hv'2
-          match v'' with
-          | .none => simp_all
-          | .some ys =>
-            simp_all
-            obtain ⟨hv'', rfl, rfl⟩ := hv''
-            exists b''
-            apply And.intro hv'1
-            apply (@ih b'').mp
-            exists n
-    . intro ⟨b', hx, hxs⟩
-      have ⟨n, h⟩ := ih.mpr hxs
-      exists n + 1
-      simp_all
-      exists ListF.cons x b'
-      simp_all
-      exists some xs
+          have ⟨n', hn'⟩ := ih
+          exists n' + 1
+          simp
+          exists 1
+          simp
+          exists some n
+          simp_arith
+          assumption
+    ⟩
