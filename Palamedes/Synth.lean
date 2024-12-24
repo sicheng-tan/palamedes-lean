@@ -2,6 +2,7 @@ import Palamedes.Free
 import Palamedes.Support
 import Palamedes.Util
 import Palamedes.List
+import Palamedes.Tree
 
 theorem foldr_accu
     {α β σ : Type}
@@ -73,6 +74,16 @@ theorem ListF_or
   match t with
   | .nil => simp
   | .cons x b => aesop
+
+theorem TreeF_or
+    {α β : Type}
+    {P : Prop}
+    {Q : β → α → β → Prop}
+    {t : TreeF α β} :
+    TreeF.rec P Q t ↔ (P ∧ t = .leaf) ∨ (∃ bl x br, t = .node bl x br ∧ Q bl x br) := by
+  match t with
+  | .leaf => simp
+  | .node _ _ _ => aesop
 
 theorem fold_foldM
     {α β : Type}
@@ -315,6 +326,54 @@ abbrev synth_accuM
         apply And.intro
         . exists .cons x b'
         . rw [ho]
+
+abbrev synth_accuTreeM
+    {α β σ : Type}
+    {st : α → σ → σ × σ}
+    {f : β → α → β → σ → Option β}
+    {z : σ → Option β}
+    {s : σ}
+    {b : β}
+    (g : (b : β) → (s : σ) → CGen (TreeF.rec (z s = some b) (λ bl a br => f bl a br s = some b))) :
+    CGen (λ v => Tree.accuM st f z v s = some b) := by
+  exists (.sized (λ n => unfoldTree n (λ (b, s) => do
+    match (← (g b s).val) with
+    | .leaf => pure .leaf
+    | .node bl x br =>
+      let (sl, sr) := st x s
+      pure (.node (bl, sl) x (br, sr))) (b, s)))
+  rw [support_unfoldTree_ok]
+  simp_all
+  intro t
+  induction t generalizing s b with
+  | leaf =>
+    have := (g b s).property .leaf
+    aesop (add simp Tree.accuM)
+  | node l x r ih =>
+    simp_all
+    clear ih
+    aesop
+      (config := {warnOnNonterminal := false})
+      (add simp Tree.accuM)
+    . have := (g b s).property
+      simp_all
+    . have := (g b s).property
+      simp_all
+      generalize hol : Tree.accuM st f z l (st x s).fst = o_l at *
+      match o_l with
+      | .none => simp_all
+      | .some bl =>
+        simp_all
+        generalize hor : Tree.accuM st f z r (st x s).snd = o_r at *
+        match o_r with
+        | .none => simp_all
+        | .some br =>
+          exists bl
+          exists (st x s).fst
+          exists br
+          exists (st x s).snd
+          simp_all
+          exists (.node bl x br)
 
 abbrev synth_true
     [Arbitrary α] :

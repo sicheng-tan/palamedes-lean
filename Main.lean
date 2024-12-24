@@ -1,5 +1,6 @@
 import Palamedes.Synth
 import Palamedes.Sample
+import Palamedes.Tree
 
 attribute [simp]
   guard
@@ -9,6 +10,7 @@ attribute [simp]
   deforest_decidable_eq
   decidable_or
   ListF_or
+  TreeF_or
   fold_foldM
   merge_foldM
 attribute [-simp]
@@ -27,6 +29,7 @@ add_aesop_rules unsafe [
   apply synth_tuple,
   apply synth_unfoldM,
   apply synth_accuM,
+  apply synth_accuTreeM,
 ]
 
 def genTwo : CGen (λ v => v = 2) := by
@@ -93,4 +96,13 @@ def genIncreasingByOne :
                 0 = some ()) := by
   aesop
 
-def main := IO.print =<< sampleN 10 genIncreasingByOne.val
+def genTreeIncreasingByOne :
+    CGen (λ v =>
+      Tree.accuM (λ x _ => (x, x))
+                 (λ () x () => λ (prev : Int) => do guard (x == prev + 1))
+                 (λ _ => pure ())
+                 v
+                 0 = some ()) := by
+  aesop
+
+def main := IO.print =<< sampleN 10 genTreeIncreasingByOne.val

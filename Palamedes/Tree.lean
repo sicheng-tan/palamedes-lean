@@ -5,6 +5,13 @@ inductive Tree (α : Type) where
   | leaf : Tree α
   | node : (l : Tree α) → (x : α) → (r : Tree α) → Tree α
 
+def treeToString [ToString α] : Tree α → String
+  | .leaf => "(leaf)"
+  | .node l x r => s!"(node {treeToString l} {x} {treeToString r})"
+
+instance [ToString α] : ToString (Tree α) where
+  toString := treeToString
+
 inductive TreeF (α β : Type) where
   | leaf : TreeF α β
   | node : (l : β) → (x : α) → (r : β) → TreeF α β
