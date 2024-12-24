@@ -1,4 +1,5 @@
 import Palamedes.Synth
+import Palamedes.Sample
 
 attribute [simp]
   guard
@@ -92,4 +93,4 @@ def genIncreasingByOne :
                 0 = some ()) := by
   aesop
 
-def main := IO.print "Hello!"
+def main := IO.print =<< sampleN 10 genIncreasingByOne.val
