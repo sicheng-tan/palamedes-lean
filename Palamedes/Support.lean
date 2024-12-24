@@ -86,15 +86,12 @@ def support : Gen α → α → Prop
 
 notation v " ∈ 〚" g "〛" => support g v
 
-@[simp]
 abbrev CGen {α : Type} (P : α → Prop) :=
   {g : Gen α // ∀ v, support g v ↔ P v}
 
-@[simp]
 abbrev CompleteGen {α : Type} (P : α → Prop) :=
   {g : Gen α // ∀ v, P v → support g v}
 
-@[simp]
 abbrev SoundGen {α : Type} (P : α → Prop) :=
   {g : Gen α // ∀ v, support g v → P v}
 

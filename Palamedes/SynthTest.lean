@@ -358,7 +358,6 @@ attribute [simp]
   merge_foldM
 attribute [-simp]
   Prod.forall
-  CGen
 attribute [-aesop]
   Subtype
 add_aesop_rules unsafe [
