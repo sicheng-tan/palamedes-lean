@@ -5,7 +5,6 @@ import Palamedes.Util
 
 attribute [simp] guard
 attribute [-simp] Prod.forall
-attribute [aesop safe apply] synth_match
 
 #print CGen
 
@@ -25,7 +24,7 @@ def isAllTwos (xs : List Nat) : Option Unit :=
     ()
     xs
 
-abbrev genAllTwos : CGen (λ xs => isAllTwos xs = Option.some ()) := by
+abbrev genAllTwos' : CGen (λ xs => isAllTwos xs = Option.some ()) := by
   aesop
 
-#eval traceConstWithTransparency .reducible ``genAllTwos
+#eval traceConstWithTransparency .reducible ``genAllTwos'

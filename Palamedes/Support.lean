@@ -1,5 +1,9 @@
 import Palamedes.Free
 
+inductive ListF (α β : Type) where
+  | nil : ListF α β
+  | cons : (a : α) → (b : β) → ListF α β
+
 @[simp]
 def support_unfoldr (P : β → ListF α β → Prop) (b : β) (xs : List α) : Prop :=
   match xs with
@@ -7,81 +11,10 @@ def support_unfoldr (P : β → ListF α β → Prop) (b : β) (xs : List α) : 
   | x :: xs => ∃ b', P b (.cons x b') ∧ support_unfoldr P b' xs
 
 @[simp]
-def support_unfoldTree (P : β → TreeF α β → Prop) (b : β) (t : Tree α) : Prop :=
-  match t with
-  | .leaf => P b .leaf
-  | .node l x r => ∃ bl br,
-    P b (.node bl x br) ∧
-    support_unfoldTree P bl l ∧
-    support_unfoldTree P br r
-
-@[simp]
-def support_unfoldW
-    {α γ : Type}
-    {β : α → Type}
-    (P : γ → (Σ a : α, β a → γ) → Prop) (b : γ) (f : W β) : Prop :=
-  @W.elim _ _ (γ → Prop)
-    (λ ⟨a, result⟩ =>
-      λ b =>
-        ∃ (b' : β a → γ),
-        P b ⟨a, b'⟩ ∧ ∀ (c : β a), result c (b' c)) f b
-
-theorem support_unfoldW_valid
-    {α β : Type}
-    {P : β → ListF α β → Prop}
-    {P' : β → (Σ a : Listα α, Listβ α a → β) → Prop}
-    {b : β}
-    {xs : List α}
-    {xs' : W (Listβ α)}
-    (hxs : xs' = ofList xs)
-    (hP : ∀ b,
-      P b .nil = P' b ⟨.nil, Empty.elim⟩ ∧
-      ∀ x b', P b (.cons x b') = P' b ⟨.cons x, λ () => b'⟩) :
-  support_unfoldr P b xs = support_unfoldW P' b xs' := by
-  induction xs generalizing b xs' with
-  | nil =>
-    simp_all only [eq_iff_iff, support_unfoldr, support_unfoldW]
-    apply Iff.intro
-    · intro ha
-      simp [ofList, W.elim]
-      exists Empty.elim
-      apply And.intro
-      . apply ha
-      . intro c
-        contradiction
-    · intro ha
-      simp [W.elim] at ha
-      have ⟨b', hb', _⟩ := ha
-      conv at hb' =>
-        congr
-        . skip
-        . congr
-          intro c'
-          tactic => contradiction
-      apply hb'
-  | cons x xs ih =>
-    simp_all [ofList, W.elim]
-    apply Iff.intro
-    . rintro ⟨b', hb'⟩
-      exists λ () => b'
-      apply And.intro
-      . apply hb'.left
-      . intro ()
-        exact hb'.right
-    . rintro ⟨b', hb'1, hb'2⟩
-      exists b' ()
-      subst hxs
-      simp_all only [and_true]
-      exact hb'1
-
-@[simp]
 def support : Gen α → α → Prop
   | .ret v' => (. = v')
   | .choose lo hi _ => λ v => lo ≤ v ∧ v ≤ hi
   | .sized f => λ v => ∃ n, support (f n) (some v)
-  | .unfoldr f b => support_unfoldr (λ b' => support (f b')) b
-  | .unfoldTree f b => support_unfoldTree (λ b' => support (f b')) b
-  | .unfoldW f b => support_unfoldW (λ b' => support (f b')) b
   | .bind x f => λ v => ∃ v', support x v' ∧ support (f v') v
 
 notation v " ∈ 〚" g "〛" => support g v
