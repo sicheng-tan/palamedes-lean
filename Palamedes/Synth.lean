@@ -384,14 +384,7 @@ abbrev synth_true
 abbrev synth_between
     {lo hi : Nat} :
     CGen (λ v => lo ≤ v ∧ v ≤ hi) := by
-  exists (if h : lo ≤ hi then .choose lo hi h else .fail)
+  exists (.guardIn (lo ≤ hi) (Nat.decLe lo hi) (Gen.choose lo hi))
   intro v
   simp_all
-  by_cases hle : lo ≤ hi
-  . aesop
-  . split
-    . simp_all
-    . simp_all
-      intro h'
-      rename_i h''
-      exact Nat.lt_of_lt_of_le h'' h'
+  exact Nat.le_trans

@@ -1,6 +1,7 @@
 import Palamedes.Synth
 import Palamedes.Sample
 import Palamedes.Tree
+import Palamedes.Opt
 
 attribute [simp]
   guard
@@ -121,7 +122,7 @@ def genSortedBetween
     (add simp And.comm)
     (config := {maxRuleApplications := 0})
 
-def genBST
+abbrev genBST
     (lo hi : Nat) :
     CGen (λ v =>
       Tree.accuM (λ x p => ((p.fst, x - 1), (x + 1, p.snd)))
@@ -146,5 +147,7 @@ def genBST
       apply synth_bind_arb
       intro ()
       apply synth_pure
+
+#eval sampleN 10 (genSortedBetween 2 10).val
 
 def main := IO.print =<< sampleN 10 (genSortedBetween 2 10).val

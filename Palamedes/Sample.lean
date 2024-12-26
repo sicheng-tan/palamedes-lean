@@ -17,10 +17,16 @@ partial def sampleSized (n : Nat) (f : Nat → Gen (Option α)) : Plausible.Rand
 
 partial def sampleRand : Gen α → Plausible.RandT IO α
   | .ret v' => pure v'
+  | .pick x y =>
+    Plausible.Random.randBool >>= λ b =>
+      if b then sampleRand x else sampleRand y
   | .choose lo hi pf => Plausible.Random.randBound Nat lo hi pf
   | .sized f => sampleSized 100 f
   | .bind x f => sampleRand x >>= sampleRand ∘ f
-  | .fail => StateT.lift (throw (IO.userError "failed to generate value"))
+  | .guardIn p _ f =>
+    if h : p
+      then sampleRand (f h)
+      else StateT.lift (throw (IO.userError "failed to generate value"))
 end
 
 partial def sample : Gen α → IO α := Plausible.runRand ∘ sampleRand

@@ -3,10 +3,11 @@ import Palamedes.Free
 @[simp]
 def support : Gen α → α → Prop
   | .ret v' => (. = v')
+  | .pick x y => λ v => support x v ∨ support y v
   | .choose lo hi _ => λ v => lo ≤ v ∧ v ≤ hi
   | .sized f => λ v => ∃ n, support (f n) (some v)
   | .bind x f => λ v => ∃ v', support x v' ∧ support (f v') v
-  | .fail => λ _ => False
+  | .guardIn P _ f => λ v => ∃ h : P, support (f h) v
 
 notation v " ∈ 〚" g "〛" => support g v
 
@@ -28,11 +29,7 @@ instance : Arbitrary Unit where
 instance : Arbitrary Bool where
   arbitrary := ⟨
     pick (pure true) (pure false),
-    by
-      simp
-      apply And.intro
-      . exists 1
-      . exists 0
+    by simp
   ⟩
 
 def arbNat (fuel : Nat) : Gen (Option Nat) :=
@@ -48,13 +45,11 @@ instance : Arbitrary Nat where
       by
         intro v
         induction v with
-        | zero => simp; exists 1; simp; exists 0
+        | zero => simp; exists 1; simp
         | succ n ih =>
           simp_all
           have ⟨n', hn'⟩ := ih
           exists n' + 1
-          simp
-          exists 1
           simp
           exists some n
           simp_arith
