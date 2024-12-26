@@ -5,6 +5,7 @@ inductive Gen : Type → Type 1 where
   | bind : Gen α → (α → Gen β) → Gen β
   | choose : (lo : Nat) → (hi : Nat) → lo ≤ hi → Gen Nat
   | sized : (Nat → Gen (Option α)) → Gen α
+  | fail : Gen α
 
 instance : Monad Gen where
   pure := .ret

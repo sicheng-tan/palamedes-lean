@@ -6,6 +6,7 @@ def support : Gen α → α → Prop
   | .choose lo hi _ => λ v => lo ≤ v ∧ v ≤ hi
   | .sized f => λ v => ∃ n, support (f n) (some v)
   | .bind x f => λ v => ∃ v', support x v' ∧ support (f v') v
+  | .fail => λ _ => False
 
 notation v " ∈ 〚" g "〛" => support g v
 

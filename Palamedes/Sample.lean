@@ -20,6 +20,7 @@ partial def sampleRand : Gen α → Plausible.RandT IO α
   | .choose lo hi pf => Plausible.Random.randBound Nat lo hi pf
   | .sized f => sampleSized 100 f
   | .bind x f => sampleRand x >>= sampleRand ∘ f
+  | .fail => StateT.lift (throw (IO.userError "failed to generate value"))
 end
 
 partial def sample : Gen α → IO α := Plausible.runRand ∘ sampleRand

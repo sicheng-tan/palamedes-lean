@@ -380,3 +380,18 @@ abbrev synth_true
     CGen (λ (_ : α) => True) := by
   obtain ⟨g, p⟩ := @Arbitrary.arbitrary α _
   exists g
+
+abbrev synth_between
+    {lo hi : Nat} :
+    CGen (λ v => lo ≤ v ∧ v ≤ hi) := by
+  exists (if h : lo ≤ hi then .choose lo hi h else .fail)
+  intro v
+  simp_all
+  by_cases hle : lo ≤ hi
+  . aesop
+  . split
+    . simp_all
+    . simp_all
+      intro h'
+      rename_i h''
+      exact Nat.lt_of_lt_of_le h'' h'

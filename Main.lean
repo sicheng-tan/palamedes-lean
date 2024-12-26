@@ -30,6 +30,7 @@ add_aesop_rules unsafe [
   apply synth_unfoldM,
   apply synth_accuM,
   apply synth_accuTreeM,
+  apply synth_between,
 ]
 
 def genTwo : CGen (λ v => v = 2) := by
@@ -90,10 +91,10 @@ def genLengthKTwos {k : Nat} :
 def genIncreasingByOne :
     CGen (λ v =>
       List.accuM (λ x _ => x)
-                (λ x () => λ (prev : Int) => do guard (x == prev + 1))
-                (λ _ => pure ())
-                v
-                0 = some ()) := by
+                 (λ x () => λ (prev : Int) => do guard (x == prev + 1))
+                 (λ _ => pure ())
+                 v
+                 0 = some ()) := by
   aesop
 
 def genTreeIncreasingByOne :
@@ -105,4 +106,45 @@ def genTreeIncreasingByOne :
                  0 = some ()) := by
   aesop
 
-def main := IO.print =<< sampleN 10 genTreeIncreasingByOne.val
+def genBetween : CGen (λ v => 3 ≤ v ∧ v ≤ 10) := by
+  aesop
+
+def genSortedBetween
+    (lo hi : Nat) :
+    CGen (λ v =>
+      List.accuM (λ x _ => x)
+                 (λ x () => λ (prev : Nat) => do guard (prev ≤ x ∧ x ≤ hi))
+                 (λ _ => pure ())
+                 v
+                 lo = some ()) := by
+  aesop
+    (add simp And.comm)
+    (config := {maxRuleApplications := 0})
+
+def genBST
+    (lo hi : Nat) :
+    CGen (λ v =>
+      Tree.accuM (λ x p => ((p.fst, x - 1), (x + 1, p.snd)))
+                 (λ () x () => λ (p : Nat × Nat) => do guard (p.fst ≤ x ∧ x ≤ p.snd))
+                 (λ _ => pure ())
+                 v
+                 (lo, hi) = some ()) := by
+  -- aesop
+  --   (add simp And.comm)
+  --   (config := {maxRuleApplications := 0})
+  apply synth_accuTreeM
+  intro b ⟨lo, hi⟩
+  simp
+  apply synth_or
+  . apply synth_pure
+  . apply synth_bind_arb
+    intro ()
+    conv in _ ∧ _ => rw [And.comm]
+    apply synth_bind
+    . apply synth_between
+    . intro x
+      apply synth_bind_arb
+      intro ()
+      apply synth_pure
+
+def main := IO.print =<< sampleN 10 (genSortedBetween 2 10).val
