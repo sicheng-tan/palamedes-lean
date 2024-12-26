@@ -164,12 +164,6 @@ abbrev synth_pure
   exists (pure v')
   simp
 
-abbrev synth_pure'
-  (v' : α) :
-  CGen (λ v => v' = v) := by
-  exists (pure v')
-  simp_all [Eq.comm]
-
 abbrev synth_bind
     {P : α → Prop}
     {Q : α → β → Prop}

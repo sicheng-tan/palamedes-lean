@@ -19,19 +19,22 @@ attribute [-simp]
 attribute [-aesop]
   Subtype
 add_aesop_rules unsafe [
-  cases Nat,
-  cases Bool,
   apply synth_bind,
   apply synth_bind_arb,
   apply synth_or,
   apply synth_pure,
-  apply synth_pure',
   apply synth_true,
   apply synth_tuple,
   apply synth_unfoldM,
   apply synth_accuM,
   apply synth_accuTreeM,
   apply synth_between,
+  (by (conv => congr; intro v; congr; intro x; rw [and_comm]); apply synth_bind),
+  (by (conv in _ = _ => rw [eq_comm]); apply synth_pure),
+]
+add_aesop_rules 5% [
+  cases Nat,
+  cases Bool,
 ]
 
 def genTwo : CGen (λ v => v = 2) := by
@@ -87,7 +90,7 @@ def genLengthKTwos {k : Nat} :
     CGen (λ (v : List Nat) =>
       List.foldr (λ _ l => l + 1) 0 v = k ∧
       List.foldrM (λ x () => guard (x == 2)) () v = Option.some ()) := by
-  aesop
+  aesop (add 5% cases Nat)
 
 def genIncreasingByOne :
     CGen (λ v =>
@@ -119,8 +122,6 @@ def genSortedBetween
                  v
                  lo = some ()) := by
   aesop
-    (add simp And.comm)
-    (config := {maxRuleApplications := 0})
 
 abbrev genBST
     (lo hi : Nat) :
@@ -130,25 +131,9 @@ abbrev genBST
                  (λ _ => pure ())
                  v
                  (lo, hi) = some ()) := by
-  -- aesop
-  --   (add simp And.comm)
-  --   (config := {maxRuleApplications := 0})
-  apply synth_accuTreeM
-  intro b ⟨lo, hi⟩
-  simp
-  apply synth_or
-  . apply synth_pure
-  . apply synth_bind_arb
-    intro ()
-    conv in _ ∧ _ => rw [And.comm]
-    apply synth_bind
-    . apply synth_between
-    . intro x
-      apply synth_bind_arb
-      intro ()
-      apply synth_pure
+  aesop
 
-#eval sampleN 10 (genSortedBetween 2 10).val
-#eval sampleN 10 (optimize (genBST 2 10).val)
+-- #eval sampleN 10 (genSortedBetween 2 10).val
+-- #eval sampleN 10 (optimize (genBST 2 10).val)
 
 def main := IO.print =<< sampleN 10 (genSortedBetween 2 10).val
