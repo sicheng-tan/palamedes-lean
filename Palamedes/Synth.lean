@@ -226,19 +226,8 @@ abbrev synth_or
     CGen (λ v => P v ∨ Q v) := by
   have ⟨gx, hx⟩ := x
   have ⟨gy, hy⟩ := y
-  exists (do
-    let b ← choose 0 1
-    if b == 0 then gx else gy)
-  intro v
-  simp
-  apply Iff.intro <;> intro h
-  . have ⟨v', hv'⟩ := h
-    match v' with
-    | 0 => left; simp at *; apply (hx _).mp hv'
-    | 1 => right; simp at *; apply  (hy _).mp hv'
-  . match h with
-    | .inl h => exists 0; simp; exact (hx _).mpr h
-    | .inr h => exists 1; simp; exact (hy _).mpr h
+  exists (pick gx gy)
+  aesop
 
 abbrev synth_unfoldM
     {α β : Type}

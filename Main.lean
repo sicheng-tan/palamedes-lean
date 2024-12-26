@@ -149,5 +149,6 @@ abbrev genBST
       apply synth_pure
 
 #eval sampleN 10 (genSortedBetween 2 10).val
+#eval sampleN 10 (optimize (genBST 2 10).val)
 
 def main := IO.print =<< sampleN 10 (genSortedBetween 2 10).val
