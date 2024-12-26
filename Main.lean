@@ -133,7 +133,7 @@ abbrev genBST
                  (lo, hi) = some ()) := by
   aesop
 
--- #eval sampleN 10 (genSortedBetween 2 10).val
--- #eval sampleN 10 (optimize (genBST 2 10).val)
+#eval sampleN 10 (optimize (genSortedBetween 2 10).val)
+#eval sampleN 10 (optimize (genBST 2 10).val)
 
 def main := IO.print =<< sampleN 10 (genSortedBetween 2 10).val
