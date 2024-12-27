@@ -2,6 +2,7 @@ import Palamedes.Synth
 import Palamedes.Sample
 import Palamedes.Tree
 import Palamedes.Opt
+import Mathlib.Tactic.SimpRw
 
 attribute [simp]
   guard
@@ -50,23 +51,7 @@ def genTwoOrThreeOrFour : CGen (λ v => v = 2 ∨ v = 3 ∨ v = 4) := by
   aesop
 
 def genTwoAndThree : CGen (λ (v : Int × Int) => v.fst = 2 ∧ v.snd = 3) := by
-  apply synth_tuple
-  on_goal 3 => {
-    intro x
-    apply synth_pure
-  }
-  intro p
-  apply Iff.intro
-  intro a
-  simp_all
-  apply And.intro
-  on_goal 2 => {rfl
-  }
-  on_goal 3 => apply synth_pure
-  · simp_all only
-    rfl
-  · intro a
-    simp_all only [and_self]
+  aesop
 
 def genTwoAndThree' : CGen (λ (v : Int × Int) => v.snd = 3 ∧ v.fst = 2) := by
   aesop
@@ -90,7 +75,7 @@ def genLengthKTwos {k : Nat} :
     CGen (λ (v : List Nat) =>
       List.foldr (λ _ l => l + 1) 0 v = k ∧
       List.foldrM (λ x () => guard (x == 2)) () v = Option.some ()) := by
-  aesop (add 5% cases Nat)
+  aesop
 
 def genIncreasingByOne :
     CGen (λ v =>
@@ -123,17 +108,16 @@ def genSortedBetween
                  lo = some ()) := by
   aesop
 
-abbrev genBST
-    (lo hi : Nat) :
-    CGen (λ v =>
-      Tree.accuM (λ x p => ((p.fst, x - 1), (x + 1, p.snd)))
-                 (λ () x () => λ (p : Nat × Nat) => do guard (p.fst ≤ x ∧ x ≤ p.snd))
-                 (λ _ => pure ())
-                 v
-                 (lo, hi) = some ()) := by
+def isBST (lo hi : Nat) (t : Tree Nat) : Option Unit :=
+  Tree.accuM (λ x p => ((p.fst, x - 1), (x + 1, p.snd)))
+             (λ () x () => λ (p : Nat × Nat) => do guard (p.fst ≤ x ∧ x ≤ p.snd))
+             (λ _ => pure ())
+             t
+             (lo, hi)
+
+def genBST (lo hi : Nat) : CGen (λ v => isBST lo hi v = some ()) := by
   aesop
 
-#eval sampleN 10 (optimize (genSortedBetween 2 10).val)
-#eval sampleN 10 (optimize (genBST 2 10).val)
+#eval sampleN 10 (optimize (genBST 50 100).val)
 
 def main := IO.print =<< sampleN 10 (genSortedBetween 2 10).val
