@@ -2,7 +2,7 @@ import Palamedes.Synth
 import Palamedes.Sample
 import Palamedes.Tree
 import Palamedes.Opt
-import Mathlib.Tactic.SimpRw
+import Mathlib.Tactic.Convert
 
 attribute [simp]
   guard
@@ -31,7 +31,7 @@ add_aesop_rules unsafe [
   apply synth_accuTreeM,
   apply synth_between,
   (by (conv => congr; intro v; congr; intro x; rw [and_comm]); apply synth_bind),
-  (by (conv in _ = _ => rw [eq_comm]); apply synth_pure),
+  (by (conv => congr; intro v; rw [eq_comm]); apply synth_pure),
 ]
 add_aesop_rules 5% [
   cases Nat,
