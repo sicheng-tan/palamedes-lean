@@ -32,6 +32,56 @@ def optimize : Gen α → Gen α
   | .guardIn P inst f => .guardIn P inst (λ h => optimize (f h))
   | x => x
 
+theorem optPick_pick (x y : Gen α) : support (.pick x y) = support (optPick x y) := by
+  generalize hn : genMeasure x + genMeasure y = n
+  induction n generalizing x y
+  case zero =>
+    cases hx : x with
+    | guardIn P _ f =>
+      by_cases h : P
+      . simp_all [optPick]
+      . simp_all [optPick]
+        funext v
+        simp_all only [eq_iff_iff, or_iff_right_iff_imp, forall_exists_index, forall_false]
+    | _ =>
+      cases hy : y with
+      | guardIn Q _ g =>
+        by_cases h' : Q
+        . simp_all [optPick]
+        . simp_all [optPick]
+          funext x
+          rename_i h_1 a_1
+          simp_all only [eq_iff_iff, or_iff_left_iff_imp, forall_exists_index, forall_false]
+      | _ => simp_all [optPick]
+  case succ m ih =>
+    cases x with
+    | guardIn P _ f =>
+      by_cases h : P
+      . simp_all [optPick]
+        rw [← ih]
+        conv at hn =>
+          lhs
+          rw [Nat.add_assoc]
+          rw [Nat.add_comm]
+        simp at hn
+        exact hn
+      . simp_all [optPick]
+        funext v
+        simp_all only [eq_iff_iff, or_iff_right_iff_imp, forall_exists_index, forall_false]
+    | _ =>
+      cases hy : y with
+      | guardIn Q _ g =>
+        by_cases h' : Q
+        . simp_all [optPick]
+          conv at hn => lhs; rw [Nat.add_comm]
+          simp_all
+          subst hn
+          rw [← ih]
+          . simp_all [genMeasure]
+          . simp_all [genMeasure]
+        . simp_all [optPick]
+      | _ => simp_all [optPick]
+
 theorem optBind_bind : support (.bind x f) = support (optBind x f) := by
   funext v
   induction x generalizing v <;> simp_all [optBind]
