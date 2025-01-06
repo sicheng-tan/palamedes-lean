@@ -30,6 +30,28 @@ def Tree.accu
     let (sl, sr) := st x s
     f (Tree.accu st f z l sl) x (Tree.accu st f z r sr) s
 
+def Tree.fold
+    {α β : Type}
+    (f : β → α → β → β)
+    (z : β)
+    (t : Tree α) :
+    β :=
+  match t with
+  | .leaf => z
+  | .node l x r => f (Tree.fold f z l) x (Tree.fold f z r)
+
+def Tree.foldM
+    [Monad m]
+    {α β : Type}
+    (f : β → α → β → m β)
+    (z : m β)
+    (t : Tree α) :
+    m β :=
+  match t with
+  | .leaf => z
+  | .node l x r => do
+    f (← Tree.foldM f z l) x (← Tree.foldM f z r)
+
 def Tree.accuM
     [Monad m]
     {α β σ : Type}
@@ -44,6 +66,21 @@ def Tree.accuM
   | .node l x r => do
     let (sl, sr) := st x s
     f (← Tree.accuM st f z l sl) x (← Tree.accuM st f z r sr) s
+
+theorem fold_accuM
+    [Monad m]
+    {α β σ : Type}
+    {st : α → σ → σ × σ}
+    {s : σ}
+    {t : Tree α}
+    {z : σ → m β}
+    {f : β → α → β → σ → m β}
+    {f' : (σ → m β) → α → (σ → m β) → σ → m β} :
+    f' = (λ bl x br => λ s => do
+      let (sl, sr) := st x s
+      f (← bl sl) x (← br sr) s) →
+    Tree.fold f' z t s = Tree.accuM st f z t s := by
+  induction t generalizing s <;> simp_all [Tree.fold, Tree.accuM]
 
 def unfoldTree (n : Nat) (f : β → Gen (TreeF α β)) (b : β) : Gen (Option (Tree α)) :=
   match n with
