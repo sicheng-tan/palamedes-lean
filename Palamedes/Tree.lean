@@ -77,37 +77,42 @@ theorem unfoldTree_monotonic'
     match n with
     | 0 => simp_all
     | .succ _ =>
-      simp_all
+      simp_all [unfoldTree, bind, optBind_bind]
       have ⟨v', hv'1, hv'2⟩ := hn
       exists v'
-      simp_all
       match v' with
       | .leaf => simp_all
+      | .node _ _ _ =>
+        simp_all [bind, optBind_bind]
+        have ⟨a, ⟨_, ⟨b, _, _⟩⟩⟩ := hv'2
+        match a, b with
+        | .some _, .some _ => simp_all
   | node l x r ihl ihr =>
     match n with
     | 0 => simp_all
     | .succ n' =>
+      simp_all [unfoldTree, bind, optBind_bind]
       have ⟨v', hv'1, hv'2⟩ := hn
       exists v'
       match v' with
       | .node bl y br =>
+        simp_all [unfoldTree, bind, optBind_bind]
         have ⟨ll, hll, rr, hrr, h⟩ := hv'2
         clear hv'2
         match ll, rr with
         | .none, _ => simp_all
         | _, .none => simp_all
         | .some ll, some rr =>
-          apply And.intro hv'1
+          simp_all [unfoldTree, bind, optBind_bind]
           cases h
           replace ihl := ihl hll
           replace ihr := ihr hrr
           clear hll
           clear hrr
-          simp_all
           exists (some l)
           apply And.intro
-          . apply ihl
-          . exists (some r)
+          . aesop
+          . aesop
 
 theorem unfoldTree_monotonic
     {n m : Nat}
@@ -140,12 +145,12 @@ theorem support_unfoldTree_ok :
       match n with
       | 0 => simp_all
       | n + 1 =>
-        simp_all
+        simp_all [unfoldTree, bind, optBind_bind]
         have ⟨v', hv'1, hv'2⟩ := h
         match v' with
         | .leaf => simp_all
         | .node _ _ _ =>
-          simp_all
+          simp_all [unfoldTree, bind, optBind_bind]
           have ⟨l'', hl'', r'', hr''⟩ := hv'2
           match l'', r'' with
           | .none, _ => simp_all
@@ -155,7 +160,7 @@ theorem support_unfoldTree_ok :
           | .some (.node _ _ _), .some (.node _ _ _) => simp_all
     . intro h
       exists 1
-      simp [unfoldTree]
+      simp [unfoldTree, bind, optBind_bind]
       exists .leaf
   | node l x r ih_l ih_r =>
     simp_all
@@ -164,12 +169,12 @@ theorem support_unfoldTree_ok :
       match n with
       | 0 => simp_all
       | n + 1 =>
-        simp_all
+        simp_all [unfoldTree, bind, optBind_bind]
         have ⟨v', hv'1, hv'2⟩ := h
         match v' with
         | .leaf => simp_all
         | .node bl'' x br'' =>
-          simp_all
+          simp_all [unfoldTree, bind, optBind_bind]
           have ⟨l'', hl'', r'', hr'', hv''⟩ := hv'2
           match l'', r'' with
           | .none, _ => simp_all
@@ -189,9 +194,9 @@ theorem support_unfoldTree_ok :
       have ⟨nl, hl⟩ := ih_l.mpr hl
       have ⟨nr, hr⟩ := ih_r.mpr hr
       exists nl + nr + 1
-      simp_all
+      simp_all [unfoldTree, bind, optBind_bind]
       exists .node bl x br
-      simp_all
+      simp_all [unfoldTree, bind, optBind_bind]
       exists some l
       apply And.intro
       . apply @unfoldTree_monotonic _ _ _ nl (nl + nr)

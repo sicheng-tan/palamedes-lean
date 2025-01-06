@@ -1,7 +1,6 @@
 import Palamedes.Synth
 import Palamedes.Sample
 import Palamedes.Tree
-import Palamedes.Opt
 import Mathlib.Tactic.Convert
 
 attribute [simp]
@@ -53,7 +52,13 @@ def genTwoOrThreeOrFour : CGen (λ v => v = 2 ∨ v = 3 ∨ v = 4) := by
 def genTwoAndThree : CGen (λ (v : Int × Int) => v.fst = 2 ∧ v.snd = 3) := by
   aesop
 
-def genTwoAndThree' : CGen (λ (v : Int × Int) => v.snd = 3 ∧ v.fst = 2) := by
+def genTwoAndThree' : CGen (λ (v : Nat × Nat) => ∃ a, ∃ b, a = 2 ∧ b = 3 ∧ v = (a, b)) := by
+  aesop
+
+def genThreeAndTwo : CGen (λ (v : Int × Int) => v.snd = 3 ∧ v.fst = 2) := by
+  aesop
+
+def genThreeAndTwo' : CGen (λ (v : Int × Int) => ∃ a, ∃ b, b = 3 ∧ a = 2 ∧ v = (a, b)) := by
   aesop
 
 def genAllTwos : CGen (λ v => List.foldrM (λ x () => guard (x == 2)) () v = Option.some ()) := by
@@ -118,6 +123,6 @@ def isBST (lo hi : Nat) (t : Tree Nat) : Option Unit :=
 def genBST (lo hi : Nat) : CGen (λ v => isBST lo hi v = some ()) := by
   aesop
 
-#eval sampleN 10 (optimize (genBST 50 100).val)
+#eval sampleN 10 (genBST 50 100).val
 
 def main := IO.print =<< sampleN 10 (genSortedBetween 2 10).val

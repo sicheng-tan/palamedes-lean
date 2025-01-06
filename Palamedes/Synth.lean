@@ -170,8 +170,9 @@ abbrev synth_bind
     (hb : CGen P)
     (hf : (a : α) → CGen (Q a)) :
     CGen (λ v => ∃ a, P a ∧ Q a v) := by
-  exists .bind hb.val λ a => (hf a).val
+  exists optBind hb.val λ a => (hf a).val
   intro v
+  rw [optBind_bind]
   obtain ⟨val, property⟩ := hb
   apply Iff.intro <;>
     (rintro ⟨a, ha⟩; exists a; have := (hf a).property; simp_all only [and_self])
@@ -186,12 +187,15 @@ abbrev synth_bind_arb
   intro b
   simp_all
   apply Iff.intro
-  · rintro ⟨v', hv'⟩
+  · simp [bind, optBind_bind]
+    rintro v'
     have := (g v').property
     simp_all
+    intro hv
     exists v'
   · rintro ⟨v', hv'⟩
     have := (g v').property
+    simp [bind, optBind_bind]
     exists v'
     simp_all
 
@@ -199,7 +203,7 @@ abbrev synth_tuple
     {P : α → Prop}
     {Q : α → β → Prop}
     {R : α × β → Prop}
-    {h : ∀ p, P p.fst ∧ Q p.fst p.snd ↔ R p}
+    {h : ∀ v, P v.1 ∧ Q v.1 v.2 ↔ R v}
     (gx : CGen P)
     (gy : (x : α) → CGen (Q x)) :
     CGen R := by
@@ -208,7 +212,7 @@ abbrev synth_tuple
     let x ← gx_val
     let y ← (gy x).val
     pure (x, y))
-  simp_all [-Prod.forall]
+  simp_all [-Prod.forall, bind, optBind_bind]
   intro ⟨x, y⟩
   have gy_prop := (gy x).property
   simp_all
@@ -221,6 +225,7 @@ abbrev synth_or
   have ⟨gx, hx⟩ := x
   have ⟨gy, hy⟩ := y
   exists (pick gx gy)
+  simp [pick, optPick_pick]
   aesop
 
 abbrev synth_unfoldM
@@ -264,9 +269,11 @@ abbrev synth_accu
   induction v generalizing s b with
   | nil =>
     have := (g b s).property .nil
+    simp_all [bind, optBind_bind]
     aesop
   | cons x xs ih =>
     have := (g b s).property (.cons x (List.foldr (fun x b s => f x (b (st x s)) s) z xs (st x s)))
+    simp_all [bind, optBind_bind]
     aesop
 
 abbrev synth_accuM
@@ -290,13 +297,15 @@ abbrev synth_accuM
   induction xs generalizing s b with
   | nil =>
     have := (g b s).property .nil
+    simp_all [bind, optBind_bind]
     aesop
   | cons x xs ih =>
     simp_all
     clear ih
     aesop (config := {warnOnNonterminal := false})
     . have := (g b s).property
-      simp_all
+      simp_all [bind, optBind_bind]
+      aesop
     . have := (g b s).property
       simp_all
       generalize ho : List.foldr (fun x b s => do f x (← b (st x s)) s) z xs (st x s) = o at *
@@ -307,7 +316,8 @@ abbrev synth_accuM
         exists b'
         exists st x s
         apply And.intro
-        . exists .cons x b'
+        . simp_all [bind, optBind_bind]
+          exists .cons x b'
         . rw [ho]
 
 abbrev synth_accuTreeM
@@ -331,6 +341,7 @@ abbrev synth_accuTreeM
   induction t generalizing s b with
   | leaf =>
     have := (g b s).property .leaf
+    simp_all [bind, optBind_bind]
     aesop (add simp Tree.accuM)
   | node l x r ih =>
     simp_all
@@ -339,7 +350,8 @@ abbrev synth_accuTreeM
       (config := {warnOnNonterminal := false})
       (add simp Tree.accuM)
     . have := (g b s).property
-      simp_all
+      simp_all [bind, optBind_bind]
+      aesop
     . have := (g b s).property
       simp_all
       generalize hol : Tree.accuM st f z l (st x s).fst = o_l at *
@@ -355,7 +367,7 @@ abbrev synth_accuTreeM
           exists (st x s).fst
           exists br
           exists (st x s).snd
-          simp_all
+          simp_all [bind, optBind_bind]
           exists (.node bl x br)
 
 abbrev synth_true
