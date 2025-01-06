@@ -123,6 +123,21 @@ def isBST (lo hi : Nat) (t : Tree Nat) : Option Unit :=
 def genBST (lo hi : Nat) : CGen (λ v => isBST lo hi v = some ()) := by
   aesop
 
+def genBST_explicit (lo hi : Nat) : CGen (λ v => isBST lo hi v = some ()) := by
+  apply synth_accuTreeM
+  intro b s
+  simp_all
+  apply synth_or
+  · apply synth_pure
+  · apply synth_bind_arb
+    intro ()
+    ((conv => congr; intro v; congr; intro x; rw [and_comm]); apply synth_bind)
+    · apply synth_between
+    · intro x
+      apply synth_bind_arb
+      intro ()
+      apply synth_pure
+
 #eval sampleN 10 (genBST 50 100).val
 
 def main := IO.print =<< sampleN 10 (genSortedBetween 2 10).val
