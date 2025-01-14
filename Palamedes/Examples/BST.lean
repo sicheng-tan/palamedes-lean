@@ -78,3 +78,23 @@ example : isBST_fold lo hi t = isBST lo hi t := by
 
 def genBST (lo hi : Nat) : CGen (λ v => isBST lo hi v = some ()) := by
   aesop
+
+syntax "rw_add_comm" : tactic
+macro_rules
+  | `(tactic| rw_add_comm) => `(tactic| conv => congr; intro v; congr; intro x; rw [and_comm])
+
+def genBST_explicit (lo hi : Nat) : CGen (λ v => isBST lo hi v = some ()) := by
+  apply synth_accuTreeM
+  intro b s
+  simp_all [TreeF_or]
+  apply synth_or
+  · apply synth_pure
+  · apply synth_bind_arb
+    intro ()
+    rw_add_comm
+    apply synth_bind
+    · apply synth_between
+    · intro x
+      apply synth_bind_arb
+      intro ()
+      apply synth_pure

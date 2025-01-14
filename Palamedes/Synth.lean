@@ -383,3 +383,13 @@ abbrev synth_between
   intro v
   simp_all
   exact Nat.le_trans
+
+abbrev synth_cut
+    (h : ∀ {v}, Q v ↔ P v)
+    (g : CGen P) :
+    CGen Q := by
+  conv =>
+    congr
+    intro v
+    rw [h]
+  apply g
