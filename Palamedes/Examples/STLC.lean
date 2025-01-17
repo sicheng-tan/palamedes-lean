@@ -153,21 +153,58 @@ abbrev Term.synth_accuM
     (b, s)
   intro v
   rw [Term.unfold_unfold_support]
-  sorry
+  induction v generalizing b s with
+  | unit =>
+    simp_all [Term.accuM, bind, optBind_bind]
+    have g_prop := (g b s).property .unitStep
+    aesop
+  | var n =>
+    simp_all [Term.accuM, bind, optBind_bind]
+    have g_prop := (g b s).property (.varStep n)
+    aesop
+  | abs τ t ih =>
+    simp_all [Term.accuM, bind, optBind_bind]
+    generalize ho : accuM stAbs stApp f t (stAbs τ s) = o at *
+    match o with
+    | none => aesop
+    | some bt =>
+      have g_prop := (g b s).property (.absStep τ bt)
+      aesop
+  | app t₁ t₂ ih₁ ih₂ =>
+    simp_all [Term.accuM, bind, optBind_bind]
+    generalize ho₁ : accuM stAbs stApp f t₁ (stApp s).fst = o₁ at *
+    match o₁ with
+    | none => aesop
+    | some bt₁ =>
+      generalize ho₂ : accuM stAbs stApp f t₂ (stApp s).snd = o₂ at *
+      match o₂ with
+      | none => aesop
+      | some bt₂ =>
+        have g_prop := (g b s).property (.appStep bt₁ bt₂)
+        simp_all [Option.some_bind]
+        rw [← g_prop]
+        apply Iff.intro
+        . aesop
+        . intro h
+          exists bt₁
+          exists (stApp s).fst
+          exists bt₂
+          exists (stApp s).snd
+          aesop
 
 theorem Ty.deforest_eq
     {b b_unit : β}
     {b_arrow : Ty → Ty → β} :
     Ty.rec b_unit (λ τ₁ τ₂ _ _ => b_arrow τ₁ τ₂) τ = b ↔
     Ty.rec (b_unit = b) (λ τ₁ τ₂ _ _ => b_arrow τ₁ τ₂ = b) τ := by
-  sorry
+  induction τ <;> aesop
 
 theorem Ty.as_or
     {P_unit : Prop}
     {P_arrow : Ty → Ty → Prop} :
     Ty.rec P_unit (λ τ₁ τ₂ _ _ => P_arrow τ₁ τ₂) τ ↔
     (τ = .unit ∧ P_unit) ∨ (∃ τ₁ τ₂, τ = .arrow τ₁ τ₂ ∧ P_arrow τ₁ τ₂) := by
-  sorry
+  induction τ <;> aesop
 
 theorem TermF.as_or :
     TermF.rec P_unit P_var P_app P_abs t ↔
@@ -175,10 +212,47 @@ theorem TermF.as_or :
      (∃ n, t = .varStep n ∧ P_var n) ∨
      (∃ τ t', t = .absStep τ t' ∧ P_app τ t') ∨
      (∃ t₁ t₂, t = .appStep t₁ t₂ ∧ P_abs t₁ t₂)) := by
-  sorry
+  induction t <;> aesop
 
-def synth_get? {xs : List α} {a : α} : CGen (fun (n : Nat) => xs[n]? = some a) := by
-  sorry
+def Gen.elements (xs : List α) (h : xs.length > 0 := by simp_all) : Gen α :=
+  match xs with
+  | x :: xs =>
+    match hxs : xs with
+    | [] => pure x
+    | _ :: _ => pick (pure x) (Gen.elements xs)
+
+theorem Gen.elements_support
+    {xs : List α} {v : α} {h : xs.length > 0} :
+    v ∈ 〚Gen.elements xs h〛↔ v ∈ xs := by
+  induction xs with
+  | nil => simp_all; contradiction
+  | cons x xs ih =>
+    match hxs : xs with
+    | [] => simp_all
+    | _ :: _ => simp_all
+
+def Gen.indicesOf [DecidableEq α] (xs : List α) (a : α) : Gen Nat :=
+  let inds := (xs.enum.filter (λ (_, x) => x == a)).map (λ (n, _) => n)
+  .guardIn (inds.length > 0)
+           (if h : inds.length > 0 then isTrue h else isFalse h)
+           (λ h => Gen.elements inds h)
+
+def synth_get? [DecidableEq α] {xs : List α} {a : α} : CGen (fun (n : Nat) => xs[n]? = some a) := by
+  exists Gen.indicesOf xs a
+  intro v
+  simp [Gen.indicesOf, Gen.elements_support]
+  apply Iff.intro
+  . intro ⟨_, h2⟩
+    exact List.mk_mem_enum_iff_getElem?.mp h2
+  . intro h
+    apply And.intro
+    . rw [← List.mk_mem_enum_iff_getElem?] at h
+      apply List.length_pos_of_mem
+      simp_all only [List.mem_filter, beq_iff_eq]
+      apply And.intro
+      · exact h
+      · simp_all only
+    . exact List.mk_mem_enum_iff_getElem?.mpr h
 
 theorem Option.rec_exists : Option.rec False (λ _ => True) o ↔ ∃ v, o = some v := by
   match o with
@@ -295,6 +369,7 @@ def genWellTyped_manual (Γ : Ctx) : CGen (λ (v : Term) =>
     . apply synth_or
       . apply synth_pure
       . unfold hasType_natural.match_1
+        set_option smartUnfolding false in
         simp_all [guard, ite, failure, deforest_decidable_bind, deforest_decidable_eq, decidable_or, Ty.deforest_eq, Ty.as_or]
         conv => congr; intro v; rw [exists_comm]
         apply synth_bind_arb
@@ -341,10 +416,6 @@ add_aesop_rules unsafe [
   (by (conv => congr; intro v; congr; intro x; rw [and_comm]); apply synth_bind),
   (by (conv => congr; intro v; rw [eq_comm]); apply synth_pure),
   (by (conv => congr; intro v; rw [exists_comm]); apply synth_bind_arb),
-]
-add_aesop_rules 5% [
-  cases Nat,
-  cases Bool,
 ]
 
 def genWellTyped (Γ : Ctx) : CGen (λ (v : Term) =>
