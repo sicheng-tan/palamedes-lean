@@ -3,7 +3,7 @@ import Palamedes.Synth
 inductive Ty : Type where
   | unit
   | arrow (τ₁ τ₂ : Ty)
-  deriving BEq
+  deriving DecidableEq
 
 def genTy : Nat → Gen (Option Ty)
   | 0 => pure none
@@ -93,6 +93,98 @@ def Term.accuM
     let (s₁, s₂) := stApp s
     f (.appStep (← Term.accuM stAbs stApp f t₁ s₁) (← Term.accuM stAbs stApp f t₂ s₂)) s
 
+def Term.unfold' (n : Nat) (f : β → Gen (TermF β)) (b : β) : Gen (Option Term) :=
+  match n with
+  | 0 => pure none
+  | n + 1 => do
+    match (← f b) with
+    | .unitStep => pure (some .unit)
+    | .varStep n => pure (some (.var n))
+    | .absStep τ bt => do
+      let t ← Term.unfold' n f bt
+      pure (do pure (.abs τ (← t)))
+    | .appStep bt₁ bt₂ => do
+      let t₁ ← Term.unfold' n f bt₁
+      let t₂ ← Term.unfold' n f bt₂
+      pure (do pure (.app (← t₁) (← t₂)))
+
+def Term.unfold (f : β → Gen (TermF β)) (b : β) : Gen Term :=
+  Gen.sized (λ n => Term.unfold' n f b)
+
+@[simp]
+def Term.unfold_support (P : β → TermF β → Prop) (b : β) : Term → Prop
+  | .unit => P b .unitStep
+  | .var n => P b (.varStep n)
+  | .abs τ t => ∃ bt, P b (.absStep τ bt) ∧ Term.unfold_support P bt t
+  | .app t₁ t₂ => ∃ bt₁ bt₂,
+    P b (.appStep bt₁ bt₂) ∧
+    Term.unfold_support P bt₁ t₁ ∧
+    Term.unfold_support P bt₂ t₂
+
+theorem Term.unfold_unfold_support :
+    support (Term.unfold f b) = Term.unfold_support (λ b' => support (f b')) b := by
+  sorry
+
+abbrev Term.synth_accuM
+    {β σ : Type}
+    {stAbs : Ty → σ → σ}
+    {stApp : σ → σ × σ}
+    {f : TermF β → σ → Option β}
+    {s : σ}
+    {b : β}
+    (g : (b : β) → (s : σ) → CGen
+      (TermF.rec
+        (f .unitStep s = some b)
+        (λ n => f (.varStep n) s = some b)
+        (λ τ t => f (.absStep τ t) s = some b)
+        (λ t₁ t₂ => f (.appStep t₁ t₂) s = some b))) :
+    CGen (λ (v : Term) => Term.accuM stAbs stApp f v s = some b) := by
+  exists Term.unfold
+    (λ (b, s) => do
+      match (← (g b s).val) with
+      | .unitStep => pure .unitStep
+      | .varStep n => pure (.varStep n)
+      | .absStep τ bt => do
+        let s' := stAbs τ s
+        pure (.absStep τ (bt, s'))
+      | .appStep bt₁ bt₂ => do
+        let (s₁, s₂) := stApp s
+        pure (.appStep (bt₁, s₁) (bt₂, s₂)))
+    (b, s)
+  intro v
+  rw [Term.unfold_unfold_support]
+  sorry
+
+theorem Ty.deforest_eq
+    {b b_unit : β}
+    {b_arrow : Ty → Ty → β} :
+    Ty.rec b_unit (λ τ₁ τ₂ _ _ => b_arrow τ₁ τ₂) τ = b ↔
+    Ty.rec (b_unit = b) (λ τ₁ τ₂ _ _ => b_arrow τ₁ τ₂ = b) τ := by
+  sorry
+
+theorem Ty.as_or
+    {P_unit : Prop}
+    {P_arrow : Ty → Ty → Prop} :
+    Ty.rec P_unit (λ τ₁ τ₂ _ _ => P_arrow τ₁ τ₂) τ ↔
+    (τ = .unit ∧ P_unit) ∨ (∃ τ₁ τ₂, τ = .arrow τ₁ τ₂ ∧ P_arrow τ₁ τ₂) := by
+  sorry
+
+theorem TermF.as_or :
+    TermF.rec P_unit P_var P_app P_abs t ↔
+    ((t = .unitStep ∧ P_unit) ∨
+     (∃ n, t = .varStep n ∧ P_var n) ∨
+     (∃ τ t', t = .absStep τ t' ∧ P_app τ t') ∨
+     (∃ t₁ t₂, t = .appStep t₁ t₂ ∧ P_abs t₁ t₂)) := by
+  sorry
+
+def synth_get? {xs : List α} {a : α} : CGen (fun (n : Nat) => xs[n]? = some a) := by
+  sorry
+
+theorem Option.rec_exists : Option.rec False (λ _ => True) o ↔ ∃ v, o = some v := by
+  match o with
+  | none => simp
+  | some v => simp
+
 def Ctx := List Ty
 
 def hasType_natural (Γ : Ctx) : Term → Option Ty
@@ -143,7 +235,8 @@ def hasType_accu (Γ : Ctx) (t : Term) : Option Ty :=
     t
     Γ
 
-def hasType_accuM (Γ : Ctx) (t : Term) : Option Ty :=
+@[simp]
+def hasType (Γ : Ctx) (t : Term) : Option Ty :=
   Term.accuM
     (λ τ Γ => τ :: Γ)
     (λ Γ => (Γ, Γ))
@@ -158,3 +251,106 @@ def hasType_accuM (Γ : Ctx) (t : Term) : Option Ty :=
         | .unit => failure)
     t
     Γ
+
+def genWellTyped_manual (Γ : Ctx) : CGen (λ (v : Term) =>
+    match hasType Γ v with
+    | some _ => True
+    | none => False) := by
+  unfold genWellTyped_manual.match_1
+  simp [Option.rec_exists]
+  apply synth_bind_arb
+  intro τ
+  apply Term.synth_accuM
+  intro τ Γ
+  simp [TermF.as_or]
+  match τ with
+  | .unit =>
+    simp
+    apply synth_or
+    . apply synth_pure
+    . apply synth_or
+      . conv => congr; intro v; congr; intro x; rw [and_comm]
+        apply synth_bind
+        . apply synth_get?
+        . intro n
+          apply synth_pure
+      . unfold hasType_natural.match_1
+        simp_all [guard, ite, failure, deforest_decidable_bind, deforest_decidable_eq, decidable_or, Ty.deforest_eq, Ty.as_or]
+        conv => congr; intro v; rw [exists_comm]
+        apply synth_bind_arb
+        intro τ₁
+        conv => congr; intro v; congr; intro x; rw [and_comm]
+        apply synth_bind
+        . apply synth_pure
+        . intro τ₂
+          apply synth_pure
+  | .arrow τ₁ τ₂ =>
+    simp
+    apply synth_or
+    . conv => congr; intro v; congr; intro x; rw [and_comm]
+      apply synth_bind
+      . apply synth_get?
+      . intro n
+        apply synth_pure
+    . apply synth_or
+      . apply synth_pure
+      . unfold hasType_natural.match_1
+        simp_all [guard, ite, failure, deforest_decidable_bind, deforest_decidable_eq, decidable_or, Ty.deforest_eq, Ty.as_or]
+        conv => congr; intro v; rw [exists_comm]
+        apply synth_bind_arb
+        intro τ₁
+        conv => congr; intro v; congr; intro x; rw [and_comm]
+        apply synth_bind
+        . apply synth_pure
+        . intro τ₂
+          apply synth_pure
+
+attribute [simp]
+  guard
+  failure
+  ite
+  deforest_decidable_bind
+  deforest_decidable_eq
+  decidable_or
+  Ty.deforest_eq
+  Ty.as_or
+  TermF.as_or
+  ListF_or
+  TreeF_or
+  fold_foldM
+  merge_foldM
+  Option.rec_exists
+attribute [-simp]
+  Prod.forall
+attribute [-aesop]
+  Subtype
+add_aesop_rules unsafe [
+  apply synth_bind,
+  apply synth_bind_arb,
+  apply synth_or,
+  apply synth_pure,
+  apply synth_true,
+  apply synth_tuple,
+  apply synth_unfoldM,
+  apply synth_accuM,
+  apply synth_accuTreeM,
+  apply synth_between,
+  apply Term.synth_accuM,
+  (by apply Term.synth_accuM; intro b s; cases b),
+  apply synth_get?,
+  (by (conv => congr; intro v; congr; intro x; rw [and_comm]); apply synth_bind),
+  (by (conv => congr; intro v; rw [eq_comm]); apply synth_pure),
+  (by (conv => congr; intro v; rw [exists_comm]); apply synth_bind_arb),
+]
+add_aesop_rules 5% [
+  cases Nat,
+  cases Bool,
+]
+
+def genWellTyped (Γ : Ctx) : CGen (λ (v : Term) =>
+    match hasType Γ v with
+    | some _ => True
+    | none => False) := by
+  aesop
+    (add unsafe (by unfold hasType_natural.match_1))
+    (add unsafe (by unfold genWellTyped_manual.match_1))
