@@ -1,9 +1,10 @@
 import Palamedes.Synth
+import Palamedes.Sample
 
 inductive Ty : Type where
   | unit
   | arrow (τ₁ τ₂ : Ty)
-  deriving DecidableEq
+  deriving DecidableEq, Repr
 
 def genTy (n : Nat) : Gen (Option Ty) :=
   Nat.fold (λ _ (g : Gen (Option Ty)) =>
@@ -82,6 +83,7 @@ inductive Term : Type where
   | var (n : Nat)
   | abs (τ : Ty) (t : Term)
   | app (t₁ t₂ : Term)
+  deriving Repr
 
 inductive TermF : Type → Type where
   | unitStep : TermF β
@@ -628,3 +630,5 @@ def genWellTyped (Γ : Ctx) : CGen (λ (v : Term) =>
   aesop
     (add unsafe (by unfold hasType_natural.match_1))
     (add unsafe (by unfold genWellTyped_manual.match_1))
+
+-- #eval sampleN 10 (genWellTyped []).val
