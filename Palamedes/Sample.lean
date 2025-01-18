@@ -10,18 +10,24 @@ def replicateM [Monad m] (n : Nat) (mx : m α) : m (List α) :=
     pure (x :: xs)
 
 mutual
-partial def sampleSized (n : Nat) (f : Nat → Gen (Option α)) : Plausible.RandT IO α := do
+partial def sampleSized (tries : Nat) (n : Nat) (f : Nat → Gen (Option α)) : Plausible.RandT IO α := do
+  -- match (← sampleRand (f n)) with
+  -- | .none => sampleSized (2 * n) f
+  -- | .some v => pure v
   match (← sampleRand (f n)) with
-  | .none => sampleSized (2 * n) f
+  | .none =>
+    if tries == 0
+      then StateT.lift (throw (IO.userError "ran out of fuel"))
+      else sampleSized (tries - 1) n f
   | .some v => pure v
 
 partial def sampleRand : Gen α → Plausible.RandT IO α
   | .ret v' => pure v'
-  | .pick x y =>
-    Plausible.Random.randBool >>= λ b =>
-      if b then sampleRand x else sampleRand y
+  | .pick (w₁, w₂) x y =>
+    Plausible.Random.randBound Nat 0 (w₁ + w₁ - 1) (by simp) >>= λ ⟨b, _⟩ =>
+      if b < w₁ then sampleRand x else sampleRand y
   | .choose lo hi pf => Plausible.Random.randBound Nat lo hi pf
-  | .sized f => sampleSized 100 f
+  | .sized f => sampleSized 10 100 f
   | .bind x f => sampleRand x >>= sampleRand ∘ f
   | .guardIn p _ f =>
     if h : p

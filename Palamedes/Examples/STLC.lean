@@ -8,7 +8,7 @@ inductive Ty : Type where
 
 def genTy (n : Nat) : Gen (Option Ty) :=
   Nat.fold (λ _ (g : Gen (Option Ty)) =>
-    pick
+    wpick (10, 1)
       (pure (some Ty.unit))
       (do
         let g1 ← g
@@ -34,15 +34,15 @@ theorem genTy_monotonic
   | zero => simp_all
   | succ n' ih =>
     match v with
-    | .unit => simp_all [Nat.fold, pick, optPick_pick, bind, optBind_bind]
+    | .unit => simp_all [Nat.fold, wpick, optPick_pick, bind, optBind_bind]
     | .arrow τ₁ τ₂ =>
-      simp [Nat.fold, pick, optPick_pick, bind, optBind_bind] at hn
+      simp [Nat.fold, wpick, optPick_pick, bind, optBind_bind] at hn
       have ⟨τ₁', hτ₁, ⟨τ₂', hτ₂, heq⟩⟩ := hn
       have ⟨rfl, rfl⟩ : τ₁ = τ₁' ∧ τ₂ = τ₂' := by
         cases τ₁' <;> cases τ₂' <;> (simp_all [Option.map, Seq.seq]; try contradiction)
       clear heq
       unfold Nat.fold
-      simp [pick, optPick_pick, bind, optBind_bind]
+      simp [wpick, optPick_pick, bind, optBind_bind]
       exists some τ₁
       apply And.intro (ih hτ₁)
       exists some τ₂
@@ -58,13 +58,13 @@ instance : Arbitrary Ty where
       | unit =>
         simp_all
         exists 1
-        simp [Nat.fold, pick, optPick_pick]
+        simp [Nat.fold, wpick, optPick_pick]
       | arrow τ₁ τ₂ ih₁ ih₂ =>
         simp_all
         have ⟨n₁, ih₁⟩ := ih₁
         have ⟨n₂, ih₂⟩ := ih₂
         exists n₁ + n₂ + 1
-        simp_all [Nat.fold, pick, optPick_pick, bind, optBind_bind]
+        simp_all [Nat.fold, wpick, optPick_pick, bind, optBind_bind]
         exists some τ₁
         apply And.intro
         . conv =>
@@ -419,33 +419,39 @@ theorem TermF.as_or :
      (∃ t₁ t₂, t = .appStep t₁ t₂ ∧ P_abs t₁ t₂)) := by
   induction t <;> aesop
 
-def Gen.elements (xs : List α) (h : xs.length > 0 := by simp_all) : Gen α :=
+def elements (xs : List α) (h : xs.length > 0) : Gen α :=
   match xs with
   | x :: xs =>
     match hxs : xs with
     | [] => pure x
-    | _ :: _ => pick (pure x) (Gen.elements xs)
+    | _ :: _ => pick (pure x) (elements xs (by rw [hxs]; simp))
 
-theorem Gen.elements_support
+theorem support_elements
     {xs : List α} {v : α} {h : xs.length > 0} :
-    v ∈ 〚Gen.elements xs h〛↔ v ∈ xs := by
+    v ∈ 〚elements xs h〛↔ v ∈ xs := by
   induction xs with
   | nil => simp_all; contradiction
   | cons x xs ih =>
     match hxs : xs with
     | [] => simp_all
-    | _ :: _ => simp_all
+    | _ :: _ =>
+      simp [elements, pick, optPick_pick] at ih
+      simp [elements, pick, optPick_pick] at hxs
+      simp [elements, pick, optPick_pick] at h
+      simp [elements, pick, optPick_pick]
+      subst hxs
+      simp_all only [List.length_cons, gt_iff_lt, Nat.lt_add_left_iff_pos, Nat.zero_lt_succ]
 
-def Gen.indicesOf [DecidableEq α] (xs : List α) (a : α) : Gen Nat :=
+def indicesOf [DecidableEq α] (xs : List α) (a : α) : Gen Nat :=
   let inds := (xs.enum.filter (λ (_, x) => x == a)).map (λ (n, _) => n)
   .guardIn (inds.length > 0)
            (if h : inds.length > 0 then isTrue h else isFalse h)
-           (λ h => Gen.elements inds h)
+           (λ h => elements inds h)
 
 def synth_get? [DecidableEq α] {xs : List α} {a : α} : CGen (fun (n : Nat) => xs[n]? = some a) := by
-  exists Gen.indicesOf xs a
+  exists indicesOf xs a
   intro v
-  simp [Gen.indicesOf, Gen.elements_support]
+  simp [indicesOf, support_elements]
   apply Iff.intro
   . intro ⟨_, h2⟩
     exact List.mk_mem_enum_iff_getElem?.mp h2
@@ -631,4 +637,4 @@ def genWellTyped (Γ : Ctx) : CGen (λ (v : Term) =>
     (add unsafe (by unfold hasType_natural.match_1))
     (add unsafe (by unfold genWellTyped_manual.match_1))
 
--- #eval sampleN 10 (genWellTyped []).val
+-- #eval sample (genWellTyped []).val
