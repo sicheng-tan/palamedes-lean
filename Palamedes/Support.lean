@@ -84,7 +84,7 @@ def arbNat (fuel : Nat) : Gen (Option Nat) :=
   | 0 => pure none
   | n + 1 =>
     pick (pure (some 0))
-         (.map (1 + .) <$> arbNat n)
+          (.map (1 + .) <$> arbNat n)
 
 theorem optBind_bind : support (optBind x f) = support (.bind x f) := by
   funext v

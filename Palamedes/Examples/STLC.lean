@@ -8,7 +8,7 @@ inductive Ty : Type where
 
 def genTy (n : Nat) : Gen (Option Ty) :=
   Nat.fold (λ _ (g : Gen (Option Ty)) =>
-    wpick (10, 1)
+    wpick (4, 1)
       (pure (some Ty.unit))
       (do
         let g1 ← g
@@ -637,4 +637,4 @@ def genWellTyped (Γ : Ctx) : CGen (λ (v : Term) =>
     (add unsafe (by unfold hasType_natural.match_1))
     (add unsafe (by unfold genWellTyped_manual.match_1))
 
--- #eval sample (genWellTyped []).val
+#eval sampleN 10 (genWellTyped []).val
