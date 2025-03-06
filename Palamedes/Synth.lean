@@ -384,6 +384,12 @@ abbrev synth_between
   simp_all
   exact Nat.le_trans
 
+abbrev synth_gt
+  {lo : Nat} :
+  CGen (λ v => lo < v) := by
+  exists(gt lo)
+  simp
+
 abbrev synth_cut
     (h : ∀ {v}, Q v ↔ P v)
     (g : CGen P) :

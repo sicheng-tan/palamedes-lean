@@ -1,8 +1,10 @@
 import Palamedes.Free
-
+set_option diagnostics true
+#check Gen.gt
 @[simp]
 def support : Gen α → α → Prop
   | .ret v' => (. = v')
+  | .gt lo => λ v => lo < v
   | .pick _ x y => λ v => support x v ∨ support y v
   | .choose lo hi _ => λ v => lo ≤ v ∧ v ≤ hi
   | .sized f => λ v => ∃ n, support (f n) (some v)

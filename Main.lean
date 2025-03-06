@@ -23,6 +23,7 @@ add_aesop_rules unsafe [
   apply synth_bind_arb,
   apply synth_or,
   apply synth_pure,
+  apply synth_gt,
   apply synth_true,
   apply synth_tuple,
   apply synth_unfoldM,
@@ -44,6 +45,9 @@ def genTwo' : CGen (2 = .) := by
   aesop
 
 def genTwoOrThree : CGen (λ v => v = 2 ∨ v = 3) := by
+  aesop
+
+def getMoreThanThree : CGen (λ v => v > 3) := by
   aesop
 
 def genTwoOrThreeOrFour : CGen (λ v => v = 2 ∨ v = 3 ∨ v = 4) := by

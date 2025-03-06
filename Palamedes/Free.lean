@@ -2,6 +2,7 @@ import Aesop
 
 inductive Gen : Type → Type 1 where
   | ret : α → Gen α
+  | gt : (lo : Nat) → Gen Nat
   | bind : Gen α → (α → Gen β) → Gen β
   | pick : (w : Nat × Nat) → Gen α → Gen α → Gen α
   | choose : (lo : Nat) → (hi : Nat) → lo ≤ hi → Gen Nat
@@ -42,3 +43,5 @@ def wpick (w : Nat × Nat) (x y : Gen α) : Gen α := optPick w x y
 
 def choose (lo hi : Nat) (h : lo ≤ hi := by simp) : Gen Nat :=
   .choose lo hi h
+
+def gt(lo: Nat): Gen Nat  := .gt lo

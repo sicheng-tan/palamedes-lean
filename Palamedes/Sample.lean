@@ -21,8 +21,14 @@ partial def sampleSized (tries : Nat) (n : Nat) (f : Nat → Gen (Option α)) : 
       else sampleSized (tries - 1) n f
   | .some v => pure v
 
+
+
 partial def sampleRand : Gen α → Plausible.RandT IO α
   | .ret v' => pure v'
+  | .gt lo => do
+    let n ← Plausible.Rand.next
+    dbg_trace "I'm here"
+    pure $ n + lo
   | .pick (w₁, w₂) x y =>
     Plausible.Random.randBound Nat 0 (w₁ + w₁ - 1) (by simp) >>= λ ⟨b, _⟩ =>
       if b < w₁ then sampleRand x else sampleRand y
