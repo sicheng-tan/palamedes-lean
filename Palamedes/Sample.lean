@@ -27,7 +27,6 @@ partial def sampleRand : Gen α → Plausible.RandT IO α
   | .ret v' => pure v'
   | .gt lo => do
     let n ← Plausible.Rand.next
-    dbg_trace "I'm here"
     pure $ n + lo
   | .pick (w₁, w₂) x y =>
     Plausible.Random.randBound Nat 0 (w₁ + w₁ - 1) (by simp) >>= λ ⟨b, _⟩ =>
