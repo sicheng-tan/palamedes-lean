@@ -1,5 +1,5 @@
 import Palamedes.Free
-set_option diagnostics true
+
 #check Gen.gt
 @[simp]
 def support : Gen α → α → Prop
