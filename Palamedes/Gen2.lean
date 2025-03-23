@@ -4,13 +4,18 @@ inductive Gen' : (α : Type) → (P: α → Prop) → Type 1 where
 | gt (lo : Int) (p : ∀ v, P v ↔ v > lo) : Gen' Int P
 | lt (hi : Int) (p : ∀ v, P v ↔ v < hi) : Gen' Int P
 | pick (g1 : Gen' α P₁) (g2 : Gen' α P₂) (p: ∀ v, P v ↔ P₁ v ∨ P₂ v) : Gen' α P
+| bind (g1 : Gen' α P₁) (f : α → Gen' β P₂)
+       (p: ∀ v, ∃ v', P₁ v' ∧ P₂ v ) : Gen' β P
 
+
+def range : Gen' (Int × Int) (fun (v1,v2) => v1 = 0 ∧ v2 > v1) :=
+  Gen'.bind
+    (Gen'.gt 0)
+    (Gen'.ret (0,.))
 
 -- instance : Monad Gen' where
 --   pure := .ret
---   bind := optBind
-
---def gt(lo: Int): Gen' Int  λ v => lo < v := .gt lo
+--   bind := .bind
 
 #check Gen'.ret 2 --(λ v => v = 2)
 
