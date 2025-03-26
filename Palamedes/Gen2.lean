@@ -4,16 +4,17 @@ inductive Gen' : (α : Type) → (P: α → Prop) → Type 1 where
 | gt (lo : Int) (p : ∀ v, P v ↔ v > lo) : Gen' Int P
 | lt (hi : Int) (p : ∀ v, P v ↔ v < hi) : Gen' Int P
 | pick (g1 : Gen' α P₁) (g2 : Gen' α P₂) (p: ∀ v, P v ↔ P₁ v ∨ P₂ v) : Gen' α P
-| bind {P₁} {P₂} (g1 : Gen' α P₁) (f : α → Gen' β P₂)
-       (p: ∀ v, ∃ v', P₁ v' ∧ P₂ v ) : Gen' β P₂
+| bind {α β : Type} {P : α → Prop} {Q : α → β → Prop} :
+  (x : Gen' α P) →
+  (f : (v : α) → P v → Gen' β (Q v)) →
+  Gen' β (λ v => ∃ v', P v' ∧ Q v' v)
+
+--{P₁} {P₂} (g1 : Gen' α P₁) (f : α → Gen' β P₂)
+--       (p: ∀ v, ∃ v', P₁ v' ∧ P₂ v ) : Gen' β P₂
 
 
-def range : Gen' (Int × Int) (fun (v1,v2) => v1 = 0 ∧ v2 > v1) :=
-  -- Gen'.bind
-  --   (Gen'.gt 0 _)
-  --   (λ v => (Gen'.ret (0,v) _))
-  --   _
-  Gen'.bind (Gen'.gt 0 _) (λ x => (Gen'.ret (0, x) _)) _
+def range : Gen' (Int × Int) (fun v => ∃ v', v' > 0 ∧ v = (0,v')) :=
+  Gen'.bind (Gen'.gt 0 (by simp)) (λ (x: Int) p =>  Gen'.ret (0, x) (by simp) )
 
 -- instance : Monad Gen' where
 --   pure := .ret
@@ -48,11 +49,21 @@ abbrev synth_or'
   apply Gen'.pick g₁ g₂
   simp
 
+abbrev synth_bind'
+  {α β : Type}
+  {P : α → Prop}
+  {Q : α → β → Prop}
+  (x : Gen' α P)
+  (f : (v : α) → P v → Gen' β (Q v)) :
+  Gen' β (λ v => ∃ v', P v' ∧ Q v' v) := by
+  apply Gen'.bind x f
+
 add_aesop_rules unsafe [
   synth_pure',
   synth_gt',
   synth_lt',
-  synth_or'
+  synth_or',
+  synth_bind'
 ]
 
 
@@ -85,3 +96,9 @@ def genTwoOrThreeOrFour : Gen' Nat (λ v => v = 2 ∨ v = 3 ∨ v = 4) := by
  aesop
 
 #reduce genTwoOrThreeOrFour
+
+def genRange: Gen' (Int × Int) (λ v => ∃ v', v' > 0 ∧ v = (0,v')) := by
+  aesop
+
+def genRange2: Gen' (Int × Int) (λ (v1,v2) => v1 = 0 ∧ v2 > v1) := by
+  aesop
