@@ -1,7 +1,6 @@
 import Palamedes.Synth
 import Palamedes.Sample
 import Palamedes.Tree
-import Palamedes.GuardFree
 import Mathlib.Tactic.Convert
 
 attribute [simp]
