@@ -16,11 +16,11 @@ inductive Gen' : (α : Type) → (P: α → Prop) → Type 1 where
 def range : Gen' (Int × Int) (fun v => ∃ v', v' > 0 ∧ v = (0,v')) :=
   Gen'.bind (Gen'.gt 0 (by simp)) (λ (x: Int) p =>  Gen'.ret (0, x) (by simp) )
 
--- instance : Monad Gen' where
---   pure := .ret
---   bind := .bind
 
-#check Gen'.ret 2 --(λ v => v = 2)
+
+#check Gen'.ret 2
+
+#reduce (Gen'.ret 2 )
 
 
 abbrev synth_pure'
@@ -58,12 +58,73 @@ abbrev synth_bind'
   Gen' β (λ v => ∃ v', P v' ∧ Q v' v) := by
   apply Gen'.bind x f
 
+theorem exists_eq_fst_snd (P1: α → Prop) (P2: β → Prop) :
+  ∀ t: α × β, (∃ v1: α, P1 v1 ∧ ∃ v2 : β, P2 v2 ∧ (v1,v2) = t) ↔ (P1 t.fst ∧ P2 t.snd) :=
+  by
+    aesop
+
+theorem exists_eq_fst_snd2 (P1: α → Prop) (P2: α → β → Prop) :
+  ∀ t: α × β, (∃ v1: α, P1 v1 ∧ ∃ v2 : β, P2 v1 v2 ∧ (v1,v2) = t) ↔ (P1 t.fst ∧ P2 t.fst t.snd) :=
+  by
+    aesop
+
+theorem other_helper (t: α × β) :
+  ∃ v1 : α , ∃ v2 : β, (v1,v2) = t → v1 = t.fst := by
+  aesop
+
+
+abbrev synth_tuple'
+  {P : α → Prop}
+  {Q : α → β → Prop}
+  (gx : Gen' α P)
+  (gy : (x : α) → Gen' β (Q x)) :
+  Gen' (α × β) (λ (v: α × β) => P v.1 ∧ (Q v.1) v.2) := by
+    have gen_tup := gx.bind fun (x: α) (hx: P x) =>
+      (gy x).bind fun (y: β) (hy: (Q x) y) =>
+        Gen'.ret (x,y) (by aesop)
+    simp at gen_tup
+    conv at gen_tup => (
+      congr;
+      intro v;
+      rw [exists_eq_fst_snd2];
+    )
+    trivial
+
+
+abbrev synth_tuple_second'
+  {P : α → Prop}
+  {Q : α → β → Prop}
+  -- {R : α × β → Prop}
+  -- {h2 : ∀ v, P v.1 ∧ Q v.1 v.2 ↔ R v}
+  (x: α)
+  (gy : (x : α) → Gen' β (Q x))
+  (h: P x) :
+  Gen' (α × β) (λ (v: α × β) => v.1 = x ∧ (Q v.1) v.2) := by
+    have gen_y := (gy x)
+    have gen_tup := gen_y.bind fun (v : β) (h2: (Q x) v) =>
+      Gen'.ret (x,v) (by
+        intro v_1;
+        apply Iff.intro
+        on_goal 2 => {
+          intro a
+          subst a
+          rfl
+        }
+        · intro a
+          simp_all only [heq_eq_eq]
+      )
+    simp at gen_tup
+
+    sorry
+
 add_aesop_rules unsafe [
   synth_pure',
   synth_gt',
   synth_lt',
   synth_or',
-  synth_bind'
+  synth_bind',
+  synth_tuple',
+  (by (conv => congr; intro v; congr; intro x; rw [and_comm]); apply synth_bind')
 ]
 
 
@@ -98,7 +159,15 @@ def genTwoOrThreeOrFour : Gen' Nat (λ v => v = 2 ∨ v = 3 ∨ v = 4) := by
 #reduce genTwoOrThreeOrFour
 
 def genRange: Gen' (Int × Int) (λ v => ∃ v', v' > 0 ∧ v = (0,v')) := by
-  aesop
+  aesop?
+
 
 def genRange2: Gen' (Int × Int) (λ (v1,v2) => v1 = 0 ∧ v2 > v1) := by
   aesop
+  -- apply synth_tuple' (synth_pure' 0) (by
+  --   intro x
+  --   apply synth_gt'
+  -- )
+
+
+--def genXYOrdered : Gen' (λ (v : ℕ  × ℕ) => 0 ≤ v.1 ∧ v.1 ≤ v.2 ∧ v.2 ≤ 200) := by
