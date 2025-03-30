@@ -68,10 +68,6 @@ theorem exists_eq_fst_snd2 (P1: α → Prop) (P2: α → β → Prop) :
   by
     aesop
 
-theorem other_helper (t: α × β) :
-  ∃ v1 : α , ∃ v2 : β, (v1,v2) = t → v1 = t.fst := by
-  aesop
-
 
 abbrev synth_tuple'
   {P : α → Prop}
@@ -90,32 +86,6 @@ abbrev synth_tuple'
     )
     trivial
 
-
-abbrev synth_tuple_second'
-  {P : α → Prop}
-  {Q : α → β → Prop}
-  -- {R : α × β → Prop}
-  -- {h2 : ∀ v, P v.1 ∧ Q v.1 v.2 ↔ R v}
-  (x: α)
-  (gy : (x : α) → Gen' β (Q x))
-  (h: P x) :
-  Gen' (α × β) (λ (v: α × β) => v.1 = x ∧ (Q v.1) v.2) := by
-    have gen_y := (gy x)
-    have gen_tup := gen_y.bind fun (v : β) (h2: (Q x) v) =>
-      Gen'.ret (x,v) (by
-        intro v_1;
-        apply Iff.intro
-        on_goal 2 => {
-          intro a
-          subst a
-          rfl
-        }
-        · intro a
-          simp_all only [heq_eq_eq]
-      )
-    simp at gen_tup
-
-    sorry
 
 add_aesop_rules unsafe [
   synth_pure',
