@@ -124,7 +124,8 @@ add_aesop_rules unsafe [
   synth_or',
   synth_bind',
   synth_tuple',
-  (by (conv => congr; intro v; congr; intro x; rw [and_comm]); apply synth_bind')
+  (by (conv => congr; intro v; congr; intro x; rw [and_comm]); apply synth_bind'),
+  (by (conv => congr; intro v; simp; rw[eq_comm];))
 ]
 
 
@@ -162,12 +163,25 @@ def genRange: Gen' (Int × Int) (λ v => ∃ v', v' > 0 ∧ v = (0,v')) := by
   aesop?
 
 
-def genRange2: Gen' (Int × Int) (λ (v1,v2) => v1 = 0 ∧ v2 > v1) := by
+def genRange2: Gen' (Int × Int) (λ v => v.fst = 0 ∧ v.snd > v.fst) := by
   aesop
-  -- apply synth_tuple' (synth_pure' 0) (by
+  -- conv => congr; intro v; simp; rw[eq_comm]
+  -- apply synth_tuple'
+  -- on_goal 1 => {
+  --   conv => congr; intro x; simp; rw[eq_comm]
+  --   apply synth_pure'
+  -- }
+  -- intro x
+  -- apply synth_gt'
+
+  -- apply synth_tuple' (synth_pure' _) (by
   --   intro x
   --   apply synth_gt'
   -- )
 
+#reduce genRange2
+
+def genRange3: Gen' (Int × Int) (λ (v1,v2) => v1 = 0 ∧ v2 > v1) := by
+  aesop
 
 --def genXYOrdered : Gen' (λ (v : ℕ  × ℕ) => 0 ≤ v.1 ∧ v.1 ≤ v.2 ∧ v.2 ≤ 200) := by
