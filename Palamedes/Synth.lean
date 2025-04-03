@@ -167,15 +167,25 @@ abbrev synth_pure
 abbrev synth_bind
     {P : α → Prop}
     {Q : α → β → Prop}
+    [d : (x : α) → Decidable (P x)]
     (hb : CGen P)
-    (hf : (a : α) → CGen (Q a)) :
+    (hf : (a : {v : α // P v}) → CGen (Q a)) :
     CGen (λ v => ∃ a, P a ∧ Q a v) := by
-  exists optBind hb.val λ a => (hf a).val
+  exists optBind hb.val λ a => .guardIn _ (d a) (λ p => (hf ⟨a, p⟩).val)
   intro v
   rw [optBind_bind]
   obtain ⟨val, property⟩ := hb
-  apply Iff.intro <;>
-    (rintro ⟨a, ha⟩; exists a; have := (hf a).property; simp_all only [and_self])
+  apply Iff.intro
+  . rintro ⟨a, ha⟩
+    exists a
+    have p : P a := by simp_all only [support]
+    have := (hf ⟨a, p⟩).property
+    simp_all only [support, exists_const, true_and, and_self]
+  . rintro ⟨a, ha⟩
+    exists a
+    have p : P a := by simp_all only [support]
+    have := (hf ⟨a, p⟩).property
+    simp_all only [support, exists_const, true_and, and_self]
 
 abbrev synth_bind_arb
     [Arbitrary α]

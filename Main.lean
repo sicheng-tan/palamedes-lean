@@ -68,6 +68,43 @@ def genThreeAndTwo' : CGen (λ (v : Int × Int) => ∃ a, ∃ b, b = 3 ∧ a = 2
 def genAllTwos : CGen (λ v => List.foldrM (λ x () => guard (x == 2)) () v = Option.some ()) := by
   aesop
 
+def genInRange : CGen (λ v => 10 ≤ v ∧ v ≤ 20) := by
+  aesop
+
+def genTwoInRange : CGen (λ (v : Nat × Nat) => 0 ≤ v.1 ∧ v.1 ≤ v.2 ∧ v.2 ≤ 100) := by
+  apply synth_tuple
+  on_goal 2 =>
+    apply synth_between
+  on_goal 4 =>
+    intro x
+    apply synth_between
+  on_goal 1 =>
+    intro v
+    apply Iff.intro
+    on_goal 1 =>
+      rintro ⟨⟨h1, h2⟩, h3, h4⟩
+      apply And.intro
+      on_goal 1 =>
+        assumption
+      on_goal 1 =>
+        apply And.intro
+        on_goal 2 => assumption
+    on_goal 2 =>
+      rintro⟨h1, h2, h3⟩
+      apply And.intro
+      on_goal 1 =>
+        apply And.intro
+        on_goal 1 => simp
+      on_goal 2 =>
+        apply And.intro
+        on_goal 2 => assumption
+  on_goal 2 =>
+    exact Nat.le_trans h2 h3
+  on_goal 2 =>
+    have : id v.fst ≤ v.snd := by assumption
+    apply this
+  assumption
+
 def genEvenLength [Arbitrary α] :
     CGen (λ (v : List α) => List.foldr (λ _ b => not b) true v) := by
   aesop
