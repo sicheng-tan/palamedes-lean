@@ -9,37 +9,51 @@ def replicateM [Monad m] (n : Nat) (mx : m α) : m (List α) :=
     let xs ← replicateM n mx
     pure (x :: xs)
 
+abbrev SampleM α := ExceptT Unit (Plausible.RandT IO) α
+
+def SampleM.throwTrueException (s : String) : SampleM α := ExceptT.lift (StateT.lift (throw (IO.userError s)))
+
+def SampleM.next : SampleM Nat := ExceptT.lift Plausible.Rand.next
+
+def SampleM.randBound (lo hi : Nat) (pf : lo ≤ hi) : SampleM {v : Nat // lo ≤ v ∧ v ≤ hi} := do
+  ExceptT.lift (Plausible.Random.randBound Nat lo hi pf)
+
+def SampleM.weightedChoice (w₁ w₂ : Nat) (g₁ g₂ : SampleM α) : SampleM α := do
+  let ⟨b, _⟩ ← SampleM.randBound 0 (w₁ + w₂ - 1) (by simp)
+  if b < w₁ then g₁ else g₂
+
+def SampleM.run : SampleM α → IO α := (. >>= IO.ofExcept) ∘ Plausible.runRand ∘ ExceptT.run
+
 mutual
-partial def sampleSized (tries : Nat) (n : Nat) (f : Nat → Gen (Option α)) : Plausible.RandT IO α := do
-  -- match (← sampleRand (f n)) with
-  -- | .none => sampleSized (2 * n) f
-  -- | .some v => pure v
+partial def sizedLoop (n : Nat) (f : Nat → Gen (Option α)) (remaining : Nat) : SampleM α := do
   match (← sampleRand (f n)) with
   | .none =>
-    if tries == 0
-      then StateT.lift (throw (IO.userError "ran out of fuel"))
-      else sampleSized (tries - 1) n f
+    match remaining with
+    | 0 => SampleM.throwTrueException "ran out of fuel"
+    | remaining' + 1 => sizedLoop n f remaining'
   | .some v => pure v
 
+partial def backtrackLoop (w₁ w₂ : Nat) (x y : Gen α) (remaining : Nat) : SampleM α :=
+  match remaining with
+  | 0 => SampleM.throwTrueException "backtracked too many times"
+  | remaining' + 1 =>
+    ExceptT.tryCatch
+      (SampleM.weightedChoice w₁ w₂ (sampleRand x) (sampleRand y))
+      (λ () => backtrackLoop w₁ w₂ x y remaining')
 
-
-partial def sampleRand : Gen α → Plausible.RandT IO α
+partial def sampleRand (g : Gen α) (backtrackLimit := 100) (sizeRetryLimit := 10) : SampleM α :=
+  match g with
   | .ret v' => pure v'
   | .gt lo => do
-    let n ← Plausible.Rand.next
+    let n ← SampleM.next
     pure $ n + lo
-  | .pick (w₁, w₂) x y =>
-    Plausible.Random.randBound Nat 0 (w₁ + w₁ - 1) (by simp) >>= λ ⟨b, _⟩ =>
-      if b < w₁ then sampleRand x else sampleRand y
-  | .choose lo hi pf => Plausible.Random.randBound Nat lo hi pf
-  | .sized f => sampleSized 10 10 f
+  | .pick (w₁, w₂) x y => backtrackLoop w₁ w₂ x y backtrackLimit
+  | .choose lo hi pf => SampleM.randBound lo hi pf
+  | .sized f => sizedLoop 10 f sizeRetryLimit
   | .bind x f => sampleRand x >>= sampleRand ∘ f
-  | .guardIn p _ f =>
-    if h : p
-      then sampleRand (f h)
-      else StateT.lift (throw (IO.userError "failed to generate value"))
+  | .guardIn p _ f => if h : p then sampleRand (f h) else throw ()
 end
 
-partial def sample : Gen α → IO α := Plausible.runRand ∘ sampleRand
+partial def sample : Gen α → IO α := SampleM.run ∘ sampleRand
 
-partial def sampleN (n : Nat) : Gen α → IO (List α) := replicateM n ∘ Plausible.runRand ∘ sampleRand
+partial def sampleN (n : Nat) : Gen α → IO (List α) := replicateM n ∘ SampleM.run ∘ sampleRand
