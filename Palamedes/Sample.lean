@@ -41,7 +41,7 @@ partial def backtrackLoop (w₁ w₂ : Nat) (x y : Gen α) (remaining : Nat) : S
       (SampleM.weightedChoice w₁ w₂ (sampleRand x) (sampleRand y))
       (λ () => backtrackLoop w₁ w₂ x y remaining')
 
-partial def sampleRand (g : Gen α) (backtrackLimit := 100) (sizeRetryLimit := 10) : SampleM α :=
+partial def sampleRand (g : Gen α) (backtrackLimit := 100) (sizeLimit := 10) (sizeRetryLimit := 10) : SampleM α :=
   match g with
   | .ret v' => pure v'
   | .gt lo => do
@@ -49,7 +49,7 @@ partial def sampleRand (g : Gen α) (backtrackLimit := 100) (sizeRetryLimit := 1
     pure $ n + lo
   | .pick (w₁, w₂) x y => backtrackLoop w₁ w₂ x y backtrackLimit
   | .choose lo hi pf => SampleM.randBound lo hi pf
-  | .sized f => sizedLoop 10 f sizeRetryLimit
+  | .sized f => sizedLoop sizeLimit f sizeRetryLimit
   | .bind x f => sampleRand x >>= sampleRand ∘ f
   | .guardIn p _ f => if h : p then sampleRand (f h) else throw ()
 end
