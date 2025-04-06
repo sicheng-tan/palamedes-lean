@@ -3,6 +3,21 @@ import Palamedes.Sample
 import Palamedes.Tree
 import Mathlib.Tactic.Convert
 
+abbrev synth_conv
+    (g : CGen P)
+    (h : P = Q) :
+    CGen Q := by
+  refine ⟨g.val, ?_⟩
+  intro v
+  rw [←h]
+  exact g.property v
+
+macro "palamedes" : tactic =>
+  `(tactic|aesop (config := {maxRuleApplicationDepth := 0, maxRuleApplications := 0}))
+
+macro "palamedes?" : tactic =>
+  `(tactic|aesop? (config := {maxRuleApplicationDepth := 0, maxRuleApplications := 0}))
+
 attribute [simp]
   guard
   failure
@@ -30,8 +45,8 @@ add_aesop_rules unsafe [
   apply synth_accuM,
   apply synth_accuTreeM,
   apply synth_between,
-  (by (conv => congr; intro v; congr; intro x; rw [and_comm]); apply synth_bind),
-  (by (conv => congr; intro v; rw [eq_comm]); apply synth_pure),
+  (by apply synth_conv (synth_bind _ _) (by ext v; conv => rhs; congr; intro a; rw [and_comm])),
+  (by apply synth_conv (synth_pure _) (by aesop (config := {maxRuleApplications := 10, maxRuleApplicationDepth := 10, terminal := true}))),
 ]
 add_aesop_rules 5% [
   cases Nat,
@@ -39,37 +54,37 @@ add_aesop_rules 5% [
 ]
 
 def genTwo : CGen (λ v => v = 2) := by
-  aesop
+  palamedes
 
 def genTwo' : CGen (2 = .) := by
-  aesop
+  palamedes
 
 def genTwoOrThree : CGen (λ v => v = 2 ∨ v = 3) := by
-  aesop
+  palamedes
 
 def getMoreThanThree : CGen (λ v => v > 3) := by
-  aesop
+  palamedes
 
 def genTwoOrThreeOrFour : CGen (λ v => v = 2 ∨ v = 3 ∨ v = 4) := by
-  aesop
+  palamedes
 
 def genTwoAndThree : CGen (λ (v : Int × Int) => v.fst = 2 ∧ v.snd = 3) := by
-  aesop
+  palamedes
 
 def genTwoAndThree' : CGen (λ (v : Nat × Nat) => ∃ a, ∃ b, a = 2 ∧ b = 3 ∧ v = (a, b)) := by
-  aesop
+  palamedes
 
 def genThreeAndTwo : CGen (λ (v : Int × Int) => v.snd = 3 ∧ v.fst = 2) := by
-  aesop
+  palamedes
 
 def genThreeAndTwo' : CGen (λ (v : Int × Int) => ∃ a, ∃ b, b = 3 ∧ a = 2 ∧ v = (a, b)) := by
-  aesop
+  palamedes
 
 def genAllTwos : CGen (λ v => List.foldrM (λ x () => guard (x == 2)) () v = Option.some ()) := by
-  aesop
+  palamedes
 
 def genInRange : CGen (λ v => 10 ≤ v ∧ v ≤ 20) := by
-  aesop
+  palamedes
 
 def genTwoInRange : CGen (λ (v : Nat × Nat) => 0 ≤ v.1 ∧ v.1 ≤ v.2 ∧ v.2 ≤ 100) := by
   apply synth_tuple
@@ -107,21 +122,21 @@ def genTwoInRange : CGen (λ (v : Nat × Nat) => 0 ≤ v.1 ∧ v.1 ≤ v.2 ∧ v
 
 def genEvenLength [Arbitrary α] :
     CGen (λ (v : List α) => List.foldr (λ _ b => not b) true v) := by
-  aesop
+  palamedes
 
 def genLengthK {k : Nat} [Arbitrary α] :
     CGen (λ (v : List α) => List.foldr (λ _ len_xs => len_xs + 1) 0 v = k) := by
-  aesop
+  palamedes
 
 def genEvenLengthTwos :
     CGen (λ (v : List Nat) => List.foldrM (λ x b => do guard (x == 2); pure (not b)) true v = Option.some true) := by
-  aesop
+  palamedes
 
 def genLengthKTwos {k : Nat} :
     CGen (λ (v : List Nat) =>
       List.foldr (λ _ l => l + 1) 0 v = k ∧
       List.foldrM (λ x () => guard (x == 2)) () v = Option.some ()) := by
-  aesop
+  palamedes
 
 def genIncreasingByOne :
     CGen (λ v =>
@@ -130,7 +145,7 @@ def genIncreasingByOne :
                  (λ _ => pure ())
                  v
                  0 = some ()) := by
-  aesop
+  palamedes
 
 def genTreeIncreasingByOne :
     CGen (λ v =>
@@ -139,10 +154,10 @@ def genTreeIncreasingByOne :
                  (λ _ => pure ())
                  v
                  0 = some ()) := by
-  aesop
+  palamedes
 
 def genBetween : CGen (λ v => 3 ≤ v ∧ v ≤ 10) := by
-  aesop
+  palamedes
 
 def genSortedBetween
     (lo hi : Nat) :
@@ -152,7 +167,7 @@ def genSortedBetween
                  (λ _ => pure ())
                  v
                  lo = some ()) := by
-  aesop
+  palamedes
 
 def isBST (lo hi : Nat) (t : Tree Nat) : Option Unit :=
   Tree.accuM (λ x p => ((p.fst, x - 1), (x + 1, p.snd)))
@@ -161,10 +176,45 @@ def isBST (lo hi : Nat) (t : Tree Nat) : Option Unit :=
              t
              (lo, hi)
 
-def genBST (lo hi : Nat) : CGen (λ v => isBST lo hi v = some ()) := by
-  aesop
+abbrev genBST (lo hi : Nat) : CGen (λ v => isBST lo hi v = some ()) := by
+  apply synth_accuTreeM
+  intro b s
+  simp_all only [Option.pure_def, guard, ite, failure, deforest_decidable_eq, reduceCtorEq, decidable_or, not_and,
+    Nat.not_le, and_false, and_true, false_or, TreeF_or, true_and, exists_and_right]
+  obtain ⟨fst, snd⟩ := s
+  simp_all only
+  apply synth_or
+  · apply synth_pure
+  · apply synth_bind_arb
+    intro a
+    apply synth_conv (synth_bind _ _) (by ext v; conv => rhs; congr; intro a; rw [and_comm])
+    · apply synth_between
+    · intro a_1
+      obtain ⟨val, property⟩ := a_1
+      obtain ⟨left, right⟩ := property
+      simp_all only
+      apply synth_bind_arb
+      intro a_1
+      apply synth_pure
 
 #eval sampleN 10 (genBST 50 100).val
 #eval sampleN 10 (.pick (1, 1) (.guardIn False (Decidable.isFalse (by simp)) (λ _ => .ret 2)) (.ret 3))
 
 def main := IO.print =<< sampleN 10 (genSortedBetween 2 10).val
+
+syntax (name := replaceMeCmd) "#replace_me " term " as " ident : command
+
+open Lean Elab Command Meta Tactic in
+@[command_elab replaceMeCmd]
+def elabReplaceMeCmd : CommandElab := fun
+  | stx@`(#replace_me $t as $name) => do
+    liftTermElabM do
+      let e ← Term.elabTerm t none
+      let e' ← withTransparency .all <| reduce e -- (← deltaExpand (← reduce e) (· == `unfoldr'))
+      let e'' ← simp e' {(default : Simp.Context) with config := {(default : Simp.Config) with singlePass := true, maxSteps := 1000}}
+      let t' ← PrettyPrinter.delab e''.1.expr
+      TryThis.addSuggestion stx (← `(def $name := $t'))
+      pure ()
+  | stx => throwError "Unexpected syntax {stx}."
+
+#replace_me genAllTwos.val as foo
