@@ -8,6 +8,7 @@ inductive Gen' : (α : Type) → (P: α → Prop) → Type 1 where
   (x : Gen' α P) →
   (f : (v : α) → P v → Gen' β (Q v)) →
   Gen' β (λ v => ∃ v', P v' ∧ Q v' v)
+| choose (lo: Int) (hi: Int) (p: ∀ v, P v ↔ lo ≤ v ∧ v ≤ hi) : Gen' Int P
 
 --{P₁} {P₂} (g1 : Gen' α P₁) (f : α → Gen' β P₂)
 --       (p: ∀ v, ∃ v', P₁ v' ∧ P₂ v ) : Gen' β P₂
@@ -63,8 +64,13 @@ theorem exists_eq_fst_snd (P1: α → Prop) (P2: β → Prop) :
   by
     aesop
 
-theorem exists_eq_fst_snd2 (P1: α → Prop) (P2: α → β → Prop) :
+theorem exists_eq_fst_snd1 (P1: α → Prop) (P2: α → β → Prop) :
   ∀ t: α × β, (∃ v1: α, P1 v1 ∧ ∃ v2 : β, P2 v1 v2 ∧ (v1,v2) = t) ↔ (P1 t.fst ∧ P2 t.fst t.snd) :=
+  by
+    aesop
+
+theorem exists_eq_fst_snd2 (P1: α → Prop) (P2: α → β → Prop) :
+  ∀ t: β × α, (∃ v2: α, P1 v2 ∧ ∃ v1 : β, P2 v2 v1 ∧ (v1,v2) = t) ↔ (P1 t.snd ∧ P2 t.snd t.fst) :=
   by
     aesop
 
@@ -82,10 +88,32 @@ abbrev synth_tuple'
     conv at gen_tup => (
       congr;
       intro v;
-      rw [exists_eq_fst_snd2];
+      rw [exists_eq_fst_snd1];
     )
     trivial
 
+abbrev synth_tuple2'
+  {P : α → Prop}
+  {Q : α → β → Prop}
+  (gy : Gen' α P)
+  (gx : (y : α) → Gen' β (Q y)) :
+  Gen' (β × α) (λ (v: β × α) => P v.2 ∧ (Q v.2) v.1) := by
+    have gen_tup := gy.bind fun (y: α) (hy: P y) =>
+      (gx y).bind fun (x : β) (hx: (Q y) x) =>
+        Gen'.ret (x,y) (by aesop)
+    simp at gen_tup
+    conv at gen_tup =>(
+      congr;
+      intro v;
+      rw [exists_eq_fst_snd2]
+    )
+    trivial
+
+abbrev synth_between'
+  (lo hi : Int) :
+  Gen' Int (λ v: Int => lo ≤ v ∧ v ≤ hi) := by
+  apply Gen'.choose lo hi
+  simp
 
 add_aesop_rules unsafe [
   synth_pure',
@@ -94,8 +122,11 @@ add_aesop_rules unsafe [
   synth_or',
   synth_bind',
   synth_tuple',
+  synth_tuple2',
+  synth_between',
   (by (conv => congr; intro v; congr; intro x; rw [and_comm]); apply synth_bind'),
-  (by (conv => congr; intro v; simp; rw[eq_comm];))
+  (by (conv => congr; intro v; simp; rw[eq_comm];)),
+  (by (conv => congr; intro v; rw[← and_assoc]))
 ]
 
 
@@ -154,4 +185,51 @@ def genRange2: Gen' (Int × Int) (λ v => v.fst = 0 ∧ v.snd > v.fst) := by
 def genRange3: Gen' (Int × Int) (λ (v1,v2) => v1 = 0 ∧ v2 > v1) := by
   aesop
 
---def genXYOrdered : Gen' (λ (v : ℕ  × ℕ) => 0 ≤ v.1 ∧ v.1 ≤ v.2 ∧ v.2 ≤ 200) := by
+def genBW: Gen' Int (λ v => v ≥ 0 ∧ v ≤ 20) := by
+  aesop
+
+def genBetweens: Gen' (Int × Int) (λ (v1,v2) => 2 ≤ v1 ∧ v1 ≤ 4 ∧ 6 ≤ v2 ∧ v2 ≤ 8) := by
+  simp
+  conv =>
+    congr;
+    intro x;
+    rw[← and_assoc]
+  have grrr := synth_tuple' (synth_between' 2 4) (fun x => synth_between' 6 8)
+  trivial
+  -- apply synth_tuple'
+  --   (synth_between' 2 4) (by
+  --     intro x
+  --     apply synth_between' 6 8
+  --   )
+    -- apply synth_between' 2 4
+    -- (synth_bind' (synth_between') (by
+    --   intro y;
+    --   conv => congr; intro v;
+    -- ) )
+
+
+ def genRange5: Gen' (Int × Int) (λ v => v.1 = 20 ∧ (0 ≤ v.2 ∧ v.2 ≤ v.1)) := by
+  have aargh := synth_tuple' (synth_pure' 20) (fun x => synth_between' 0 x)
+  trivial
+--   apply synth_tuple' (synth_pure' 20) (by
+--     intro x
+--     apply synth_between' 0 x
+--   )
+
+-- def genRange5: Gen' (Int × Int) (λ v => v.2 = 20 ∧ 0 ≤ v.1 ∧ v.1 ≤ v.2) := by
+--   sorry
+
+theorem fu (v: Int × Int) :
+(0 ≤ v.1 ∧ v.1 ≤ v.2 ∧ v.2 ≤ 200) →
+∃ vv: Int, v.1 = vv ∧ 0 ≤ vv ∧ vv ≤ 200 ∧ v.2 ≤ 200 ∧ v.2 ≥ vv := by
+  intro h
+  simp
+  omega
+
+
+-- def genXYOrdered : Gen' (Int × Int) (λ (v : Int  × Int) => 0 ≤ v.1 ∧ v.1 ≤ v.2 ∧ v.2 ≤ 200) := by
+--   apply synth_bind'
+--     (synth_between') (by
+--       intro v
+--       conv => congr; intro v;
+--     )
