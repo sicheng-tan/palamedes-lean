@@ -9,37 +9,75 @@ def replicateM [Monad m] (n : Nat) (mx : m α) : m (List α) :=
     let xs ← replicateM n mx
     pure (x :: xs)
 
+structure SampleConfig where
+  backtrackLimit : Nat
+  sizeLimit : Nat
+  sizeRetryLimit : Nat
+
+instance : Inhabited SampleConfig where
+  default := {backtrackLimit := 100, sizeLimit := 10, sizeRetryLimit := 100}
+
+abbrev SampleM α := ExceptT Unit (Plausible.RandT IO) α
+
+namespace SampleM
+
+def failWith (s : String) : SampleM α := do
+  ExceptT.lift (StateT.lift (throw (IO.userError s)))
+
+def next : SampleM Nat := ExceptT.lift Plausible.Rand.next
+
+def randBound (lo hi : Nat) (pf : lo ≤ hi) : SampleM {v : Nat // lo ≤ v ∧ v ≤ hi} := do
+  ExceptT.lift (Plausible.Random.randBound Nat lo hi pf)
+
+def weightedChoice (w₁ w₂ : Nat) (g₁ g₂ : SampleM α) : SampleM α := do
+  let ⟨b, _⟩ ← SampleM.randBound 0 (w₁ + w₂ - 1) (by simp)
+  if b < w₁ then g₁ else g₂
+
+def run : SampleM α → IO α := (. >>= IO.ofExcept) ∘ Plausible.runRand ∘ ExceptT.run
+
 mutual
-partial def sampleSized (tries : Nat) (n : Nat) (f : Nat → Gen (Option α)) : Plausible.RandT IO α := do
-  -- match (← sampleRand (f n)) with
-  -- | .none => sampleSized (2 * n) f
-  -- | .some v => pure v
-  match (← sampleRand (f n)) with
+partial def sizedLoop
+    (cfg : SampleConfig)
+    (n : Nat)
+    (f : Nat → Gen (Option α))
+    (remaining : Nat) :
+    SampleM α := do
+  match (← sampleRand cfg (f n)) with
   | .none =>
-    if tries == 0
-      then StateT.lift (throw (IO.userError "ran out of fuel"))
-      else sampleSized (tries - 1) n f
+    match remaining with
+    | 0 => failWith "ran out of fuel"
+    | remaining' + 1 => sizedLoop cfg n f remaining'
   | .some v => pure v
 
+partial def backtrackLoop
+    (cfg : SampleConfig)
+    (w₁ w₂ : Nat)
+    (x y : Gen α)
+    (remaining : Nat) :
+    SampleM α :=
+  match remaining with
+  | 0 => failWith "backtracked too many times"
+  | remaining' + 1 =>
+    ExceptT.tryCatch
+      (weightedChoice w₁ w₂ (sampleRand cfg x) (sampleRand cfg y))
+      (λ () => backtrackLoop cfg w₁ w₂ x y remaining')
 
-
-partial def sampleRand : Gen α → Plausible.RandT IO α
+partial def sampleRand (cfg : SampleConfig) : Gen α → SampleM α
   | .ret v' => pure v'
-  | .gt lo => do
-    let n ← Plausible.Rand.next
-    pure $ n + lo
-  | .pick (w₁, w₂) x y =>
-    Plausible.Random.randBound Nat 0 (w₁ + w₁ - 1) (by simp) >>= λ ⟨b, _⟩ =>
-      if b < w₁ then sampleRand x else sampleRand y
-  | .choose lo hi pf => Plausible.Random.randBound Nat lo hi pf
-  | .sized f => sampleSized 10 10 f
-  | .bind x f => sampleRand x >>= sampleRand ∘ f
-  | .guardIn p _ f =>
-    if h : p
-      then sampleRand (f h)
-      else StateT.lift (throw (IO.userError "failed to generate value"))
+  | .gt lo => (· + lo) <$> next
+  | .pick (w₁, w₂) x y => backtrackLoop cfg w₁ w₂ x y cfg.backtrackLimit
+  | .choose lo hi pf => randBound lo hi pf
+  | .sized f => sizedLoop cfg cfg.sizeLimit f cfg.sizeRetryLimit
+  | .bind x f => sampleRand cfg x >>= sampleRand cfg ∘ f
+  | .guardIn p _ f => if h : p then sampleRand cfg (f h) else throw ()
 end
 
-partial def sample : Gen α → IO α := Plausible.runRand ∘ sampleRand
+end SampleM
 
-partial def sampleN (n : Nat) : Gen α → IO (List α) := replicateM n ∘ Plausible.runRand ∘ sampleRand
+partial def interpGen (cfg : SampleConfig) : Gen α → IO α := SampleM.run ∘ SampleM.sampleRand cfg
+
+partial def sample (g : Gen α) (cfg : SampleConfig := default) : IO α :=
+  interpGen cfg g
+
+partial def sampleN (n : Nat) (g : Gen α) (cfg : SampleConfig := default) : IO (List α) :=
+  replicateM n <| interpGen cfg g

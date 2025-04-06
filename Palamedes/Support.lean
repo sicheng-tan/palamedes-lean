@@ -11,6 +11,16 @@ def support : Gen α → α → Prop
   | .bind x f => λ v => ∃ v', support x v' ∧ support (f v') v
   | .guardIn P _ f => λ v => ∃ h : P, support (f h) v
 
+@[simp]
+def complete : Gen α → Prop
+  | .ret _ => True
+  | .gt _ => True
+  | .pick _ x y => complete x ∧ complete y
+  | .choose _ _ _ => True
+  | .sized f => ∀ n, complete (f n)
+  | .bind x f => complete x ∧ ∀ v, support x v → complete (f v)
+  | .guardIn P _ f => ∃ h : P, complete (f h)
+
 notation v " ∈ 〚" g "〛" => support g v
 
 abbrev CGen {α : Type} (P : α → Prop) :=
