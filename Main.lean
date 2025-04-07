@@ -177,25 +177,7 @@ def isBST (lo hi : Nat) (t : Tree Nat) : Option Unit :=
              (lo, hi)
 
 abbrev genBST (lo hi : Nat) : CGen (λ v => isBST lo hi v = some ()) := by
-  apply synth_accuTreeM
-  intro b s
-  simp_all only [Option.pure_def, guard, ite, failure, deforest_decidable_eq, reduceCtorEq, decidable_or, not_and,
-    Nat.not_le, and_false, and_true, false_or, TreeF_or, true_and, exists_and_right]
-  obtain ⟨fst, snd⟩ := s
-  simp_all only
-  apply synth_or
-  · apply synth_pure
-  · apply synth_bind_arb
-    intro a
-    apply synth_conv (synth_bind _ _) (by ext v; conv => rhs; congr; intro a; rw [and_comm])
-    · apply synth_between
-    · intro a_1
-      obtain ⟨val, property⟩ := a_1
-      obtain ⟨left, right⟩ := property
-      simp_all only
-      apply synth_bind_arb
-      intro a_1
-      apply synth_pure
+  palamedes
 
 #eval sampleN 10 (genBST 50 100).val
 #eval sampleN 10 (.pick (1, 1) (.guardIn False (Decidable.isFalse (by simp)) (λ _ => .ret 2)) (.ret 3))
