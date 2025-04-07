@@ -12,14 +12,14 @@ def support : Gen α → α → Prop
   | .guardIn P _ f => λ v => ∃ h : P, support (f h) v
 
 @[simp]
-def complete : Gen α → Prop
+def total : Gen α → Prop
   | .ret _ => True
   | .gt _ => True
-  | .pick _ x y => complete x ∧ complete y
+  | .pick _ x y => total x ∧ total y
   | .choose _ _ _ => True
-  | .sized f => ∀ n, complete (f n)
-  | .bind x f => complete x ∧ ∀ v, support x v → complete (f v)
-  | .guardIn P _ f => ∃ h : P, complete (f h)
+  | .sized f => ∀ n, total (f n)
+  | .bind x f => total x ∧ ∀ v, support x v → total (f v)
+  | .guardIn P _ f => ∃ h : P, total (f h)
 
 notation v " ∈ 〚" g "〛" => support g v
 
