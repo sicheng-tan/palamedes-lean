@@ -159,10 +159,10 @@ theorem merge_foldM
         | .some x₁, .some x₂ => simp_all
 
 abbrev synth_pure
-  (v' : α) :
-  CGen (λ v => v = v') := by
-  exists (pure v')
-  simp
+    (v' : α) :
+    CGen (λ v => v = v') :=
+  Subtype.mk (pure v') <| by
+    simp
 
 abbrev synth_bind
     {P : α → Prop}
@@ -170,44 +170,44 @@ abbrev synth_bind
     [d : (x : α) → Decidable (P x)]
     (hb : CGen P)
     (hf : (a : {v : α // P v}) → CGen (Q a)) :
-    CGen (λ v => ∃ a, P a ∧ Q a v) := by
-  exists optBind hb.val λ a => .guardIn _ (d a) (λ p => (hf ⟨a, p⟩).val)
-  intro v
-  rw [optBind_bind]
-  obtain ⟨val, property⟩ := hb
-  apply Iff.intro
-  . rintro ⟨a, ha⟩
-    exists a
-    have p : P a := by simp_all only [support]
-    have := (hf ⟨a, p⟩).property
-    simp_all only [support, exists_const, true_and, and_self]
-  . rintro ⟨a, ha⟩
-    exists a
-    have p : P a := by simp_all only [support]
-    have := (hf ⟨a, p⟩).property
-    simp_all only [support, exists_const, true_and, and_self]
+    CGen (λ v => ∃ a, P a ∧ Q a v) :=
+  Subtype.mk (optBind hb.val λ a => .guardIn _ (d a) (λ p => (hf ⟨a, p⟩).val)) <| by
+    intro v
+    rw [optBind_bind]
+    obtain ⟨val, property⟩ := hb
+    apply Iff.intro
+    . rintro ⟨a, ha⟩
+      exists a
+      have p : P a := by simp_all only [support]
+      have := (hf ⟨a, p⟩).property
+      simp_all only [support, exists_const, true_and, and_self]
+    . rintro ⟨a, ha⟩
+      exists a
+      have p : P a := by simp_all only [support]
+      have := (hf ⟨a, p⟩).property
+      simp_all only [support, exists_const, true_and, and_self]
 
 abbrev synth_bind_arb
     [Arbitrary α]
     {Q : α → β → Prop}
     (g : (a : α) → CGen (Q a)) :
-    CGen (λ v => ∃ a, Q a v) := by
-  obtain ⟨arb_val, arb_property⟩ := @Arbitrary.arbitrary α _
-  exists (do let x ← arb_val; (g x).val)
-  intro b
-  simp_all
-  apply Iff.intro
-  · simp [bind, optBind_bind]
-    rintro v'
-    have := (g v').property
+    CGen (λ v => ∃ a, Q a v) :=
+  let ⟨arb_val, arb_property⟩ := @Arbitrary.arbitrary α _
+  Subtype.mk (do let x ← arb_val; (g x).val) <| by
+    intro b
     simp_all
-    intro hv
-    exists v'
-  · rintro ⟨v', hv'⟩
-    have := (g v').property
-    simp [bind, optBind_bind]
-    exists v'
-    simp_all
+    apply Iff.intro
+    · simp [bind, optBind_bind]
+      rintro v'
+      have := (g v').property
+      simp_all
+      intro hv
+      exists v'
+    · rintro ⟨v', hv'⟩
+      have := (g v').property
+      simp [bind, optBind_bind]
+      exists v'
+      simp_all
 
 abbrev synth_tuple
     {P : α → Prop}
@@ -216,47 +216,47 @@ abbrev synth_tuple
     {h : ∀ v, P v.1 ∧ Q v.1 v.2 ↔ R v}
     (gx : CGen P)
     (gy : (x : α) → CGen (Q x)) :
-    CGen R := by
-  have ⟨gx_val, gx_prop⟩ := gx
-  exists (do
-    let x ← gx_val
-    let y ← (gy x).val
-    pure (x, y))
-  simp_all [-Prod.forall, bind, optBind_bind]
-  intro ⟨x, y⟩
-  have gy_prop := (gy x).property
-  simp_all
+    CGen R :=
+  let ⟨gx_val, gx_prop⟩ := gx
+  Subtype.mk
+    (do
+      let x ← gx_val
+      let y ← (gy x).val
+      pure (x, y))
+    (by
+      simp_all [-Prod.forall, bind, optBind_bind]
+      intro ⟨x, y⟩
+      have gy_prop := (gy x).property
+      simp_all)
 
 abbrev synth_or
     {P Q : α → Prop}
     (x : CGen P)
     (y : CGen Q) :
-    CGen (λ v => P v ∨ Q v) := by
-  have ⟨gx, hx⟩ := x
-  have ⟨gy, hy⟩ := y
-  exists (pick gx gy)
-  simp [pick, optPick_pick]
-  aesop
+    CGen (λ v => P v ∨ Q v) :=
+  Subtype.mk (pick x.val y.val) <| by
+    simp [pick, optPick_pick]
+    aesop
 
 abbrev synth_unfoldM
     {α β : Type}
     {f : α → β → Option β}
     {b z : β}
     (g : (b : β) → CGen (ListF.rec (b = z) (λ a b' => f a b' = some b))) :
-    CGen (λ v => List.foldrM f z v = .some b) := by
-  exists (.sized (λ n => unfoldr' n (λ b => (g b).val) b))
-  rw [support_unfoldr']
-  intro v
-  induction v generalizing b with
-  | nil =>
-    have := (g b).property .nil
-    simp_all [Eq.comm]
-  | cons x xs ih =>
-    have := (g b).property
-    simp_all
-    match List.foldrM f z xs with
-    | .none => simp_all
-    | .some b' => aesop
+    CGen (λ v => List.foldrM f z v = .some b) :=
+  Subtype.mk (.sized (λ n => unfoldr' n (λ b => (g b).val) b)) <| by
+    rw [support_unfoldr']
+    intro v
+    induction v generalizing b with
+    | nil =>
+      have := (g b).property .nil
+      simp_all [Eq.comm]
+    | cons x xs ih =>
+      have := (g b).property
+      simp_all
+      match List.foldrM f z xs with
+      | .none => simp_all
+      | .some b' => aesop
 
 abbrev synth_accu
     {α β σ : Type}
@@ -266,25 +266,27 @@ abbrev synth_accu
     {s : σ}
     {b : β}
     (g : (b : β) → (s : σ) → CGen (ListF.rec (z s = b) (λ a b' => f a b' s = b))) :
-    CGen (λ v => List.accu st f z v s = b) := by
-  exists (.sized (λ n => unfoldr' n (λ (b, s) => do
-    match (← (g b s).val) with
-    | .nil => pure .nil
-    | .cons x b' => pure (.cons x (b', st x s))) (b, s)))
-  rw [support_unfoldr']
-  simp_all
-  intro v
-  rw [←foldr_accu]
-  on_goal 2 => exact Eq.refl _
-  induction v generalizing s b with
-  | nil =>
-    have := (g b s).property .nil
-    simp_all [bind, optBind_bind]
-    aesop
-  | cons x xs ih =>
-    have := (g b s).property (.cons x (List.foldr (fun x b s => f x (b (st x s)) s) z xs (st x s)))
-    simp_all [bind, optBind_bind]
-    aesop
+    CGen (λ v => List.accu st f z v s = b) :=
+  Subtype.mk
+    (.sized (λ n => unfoldr' n (λ (b, s) => do
+      match (← (g b s).val) with
+      | .nil => pure .nil
+      | .cons x b' => pure (.cons x (b', st x s))) (b, s)))
+    (by
+      rw [support_unfoldr']
+      simp_all
+      intro v
+      rw [←foldr_accu]
+      on_goal 2 => exact Eq.refl _
+      induction v generalizing s b with
+      | nil =>
+        have := (g b s).property .nil
+        simp_all [bind, optBind_bind]
+        aesop
+      | cons x xs ih =>
+        have := (g b s).property (.cons x (List.foldr (fun x b s => f x (b (st x s)) s) z xs (st x s)))
+        simp_all [bind, optBind_bind]
+        aesop)
 
 abbrev synth_accuM
     {α β σ : Type}
@@ -294,41 +296,43 @@ abbrev synth_accuM
     {s : σ}
     {b : β}
     (g : (b : β) → (s : σ) → CGen (ListF.rec (z s = some b) (λ a b' => f a b' s = some b))) :
-    CGen (λ v => List.accuM st f z v s = some b) := by
-  exists (.sized (λ n => unfoldr' n (λ (b, s) => do
-    match (← (g b s).val) with
-    | .nil => pure .nil
-    | .cons x b' => pure (.cons x (b', st x s))) (b, s)))
-  rw [support_unfoldr']
-  simp_all
-  intro xs
-  rw [←foldr_accuM]
-  on_goal 2 => exact Eq.refl _
-  induction xs generalizing s b with
-  | nil =>
-    have := (g b s).property .nil
-    simp_all [bind, optBind_bind]
-    aesop
-  | cons x xs ih =>
-    simp_all
-    clear ih
-    aesop (config := {warnOnNonterminal := false})
-    . have := (g b s).property
-      simp_all [bind, optBind_bind]
-      aesop
-    . have := (g b s).property
+    CGen (λ v => List.accuM st f z v s = some b) :=
+  Subtype.mk
+    (.sized (λ n => unfoldr' n (λ (b, s) => do
+      match (← (g b s).val) with
+      | .nil => pure .nil
+      | .cons x b' => pure (.cons x (b', st x s))) (b, s)))
+    (by
+      rw [support_unfoldr']
       simp_all
-      generalize ho : List.foldr (fun x b s => do f x (← b (st x s)) s) z xs (st x s) = o at *
-      match o with
-      | .none => simp_all
-      | .some b' =>
+      intro xs
+      rw [←foldr_accuM]
+      on_goal 2 => exact Eq.refl _
+      induction xs generalizing s b with
+      | nil =>
+        have := (g b s).property .nil
+        simp_all [bind, optBind_bind]
+        aesop
+      | cons x xs ih =>
         simp_all
-        exists b'
-        exists st x s
-        apply And.intro
-        . simp_all [bind, optBind_bind]
-          exists .cons x b'
-        . rw [ho]
+        clear ih
+        aesop (config := {warnOnNonterminal := false})
+        . have := (g b s).property
+          simp_all [bind, optBind_bind]
+          aesop
+        . have := (g b s).property
+          simp_all
+          generalize ho : List.foldr (fun x b s => do f x (← b (st x s)) s) z xs (st x s) = o at *
+          match o with
+          | .none => simp_all
+          | .some b' =>
+            simp_all
+            exists b'
+            exists st x s
+            apply And.intro
+            . simp_all [bind, optBind_bind]
+              exists .cons x b'
+            . rw [ho])
 
 abbrev synth_accuTreeM
     {α β σ : Type}
@@ -338,74 +342,63 @@ abbrev synth_accuTreeM
     {s : σ}
     {b : β}
     (g : (b : β) → (s : σ) → CGen (TreeF.rec (z s = some b) (λ bl a br => f bl a br s = some b))) :
-    CGen (λ v => Tree.accuM st f z v s = some b) := by
-  exists (.sized (λ n => unfoldTree n (λ (b, s) => do
-    match (← (g b s).val) with
-    | .leaf => pure .leaf
-    | .node bl x br =>
-      let (sl, sr) := st x s
-      pure (.node (bl, sl) x (br, sr))) (b, s)))
-  rw [support_unfoldTree_ok]
-  simp_all
-  intro t
-  induction t generalizing s b with
-  | leaf =>
-    have := (g b s).property .leaf
-    simp_all [bind, optBind_bind]
-    aesop (add simp Tree.accuM)
-  | node l x r ih =>
+    CGen (λ v => Tree.accuM st f z v s = some b) :=
+  Subtype.mk
+    (.sized (λ n => unfoldTree n (λ (b, s) => do
+      match (← (g b s).val) with
+      | .leaf => pure .leaf
+      | .node bl x br =>
+        let (sl, sr) := st x s
+        pure (.node (bl, sl) x (br, sr))) (b, s)))
+  (by
+    rw [support_unfoldTree_ok]
     simp_all
-    clear ih
-    aesop
-      (config := {warnOnNonterminal := false})
-      (add simp Tree.accuM)
-    . have := (g b s).property
+    intro t
+    induction t generalizing s b with
+    | leaf =>
+      have := (g b s).property .leaf
       simp_all [bind, optBind_bind]
-      aesop
-    . have := (g b s).property
+      aesop (add simp Tree.accuM)
+    | node l x r ih =>
       simp_all
-      generalize hol : Tree.accuM st f z l (st x s).fst = o_l at *
-      match o_l with
-      | .none => simp_all
-      | .some bl =>
+      clear ih
+      aesop
+        (config := {warnOnNonterminal := false})
+        (add simp Tree.accuM)
+      . have := (g b s).property
+        simp_all [bind, optBind_bind]
+        aesop
+      . have := (g b s).property
         simp_all
-        generalize hor : Tree.accuM st f z r (st x s).snd = o_r at *
-        match o_r with
+        generalize hol : Tree.accuM st f z l (st x s).fst = o_l at *
+        match o_l with
         | .none => simp_all
-        | .some br =>
-          exists bl
-          exists (st x s).fst
-          exists br
-          exists (st x s).snd
-          simp_all [bind, optBind_bind]
-          exists (.node bl x br)
+        | .some bl =>
+          simp_all
+          generalize hor : Tree.accuM st f z r (st x s).snd = o_r at *
+          match o_r with
+          | .none => simp_all
+          | .some br =>
+            exists bl
+            exists (st x s).fst
+            exists br
+            exists (st x s).snd
+            simp_all [bind, optBind_bind]
+            exists (.node bl x br))
 
 abbrev synth_true
     [Arbitrary α] :
-    CGen (λ (_ : α) => True) := by
-  obtain ⟨g, p⟩ := @Arbitrary.arbitrary α _
-  exists g
+    CGen (λ (_ : α) => True) :=
+  @Arbitrary.arbitrary α _
 
 abbrev synth_between
     {lo hi : Nat} :
-    CGen (λ v => lo ≤ v ∧ v ≤ hi) := by
-  exists (.guardIn (lo ≤ hi) (Nat.decLe lo hi) (Gen.choose lo hi))
-  intro v
-  simp_all
-  exact Nat.le_trans
+    CGen (λ v => lo ≤ v ∧ v ≤ hi) :=
+  Subtype.mk (.guardIn (lo ≤ hi) (Nat.decLe lo hi) (Gen.choose lo hi)) <| by
+    intro v
+    simp_all
+    exact Nat.le_trans
 
 abbrev synth_gt
   {lo : Nat} :
-  CGen (λ v => lo < v) := by
-  exists(gt lo)
-  simp
-
-abbrev synth_cut
-    (h : ∀ {v}, Q v ↔ P v)
-    (g : CGen P) :
-    CGen Q := by
-  conv =>
-    congr
-    intro v
-    rw [h]
-  apply g
+  CGen (λ v => lo < v) := Subtype.mk (gt lo) (by simp)
