@@ -245,3 +245,13 @@ theorem support_unfoldTree_ok :
           . simp
           . assumption
         . simp
+
+theorem TreeF_or
+    {α β : Type}
+    {P : Prop}
+    {Q : β → α → β → Prop}
+    {t : TreeF α β} :
+    TreeF.rec P Q t ↔ (P ∧ t = .leaf) ∨ (∃ bl x br, t = .node bl x br ∧ Q bl x br) := by
+  match t with
+  | .leaf => simp
+  | .node _ _ _ => aesop
