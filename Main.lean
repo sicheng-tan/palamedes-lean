@@ -120,7 +120,7 @@ def genTwoInRange : CGen (λ (v : Nat × Nat) => 0 ≤ v.1 ∧ v.1 ≤ v.2 ∧ v
     apply this
   assumption
 
-def genTwoBetweens : CGen (λ (v : Nat × Nat) => ∃ x, (0 ≤ x ∧ x ≤ 6) ∧ ∃ y, (2 ≤ y ∧ y ≤ 100) ∧ v = (x,y)) := by
+def genTwoBetweens : CGen (λ (v : Nat × Nat) => ∃ x, (2 ≤ x ∧ x ≤ 6) ∧ ∃ y, (2 ≤ y ∧ y ≤ 100) ∧ v = (x,y)) := by
   -- apply synth_bind
   --   (by apply synth_between) (by
   --   intro x; apply synth_bind (by apply synth_between) (by
@@ -134,8 +134,8 @@ def genTwoBetweens : CGen (λ (v : Nat × Nat) => ∃ x, (0 ≤ x ∧ x ≤ 6) �
   -- apply synth_between
   -- intro y
   -- apply synth_pure
-  apply synth_bind
-  apply synth_between -- once I comment this out search fails
+  -- apply synth_bind
+  -- apply synth_between -- once I comment this out search fails
   palamedes?
 
 def genEvenLength [Arbitrary α] :
