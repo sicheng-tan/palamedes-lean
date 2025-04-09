@@ -207,6 +207,10 @@ def genBetweens: Gen' (Int × Int) (λ (v1,v2) => 2 ≤ v1 ∧ v1 ≤ 4 ∧ 6 �
     --   conv => congr; intro v;
     -- ) )
 
+def genTwoBetweens : Gen' (Int × Int) (λ (v : Int × Int) => ∃ x, (0 ≤ x ∧ x ≤ 6) ∧ ∃ y, (2 ≤ y ∧ y ≤ 100) ∧ v = (x,y)) := by
+  aesop?
+
+
 
  def genRange5: Gen' (Int × Int) (λ v => v.1 = 20 ∧ (0 ≤ v.2 ∧ v.2 ≤ v.1)) := by
   have aargh := synth_tuple' (synth_pure' 20) (fun x => synth_between' 0 x)
