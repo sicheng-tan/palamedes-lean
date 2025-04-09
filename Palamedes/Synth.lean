@@ -402,3 +402,12 @@ abbrev synth_between
 abbrev synth_gt
   {lo : Nat} :
   CGen (λ v => lo < v) := Subtype.mk (gt lo) (by simp)
+
+abbrev synth_conv
+    (h : P = Q)
+    (g : CGen P) :
+    CGen Q :=
+  Subtype.mk g.val <| by
+    intro v
+    rw [←h]
+    exact g.property v
