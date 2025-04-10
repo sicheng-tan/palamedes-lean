@@ -3,49 +3,7 @@ import Palamedes.Sample
 import Palamedes.Tree
 import Mathlib.Tactic.Convert
 
-macro "simp_in_proof" : tactic =>
-  `(tactic|apply synth_conv (by conv => simp) _)
-
-macro "palamedes" : tactic =>
-  `(tactic|aesop (config := {maxRuleApplicationDepth := 0, maxRuleApplications := 0}))
-
-macro "palamedes?" : tactic =>
-  `(tactic|aesop? (config := {maxRuleApplicationDepth := 0, maxRuleApplications := 0}))
-
-attribute [simp]
-  guard
-  failure
-  ite -- NOTE This may be a problem
-  deforest_decidable_bind
-  deforest_decidable_eq
-  decidable_or
-  ListF_or
-  TreeF_or
-  fold_foldM
-  merge_foldM
-attribute [-simp]
-  Prod.forall
-attribute [-aesop]
-  Subtype
-add_aesop_rules unsafe [
-  apply synth_bind,
-  apply synth_bind_arb,
-  apply synth_or,
-  apply synth_pure,
-  apply synth_gt,
-  apply synth_true,
-  apply synth_tuple,
-  apply synth_unfoldM,
-  apply synth_accuM,
-  apply synth_accuTreeM,
-  apply synth_between,
-  (by apply synth_conv (by ext v; conv => rhs; congr; intro a; rw [and_comm]) (synth_bind _ _)),
-  (by apply synth_conv (by aesop (config := {maxRuleApplications := 10, maxRuleApplicationDepth := 10, terminal := true})) (synth_pure _)),
-]
-add_aesop_rules 5% [
-  cases Nat,
-  cases Bool,
-]
+#set_up_palamedes_simp
 
 def genTwo : CGen (λ v => v = 2) := by
   palamedes

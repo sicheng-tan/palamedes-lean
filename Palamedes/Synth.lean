@@ -4,6 +4,7 @@ import Palamedes.Util
 import Palamedes.List
 import Palamedes.Tree
 import Palamedes.Decidable
+import Palamedes.RuleSets
 
 abbrev synth_pure
     (v' : α) :
@@ -258,3 +259,68 @@ abbrev synth_conv
     intro v
     rw [←h]
     exact g.property v
+
+macro "#set_up_palamedes_simp" : command =>
+  `(attribute [local simp]
+      guard
+      failure
+      ite -- NOTE This may be a problem
+      deforest_decidable_bind
+      deforest_decidable_eq
+      decidable_or
+      ListF_or
+      TreeF_or
+      fold_foldM
+      merge_foldM
+
+    attribute [-simp] Prod.forall)
+
+-- attribute [simp]
+--   guard
+--   failure
+--   ite -- NOTE This may be a problem
+--   deforest_decidable_bind
+--   deforest_decidable_eq
+--   decidable_or
+--   ListF_or
+--   TreeF_or
+--   fold_foldM
+--   merge_foldM
+
+-- attribute [-simp] Prod.forall
+
+add_aesop_rules unsafe (rule_sets := [palamedes]) [
+  apply synth_bind,
+  apply synth_bind_arb,
+  apply synth_or,
+  apply synth_pure,
+  apply synth_gt,
+  apply synth_true,
+  apply synth_tuple,
+  apply synth_unfoldM,
+  apply synth_accuM,
+  apply synth_accuTreeM,
+  apply synth_between,
+  (by apply synth_conv (by ext v; conv => rhs; congr; intro a; rw [and_comm]) (synth_bind _ _)),
+  (by apply synth_conv (by aesop (config := {maxRuleApplications := 10, maxRuleApplicationDepth := 10, terminal := true})) (synth_pure _)),
+]
+
+add_aesop_rules 5% (rule_sets := [palamedes]) [
+  cases Nat,
+  cases Bool,
+]
+
+macro "simp_in_proof" : tactic =>
+  `(tactic|apply synth_conv (by conv => simp) _)
+
+macro "palamedes" : tactic =>
+  `(tactic|aesop
+    (config := {maxRuleApplicationDepth := 0, maxRuleApplications := 0})
+    (rule_sets := [palamedes])
+    (erase Subtype))
+
+macro "palamedes?" : tactic =>
+  `(tactic|aesop?
+    (config := {maxRuleApplicationDepth := 0, maxRuleApplications := 0})
+    (rule_sets := [palamedes])
+    (erase Subtype))

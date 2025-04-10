@@ -448,23 +448,6 @@ def indicesOf [DecidableEq α] (xs : List α) (a : α) : Gen Nat :=
            (if h : inds.length > 0 then isTrue h else isFalse h)
            (λ h => elements inds h)
 
-def synth_get? [DecidableEq α] {xs : List α} {a : α} : CGen (fun (n : Nat) => xs[n]? = some a) := by
-  exists indicesOf xs a
-  intro v
-  simp [indicesOf, support_elements]
-  apply Iff.intro
-  . intro ⟨_, h2⟩
-    exact List.mk_mem_enum_iff_getElem?.mp h2
-  . intro h
-    apply And.intro
-    . rw [← List.mk_mem_enum_iff_getElem?] at h
-      apply List.length_pos_of_mem
-      simp_all only [List.mem_filter, beq_iff_eq]
-      apply And.intro
-      · exact h
-      · simp_all only
-    . exact List.mk_mem_enum_iff_getElem?.mpr h
-
 theorem Option.rec_exists : Option.rec False (λ _ => True) o ↔ ∃ v, o = some v := by
   match o with
   | none => simp
@@ -537,6 +520,23 @@ def hasType (Γ : Ctx) (t : Term) : Option Ty :=
     t
     Γ
 
+def synth_get? [DecidableEq α] {xs : List α} {a : α} : CGen (fun (n : Nat) => xs[n]? = some a) := by
+  exists indicesOf xs a
+  intro v
+  simp [indicesOf, support_elements]
+  apply Iff.intro
+  . intro ⟨_, h2⟩
+    exact List.mk_mem_enum_iff_getElem?.mp h2
+  . intro h
+    apply And.intro
+    . rw [← List.mk_mem_enum_iff_getElem?] at h
+      apply List.length_pos_of_mem
+      simp_all only [List.mem_filter, beq_iff_eq]
+      apply And.intro
+      · exact h
+      · simp_all only
+    . exact List.mk_mem_enum_iff_getElem?.mpr h
+
 def genWellTyped_manual (Γ : Ctx) : CGen (λ (v : Term) =>
     match hasType Γ v with
     | some _ => True
@@ -591,41 +591,20 @@ def genWellTyped_manual (Γ : Ctx) : CGen (λ (v : Term) =>
         . intro τ₂
           apply synth_pure
 
-attribute [simp]
-  guard
-  failure
-  ite
-  deforest_decidable_bind
-  deforest_decidable_eq
-  decidable_or
+#set_up_palamedes_simp
+
+attribute [local simp]
   Ty.deforest_eq
   Ty.as_or
   TermF.as_or
-  ListF_or
-  TreeF_or
-  fold_foldM
-  merge_foldM
   Option.rec_exists
-attribute [-simp]
-  Prod.forall
-attribute [-aesop]
-  Subtype
+
 add_aesop_rules unsafe [
-  apply synth_bind,
-  apply synth_bind_arb,
-  apply synth_or,
-  apply synth_pure,
-  apply synth_true,
-  apply synth_tuple,
-  apply synth_unfoldM,
-  apply synth_accuM,
-  apply synth_accuTreeM,
-  apply synth_between,
   apply Term.synth_accuM,
-  (by apply Term.synth_accuM; intro b s; cases b),
   apply synth_get?,
-  (by (conv => congr; intro v; congr; intro x; rw [and_comm]); apply synth_bind),
-  (by (conv => congr; intro v; rw [eq_comm]); apply synth_pure),
+  (by apply Term.synth_accuM; intro b s; cases b),
+  (by unfold hasType_natural.match_1),
+  (by unfold genWellTyped_manual.match_1),
   (by (conv => congr; intro v; rw [exists_comm]); apply synth_bind_arb),
 ]
 
@@ -633,8 +612,6 @@ def genWellTyped (Γ : Ctx) : CGen (λ (v : Term) =>
     match hasType Γ v with
     | some _ => True
     | none => False) := by
-  aesop
-    (add unsafe (by unfold hasType_natural.match_1))
-    (add unsafe (by unfold genWellTyped_manual.match_1))
+  palamedes
 
 #eval sampleN 10 (genWellTyped []).val

@@ -3,39 +3,7 @@ import Palamedes.Sample
 import Palamedes.Tree
 import Mathlib.Tactic.Convert
 
-attribute [simp]
-  guard
-  failure
-  ite -- NOTE This may be a problem
-  deforest_decidable_bind
-  deforest_decidable_eq
-  decidable_or
-  ListF_or
-  TreeF_or
-  fold_foldM
-  merge_foldM
-attribute [-simp]
-  Prod.forall
-attribute [-aesop]
-  Subtype
-add_aesop_rules unsafe [
-  apply synth_bind,
-  apply synth_bind_arb,
-  apply synth_or,
-  apply synth_pure,
-  apply synth_true,
-  apply synth_tuple,
-  apply synth_unfoldM,
-  apply synth_accuM,
-  apply synth_accuTreeM,
-  apply synth_between,
-  (by (conv => congr; intro v; congr; intro x; rw [and_comm]); apply synth_bind),
-  (by (conv => congr; intro v; rw [eq_comm]); apply synth_pure),
-]
-add_aesop_rules 5% [
-  cases Nat,
-  cases Bool,
-]
+#set_up_palamedes_simp
 
 def isBST_natural (p : Nat × Nat) (t : Tree Nat) : Option Unit :=
   match t with
@@ -76,7 +44,7 @@ example : isBST_fold lo hi t = isBST lo hi t := by
     (add unsafe apply fold_accuM)
 
 def genBST (lo hi : Nat) : CGen (λ v => isBST lo hi v = some ()) := by
-  aesop
+  palamedes
 
 syntax "rw_add_comm" : tactic
 macro_rules
