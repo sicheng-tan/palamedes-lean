@@ -1,6 +1,6 @@
 import Palamedes.Synth
 import Palamedes.Sample
-import Palamedes.Tree
+import Palamedes.Examples.BST
 import Mathlib.Tactic.Convert
 
 @[simp]
@@ -67,28 +67,45 @@ partial def elabExtractGeneratorCmd : CommandElab := fun
       TryThis.addSuggestion stx (← `(def $name := $t)) (header := "Try this generator:\n") --
   | stx => throwError "Unexpected syntax {stx}."
 
-syntax (name := exactGenerator) "exact_generator " term : tactic
+syntax (name := exactGenerator) "generator? " term : tactic
 
 open Lean Elab Command Meta Tactic in
 @[tactic exactGenerator]
 def elabExactGenerator : Tactic := fun
-  | stx@`(tactic|exact_generator $t) => do
-  withMainContext do
-    let e ← elabTerm t none
-    let ctx ← Simp.Context.ofNames []
-    let e ← (·.1.expr) <$> simp e ctx
-    let simprocs ← Simp.getSimprocs
-    let hs ← getPropHyps
-    let mut simpTheorems := ctx.simpTheorems
-    for h in hs do
-      unless simpTheorems.isErased (.fvar h) do
-        simpTheorems ← simpTheorems.addTheorem (.fvar h) (← h.getDecl).toExpr
-    let e ← (·.1.expr) <$> simp e {ctx with simpTheorems} (simprocs := #[simprocs])
-    TryThis.addExactSuggestion stx e
+  | stx@`(tactic|generator? $t) => do
+    let (_, goal) ← (← getMainGoal).intros
+    goal.withContext do
+      let e ← elabTerm t none
+      let ctx ← Simp.Context.ofNames []
+      let e ← (·.1.expr) <$> simp e ctx
+      let simprocs ← Simp.getSimprocs
+      let hs ← getPropHyps
+      let mut simpTheorems := ctx.simpTheorems
+      for h in hs do
+        unless simpTheorems.isErased (.fvar h) do
+          simpTheorems ← simpTheorems.addTheorem (.fvar h) (← h.getDecl).toExpr
+      let e ← (·.1.expr) <$> simp e {ctx with simpTheorems} (simprocs := #[simprocs])
+      TryThis.addSuggestion stx (← TryThis.delabToRefinableSyntax e)
+      admitGoal goal
   | stx => throwError "Unexpected syntax {stx}."
 
--- @[simp]
--- def genBST' (lo hi : Nat) : Gen (Tree Nat) := by
---   let go : CGen (λ v => isBST lo hi v = some ()) := by
---     aesop
---   exact_generator go.val
+macro "generator_for? " t:term : term =>
+  `(let go : CGen $t := by palamedes
+    by generator? go.val)
+
+#set_up_palamedes_simp
+
+@[simp]
+def cgenBST (lo hi : Nat) : CGen (λ v => isBST lo hi v = some ()) := by
+  palamedes
+
+#extract_generator (λ lo hi => (cgenBST lo hi).val) as genBST'
+
+def genBST' (lo hi : Nat) : Gen (Tree Nat) :=
+  generator_for? (λ v => isBST lo hi v = some ())
+
+def genOneToTen' : Gen Nat :=
+  generator_for? (λ v => 1 ≤ v ∧ v ≤ 10)
+
+def genFourOrFive' : Gen Nat :=
+  generator_for? (λ v => v = 4 ∨ v = 5)
