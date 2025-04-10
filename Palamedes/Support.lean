@@ -21,6 +21,12 @@ def total : Gen α → Prop
   | .bind x f => total x ∧ ∀ v, support x v → total (f v)
   | .guardIn P _ f => ∃ h : P, total (f h)
 
+theorem total_optBind
+    (hx : total x)
+    (hf : ∀ {v}, support x v → total (f v)) :
+    total (optBind x f) := by
+  induction x <;> aesop (add simp optBind)
+
 notation v " ∈ 〚" g "〛" => support g v
 
 abbrev CGen {α : Type} (P : α → Prop) :=
