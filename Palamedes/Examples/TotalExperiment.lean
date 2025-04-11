@@ -1,11 +1,11 @@
 import Palamedes.Synth
 import Palamedes.Sample
 import Palamedes.Examples.BST
+import Palamedes.Total
 import Mathlib.Tactic.Convert
 
 namespace TotalExperiment
 
-attribute [local simp] pure bind pick optBind optPick in
 def genBST' (lo hi : Nat) : Gen (Tree Nat) :=
   Gen.sized fun n =>
     unfoldTree n
@@ -25,8 +25,6 @@ def genBST' (lo hi : Nat) : Gen (Tree Nat) :=
       ((), lo, hi)
 
 example {lo hi : Nat} : total (genBST' lo hi) := by
-  unfold genBST'
-  simp
   intro n
   induction n generalizing lo hi <;>
     aesop
@@ -36,5 +34,6 @@ example {lo hi : Nat} : total (genBST' lo hi) := by
       (add simp bind)
       (add simp optBind)
       (add simp optPick)
+      (add simp total)
 
 end TotalExperiment
