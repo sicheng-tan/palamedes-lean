@@ -29,9 +29,9 @@ def next : SampleM Nat := ExceptT.lift Plausible.Rand.next
 def randBound (lo hi : Nat) (pf : lo ≤ hi) : SampleM {v : Nat // lo ≤ v ∧ v ≤ hi} := do
   ExceptT.lift (Plausible.Random.randBound Nat lo hi pf)
 
-def weightedChoice (w₁ w₂ : Nat) (g₁ g₂ : SampleM α) : SampleM α := do
+def weightedChoice (w₁ w₂ : Nat) (g₁ g₂ : IO (SampleM α)) : SampleM α := do
   let ⟨b, _⟩ ← SampleM.randBound 0 (w₁ + w₂ - 1) (by simp)
-  if b < w₁ then g₁ else g₂
+  if b < w₁ then (← g₁) else (← g₂)
 
 def run : SampleM α → IO α := (. >>= IO.ofExcept) ∘ Plausible.runRand ∘ ExceptT.run
 
@@ -58,8 +58,10 @@ partial def backtrackLoop
   match remaining with
   | 0 => failWith "backtracked too many times"
   | remaining' + 1 =>
+    let x' := IO.lazyPure (λ () => sampleRand cfg x)
+    let y' := IO.lazyPure (λ () => sampleRand cfg y)
     ExceptT.tryCatch
-      (weightedChoice w₁ w₂ (sampleRand cfg x) (sampleRand cfg y))
+      (weightedChoice w₁ w₂ x' y')
       (λ () => backtrackLoop cfg w₁ w₂ x y remaining')
 
 partial def sampleRand (cfg : SampleConfig) : Gen α → SampleM α
