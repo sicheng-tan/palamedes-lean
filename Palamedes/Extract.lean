@@ -101,6 +101,16 @@ def cgenBST (lo hi : Nat) : CGen (λ v => isBST lo hi v = some ()) := by
 
 #extract_generator (λ lo hi => (cgenBST lo hi).val) as genBST'
 
+attribute [local simp]
+  bind
+  optBind
+  pick
+  optPick
+  pure
+  CGen.internalizeProofs
+  Gen.internalizeProofs
+  Functor.map
+in
 def genBST' (lo hi : Nat) : Gen (Tree Nat) :=
   generator_for? (λ v => isBST lo hi v = some ())
 
