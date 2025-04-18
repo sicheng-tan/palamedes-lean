@@ -2,9 +2,7 @@ import Palamedes.Support
 
 def total : Gen α → Prop
   | .ret _ => True
-  | .gt _ => True
   | .pick _ x y => total x ∧ total y
-  | .choose _ _ _ => True
   | .sized f => ∀ n, total (f n)
   | .bind x f => total x ∧ ∀ v, v ∈ 〚x〛  → total (f v)
   | .guardIn P _ f => (h : P) → total (f h)

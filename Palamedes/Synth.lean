@@ -242,14 +242,14 @@ abbrev synth_true
 abbrev synth_between
     {lo hi : Nat} :
     CGen (λ v => lo ≤ v ∧ v ≤ hi) :=
-  Subtype.mk (.guardIn (lo ≤ hi) (Nat.decLe lo hi) (Gen.choose lo hi)) <| by
+  Subtype.mk (.guardIn (lo ≤ hi) (Nat.decLe lo hi) (choose lo hi ·)) <| by
     intro v
     simp_all
     exact Nat.le_trans
 
 abbrev synth_gt
   {lo : Nat} :
-  CGen (λ v => lo < v) := Subtype.mk (gt lo) (by simp)
+  CGen (λ v => lo < v) := Subtype.mk (gt lo) (by apply gt_support)
 
 abbrev synth_conv
     (h : P = Q)

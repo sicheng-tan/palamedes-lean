@@ -1,12 +1,9 @@
 import Palamedes.Free
 
-#check Gen.gt
 @[simp]
 def support : Gen α → α → Prop
   | .ret v' => (. = v')
-  | .gt lo => λ v => lo < v
   | .pick _ x y => λ v => support x v ∨ support y v
-  | .choose lo hi _ => λ v => lo ≤ v ∧ v ≤ hi
   | .sized f => λ v => ∃ n, support (f n) (some v)
   | .bind x f => λ v => ∃ v', support x v' ∧ support (f v') v
   | .guardIn P _ f => λ v => ∃ h : P, support (f h) v
@@ -81,13 +78,6 @@ instance : Arbitrary Bool where
     by simp [optPick_pick, pick]
   ⟩
 
-def arbNat (fuel : Nat) : Gen (Option Nat) :=
-  match fuel with
-  | 0 => pure none
-  | n + 1 =>
-    pick (pure (some 0))
-          (.map (1 + .) <$> arbNat n)
-
 theorem optBind_bind : support (optBind x f) = support (.bind x f) := by
   funext v
   induction x generalizing v <;> simp_all [optBind]
@@ -115,6 +105,13 @@ theorem optBind_bind : support (optBind x f) = support (.bind x f) := by
         on_goal 2 => exact hv'2
         · simp_all only
 
+def arbNat (fuel : Nat) : Gen (Option Nat) :=
+  match fuel with
+  | 0 => pure none
+  | n + 1 =>
+    pick (pure (some 0))
+          (.map (1 + .) <$> arbNat n)
+
 instance : Arbitrary Nat where
   arbitrary :=  ⟨
       Gen.sized arbNat,
@@ -132,3 +129,79 @@ instance : Arbitrary Nat where
           simp_arith
           assumption
     ⟩
+
+def gt (lo : Nat) : Gen Nat := (lo + 1 + · ) <$> (Arbitrary.arbitrary.val : Gen Nat)
+
+def choose (lo hi : Nat) (h : lo ≤ hi := by simp) : Gen Nat :=
+  if h' : lo = hi then pure lo else pick (pure lo) (choose (lo + 1) hi
+    (by
+      simp_all only [ge_iff_le]
+      exact Nat.lt_of_le_of_ne h h'))
+
+@[simp]
+theorem gt_support :
+    v ∈ 〚gt lo〛 ↔ lo < v := by
+  simp [-support, gt, Functor.map, optBind_bind]
+  unfold support
+  conv =>
+    lhs
+    congr
+    intro v'
+    lhs
+    rw [((@Arbitrary.arbitrary Nat).property v')]
+  simp
+  apply Iff.intro
+  . intro ⟨v', hv'⟩
+    subst hv'
+    simp_arith
+  . intro h
+    induction h with
+    | refl => simp_arith
+    | step a ih =>
+      simp_arith
+      have ⟨x, hx⟩ := ih
+      exists x + 1
+      conv => rhs; rhs; rw [Nat.add_comm]
+      conv => rhs; rw [← Nat.add_assoc]
+      assumption
+
+@[simp]
+theorem choose_support :
+    v ∈ 〚choose lo hi h〛 ↔ lo ≤ v ∧ v ≤ hi := by
+  generalize hn : hi - lo = n
+  induction n generalizing lo hi v with
+  | zero =>
+    unfold choose
+    split
+    . simp
+      rename_i heq
+      subst heq
+      apply Iff.intro
+      . rintro ⟨rfl⟩
+        simp
+      . intro ⟨h1, h2⟩
+        omega
+    . exfalso
+      rename_i hne
+      apply hne
+      omega
+  | succ n' ih =>
+    unfold choose
+    split
+    . rename_i heq
+      subst heq
+      aesop
+    . simp [pick, optPick_pick]
+      apply Iff.intro
+      . intro hv
+        cases hv with
+        | inl hv => subst hv; simp_all
+        | inr hv =>
+          have : hi - (lo + 1) = n' := by omega
+          have := (ih this).mp hv
+          omega
+      . intro hbw
+        by_cases heq : v = lo
+        . left; assumption
+        . right
+          apply (ih _).mpr <;> omega

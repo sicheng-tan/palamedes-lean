@@ -66,9 +66,7 @@ partial def backtrackLoop
 
 partial def sampleRand (cfg : SampleConfig) : Gen α → SampleM α
   | .ret v' => pure v'
-  | .gt lo => (· + lo) <$> next
   | .pick (w₁, w₂) x y => backtrackLoop cfg w₁ w₂ x y cfg.backtrackLimit
-  | .choose lo hi pf => randBound lo hi pf
   | .sized f => sizedLoop cfg cfg.sizeLimit f cfg.sizeRetryLimit
   | .bind x f => sampleRand cfg x >>= sampleRand cfg ∘ f
   | .guardIn p _ f => if h : p then sampleRand cfg (f h) else throw ()
