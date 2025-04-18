@@ -5,6 +5,7 @@ import Palamedes.List
 import Palamedes.Tree
 import Palamedes.Decidable
 import Palamedes.RuleSets
+import Palamedes.InternalizeProofs
 
 abbrev synth_pure
     (v' : α) :
@@ -15,25 +16,32 @@ abbrev synth_pure
 abbrev synth_bind
     {P : α → Prop}
     {Q : α → β → Prop}
-    [d : (x : α) → Decidable (P x)]
+    [(x : α) → Decidable (P x)]
     (hb : CGen P)
     (hf : (a : {v : α // P v}) → CGen (Q a)) :
     CGen (λ v => ∃ a, P a ∧ Q a v) :=
-  Subtype.mk (optBind hb.val λ a => .guardIn _ (d a) (λ p => (hf ⟨a, p⟩).val)) <| by
+  Subtype.mk (optBind (hb.internalizeProofs).val λ a => (hf a).val) <| by
     intro v
     rw [optBind_bind]
     obtain ⟨val, property⟩ := hb
     apply Iff.intro
     . rintro ⟨a, ha⟩
       exists a
-      have p : P a := by simp_all only [support]
-      have := (hf ⟨a, p⟩).property
+      have := (hf a).property
       simp_all only [support, exists_const, true_and, and_self]
+      simp
+      exact a.property
     . rintro ⟨a, ha⟩
+      simp_all only [support, exists_const, true_and, and_self, CGen.internalizeProofs, bind, optBind_bind]
+      simp
       exists a
-      have p : P a := by simp_all only [support]
-      have := (hf ⟨a, p⟩).property
-      simp_all only [support, exists_const, true_and, and_self]
+      apply And.intro
+      . have := (property a).mpr ha.left
+        exists this
+        exact injProof_correct this
+      . exists ha.left
+        apply ((hf ⟨a, ha.left⟩).property v).mpr
+        exact ha.right
 
 abbrev synth_bind_arb
     [Arbitrary α]
