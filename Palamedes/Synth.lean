@@ -98,8 +98,8 @@ abbrev synth_unfoldM
     {b z : β}
     (g : (b : β) → CGen (ListF.rec (b = z) (λ a b' => f a b' = some b))) :
     CGen (λ v => List.foldrM f z v = .some b) :=
-  Subtype.mk (.sized (λ n => unfoldr' n (λ b => (g b).val) b)) <| by
-    rw [support_unfoldr']
+  Subtype.mk (List.unfoldr (λ b => (g b).val) b) <| by
+    rw [List.unfoldr_unfoldr_support]
     intro v
     induction v generalizing b with
     | nil =>
@@ -122,12 +122,12 @@ abbrev synth_accu
     (g : (b : β) → (s : σ) → CGen (ListF.rec (z s = b) (λ a b' => f a b' s = b))) :
     CGen (λ v => List.accu st f z v s = b) :=
   Subtype.mk
-    (.sized (λ n => unfoldr' n (λ (b, s) => do
+    (List.unfoldr (λ (b, s) => do
       match (← (g b s).val) with
       | .nil => pure .nil
-      | .cons x b' => pure (.cons x (b', st x s))) (b, s)))
+      | .cons x b' => pure (.cons x (b', st x s))) (b, s))
     (by
-      rw [support_unfoldr']
+      rw [List.unfoldr_unfoldr_support]
       simp_all
       intro v
       rw [←foldr_accu]
@@ -152,12 +152,12 @@ abbrev synth_accuM
     (g : (b : β) → (s : σ) → CGen (ListF.rec (z s = some b) (λ a b' => f a b' s = some b))) :
     CGen (λ v => List.accuM st f z v s = some b) :=
   Subtype.mk
-    (.sized (λ n => unfoldr' n (λ (b, s) => do
+    (List.unfoldr (λ (b, s) => do
       match (← (g b s).val) with
       | .nil => pure .nil
-      | .cons x b' => pure (.cons x (b', st x s))) (b, s)))
+      | .cons x b' => pure (.cons x (b', st x s))) (b, s))
     (by
-      rw [support_unfoldr']
+      rw [List.unfoldr_unfoldr_support]
       simp_all
       intro xs
       rw [←foldr_accuM]

@@ -29,22 +29,25 @@ def List.accuM
   | [] => z s
   | x :: xs => do f x (← List.accuM st f z xs (st x s)) s
 
+def List.unfoldr (f : β → Gen (ListF α β)) (b : β) : Gen (List α) :=
+  .sized (λ n => go n f b)
+  where
+    go (n : Nat) (f : β → Gen (ListF α β)) (b : β) : Gen (Option (List α)) :=
+      match n with
+      | 0 => pure none
+      | n + 1 => do
+        match (← f b) with
+        | .nil => pure (some [])
+        | .cons x b' => .map (x :: .) <$> go n f b'
+
 @[simp]
-def support_unfoldr (P : β → ListF α β → Prop) (b : β) (xs : List α) : Prop :=
+def List.unfoldr_support (P : β → ListF α β → Prop) (b : β) (xs : List α) : Prop :=
   match xs with
   | [] => P b .nil
-  | x :: xs => ∃ b', P b (.cons x b') ∧ support_unfoldr P b' xs
+  | x :: xs => ∃ b', P b (.cons x b') ∧ List.unfoldr_support P b' xs
 
-def unfoldr' (n : Nat) (f : β → Gen (ListF α β)) (b : β) : Gen (Option (List α)) :=
-  match n with
-  | 0 => pure none
-  | n + 1 => do
-    match (← f b) with
-    | .nil => pure (some [])
-    | .cons x b' => .map (x :: .) <$> unfoldr' n f b'
-
-theorem support_unfoldr' :
-    support (.sized (λ n => unfoldr' n f b)) = support_unfoldr (λ b' => support (f b')) b := by
+theorem List.unfoldr_unfoldr_support :
+    support (List.unfoldr f b) = List.unfoldr_support (λ b' => support (f b')) b := by
   funext xs
   induction xs generalizing b with
   | nil =>
@@ -54,12 +57,12 @@ theorem support_unfoldr' :
       match n with
       | 0 => simp_all
       | n + 1 =>
-        simp_all [unfoldr', Functor.map, bind, optBind_bind]
+        simp_all [List.unfoldr, List.unfoldr.go, Functor.map, Bind.bind, optBind_bind]
         have ⟨v', hv'1, hv'2⟩ := h
         match v' with
         | .nil => simp_all
         | .cons _ _ =>
-          simp_all [unfoldr', bind, optBind_bind]
+          simp_all [List.unfoldr, List.unfoldr.go, Bind.bind, optBind_bind]
           have ⟨v'', hv''⟩ := hv'2
           match v'' with
           | .none => simp_all
@@ -67,7 +70,7 @@ theorem support_unfoldr' :
           | .some (x :: xs) => simp_all
     . intro h
       exists 1
-      simp [unfoldr', bind, optBind_bind]
+      simp [List.unfoldr, List.unfoldr.go, Bind.bind, optBind_bind]
       exists .nil
   | cons x xs ih =>
     simp_all
@@ -76,12 +79,12 @@ theorem support_unfoldr' :
       match n with
       | 0 => simp_all
       | n + 1 =>
-        simp_all [unfoldr', Functor.map, bind, optBind_bind]
+        simp_all [List.unfoldr, List.unfoldr.go, Functor.map, Bind.bind, optBind_bind]
         have ⟨v', hv'1, hv'2⟩ := h
         match v' with
         | .nil => simp_all
         | .cons _ b'' =>
-          simp_all [unfoldr', bind, optBind_bind]
+          simp_all [List.unfoldr, List.unfoldr.go, optBind_bind]
           have ⟨v'', hv''⟩ := hv'2
           match v'' with
           | .none => simp_all
@@ -95,7 +98,7 @@ theorem support_unfoldr' :
     . intro ⟨b', hx, hxs⟩
       have ⟨n, h⟩ := ih.mpr hxs
       exists n + 1
-      simp_all [unfoldr', bind, optBind_bind]
+      simp_all [List.unfoldr, List.unfoldr.go, Bind.bind, optBind_bind]
       exists ListF.cons x b'
       simp_all [Functor.map, optBind_bind]
       exists some xs
