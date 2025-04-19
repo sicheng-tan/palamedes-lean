@@ -46,61 +46,50 @@ def List.unfoldr_support (P : β → ListF α β → Prop) (b : β) (xs : List �
   | [] => P b .nil
   | x :: xs => ∃ b', P b (.cons x b') ∧ List.unfoldr_support P b' xs
 
+attribute [local simp]
+  Bind.bind
+  List.unfoldr
+  List.unfoldr.go
+  Functor.map
+  optBind_bind
+in
 theorem List.unfoldr_unfoldr_support :
     support (List.unfoldr f b) = List.unfoldr_support (λ b' => support (f b')) b := by
   funext xs
+  simp_all
   induction xs generalizing b with
   | nil =>
-    simp_all
     apply Iff.intro
     . intro ⟨n, h⟩
-      match n with
-      | 0 => simp_all
-      | n + 1 =>
-        simp_all [List.unfoldr, List.unfoldr.go, Functor.map, Bind.bind, optBind_bind]
-        have ⟨v', hv'1, hv'2⟩ := h
-        match v' with
-        | .nil => simp_all
-        | .cons _ _ =>
-          simp_all [List.unfoldr, List.unfoldr.go, Bind.bind, optBind_bind]
-          have ⟨v'', hv''⟩ := hv'2
-          match v'' with
-          | .none => simp_all
-          | .some [] => simp_all [Option.map]
-          | .some (x :: xs) => simp_all
+      cases n <;> simp_all
+      have ⟨v', hv'1, hv'2⟩ := h
+      cases v' <;> simp_all
+      have ⟨v'', hv''⟩ := hv'2
+      cases v'' <;> simp_all
     . intro h
       exists 1
-      simp [List.unfoldr, List.unfoldr.go, Bind.bind, optBind_bind]
+      simp
       exists .nil
   | cons x xs ih =>
-    simp_all
     apply Iff.intro
     . intro ⟨n, h⟩
-      match n with
-      | 0 => simp_all
-      | n + 1 =>
-        simp_all [List.unfoldr, List.unfoldr.go, Functor.map, Bind.bind, optBind_bind]
-        have ⟨v', hv'1, hv'2⟩ := h
-        match v' with
-        | .nil => simp_all
-        | .cons _ b'' =>
-          simp_all [List.unfoldr, List.unfoldr.go, optBind_bind]
-          have ⟨v'', hv''⟩ := hv'2
-          match v'' with
-          | .none => simp_all
-          | .some ys =>
-            simp_all
-            obtain ⟨hv'', rfl, rfl⟩ := hv''
-            exists b''
-            apply And.intro hv'1
-            apply (@ih b'').mp
-            exists n
+      cases n <;> simp_all; case succ n =>
+      have ⟨v', hv'1, hv'2⟩ := h
+      cases v' <;> simp_all
+      case cons _ b'' =>
+      have ⟨v'', hv''⟩ := hv'2
+      cases v'' <;> simp_all
+      obtain ⟨hv'', rfl, rfl⟩ := hv''
+      exists b''
+      apply And.intro hv'1
+      apply (@ih b'').mp
+      exists n
     . intro ⟨b', hx, hxs⟩
       have ⟨n, h⟩ := ih.mpr hxs
       exists n + 1
-      simp_all [List.unfoldr, List.unfoldr.go, Bind.bind, optBind_bind]
+      simp_all
       exists ListF.cons x b'
-      simp_all [Functor.map, optBind_bind]
+      simp_all
       exists some xs
 
 theorem foldr_accu
