@@ -1,4 +1,3 @@
-import Palamedes.Free
 import Palamedes.Support
 import Mathlib.Logic.Equiv.Basic
 

@@ -1,4 +1,3 @@
-import Palamedes.Free
 import Palamedes.Support
 
 inductive ListF (α β : Type) where

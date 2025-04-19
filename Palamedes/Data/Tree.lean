@@ -1,4 +1,3 @@
-import Palamedes.Free
 import Palamedes.Support
 
 inductive Tree (α : Type) where

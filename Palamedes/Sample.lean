@@ -1,4 +1,4 @@
-import Palamedes.Free
+import Palamedes.Gen
 import Plausible.Random
 
 def replicateM [Monad m] (n : Nat) (mx : m α) : m (List α) :=

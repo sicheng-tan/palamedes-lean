@@ -1,4 +1,3 @@
-import Palamedes.Free
 import Palamedes.Support
 import Palamedes.Util
 import Palamedes.Data.List

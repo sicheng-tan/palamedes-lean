@@ -1,4 +1,4 @@
-import Palamedes.Free
+import Palamedes.Gen
 
 @[simp]
 def support : Gen α → α → Prop

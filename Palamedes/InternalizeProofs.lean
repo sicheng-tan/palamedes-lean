@@ -1,4 +1,3 @@
-import Palamedes.Free
 import Palamedes.Support
 
 def Gen.internalizeProofs
