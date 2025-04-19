@@ -114,7 +114,7 @@ def arbNat (fuel : Nat) : Gen (Option Nat) :=
 
 instance : Arbitrary Nat where
   arbitrary :=  ⟨
-      Gen.sized arbNat,
+      .sized arbNat,
       by
         intro v
         induction v with

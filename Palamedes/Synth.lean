@@ -99,7 +99,7 @@ abbrev synth_unfoldM
     (g : (b : β) → CGen (ListF.rec (b = z) (λ a b' => f a b' = some b))) :
     CGen (λ v => List.foldrM f z v = .some b) :=
   Subtype.mk (List.unfoldr (λ b => (g b).val) b) <| by
-    rw [List.unfoldr_unfoldr_support]
+    rw [support_unfoldr]
     intro v
     induction v generalizing b with
     | nil =>
@@ -125,22 +125,21 @@ abbrev synth_accu
     (List.unfoldr (λ (b, s) => do
       match (← (g b s).val) with
       | .nil => pure .nil
-      | .cons x b' => pure (.cons x (b', st x s))) (b, s))
-    (by
-      rw [List.unfoldr_unfoldr_support]
-      simp_all
-      intro v
-      rw [←foldr_accu]
-      on_goal 2 => exact Eq.refl _
-      induction v generalizing s b with
-      | nil =>
-        have := (g b s).property .nil
-        simp_all [bind, optBind_bind]
-        aesop
-      | cons x xs ih =>
-        have := (g b s).property (.cons x (List.foldr (fun x b s => f x (b (st x s)) s) z xs (st x s)))
-        simp_all [bind, optBind_bind]
-        aesop)
+      | .cons x b' => pure (.cons x (b', st x s))) (b, s)) <| by
+    rw [support_unfoldr]
+    simp_all
+    intro v
+    rw [← foldr_accu]
+    on_goal 2 => exact Eq.refl _
+    induction v generalizing s b with
+    | nil =>
+      have := (g b s).property .nil
+      simp_all [bind, optBind_bind]
+      aesop
+    | cons x xs ih =>
+      have := (g b s).property (.cons x (List.foldr (fun x b s => f x (b (st x s)) s) z xs (st x s)))
+      simp_all [bind, optBind_bind]
+      aesop
 
 abbrev synth_accuM
     {α β σ : Type}
@@ -155,38 +154,37 @@ abbrev synth_accuM
     (List.unfoldr (λ (b, s) => do
       match (← (g b s).val) with
       | .nil => pure .nil
-      | .cons x b' => pure (.cons x (b', st x s))) (b, s))
-    (by
-      rw [List.unfoldr_unfoldr_support]
+      | .cons x b' => pure (.cons x (b', st x s))) (b, s)) <| by
+    rw [support_unfoldr]
+    simp_all
+    intro xs
+    rw [←foldr_accuM]
+    on_goal 2 => exact Eq.refl _
+    induction xs generalizing s b with
+    | nil =>
+      have := (g b s).property .nil
+      simp_all [bind, optBind_bind]
+      aesop
+    | cons x xs ih =>
       simp_all
-      intro xs
-      rw [←foldr_accuM]
-      on_goal 2 => exact Eq.refl _
-      induction xs generalizing s b with
-      | nil =>
-        have := (g b s).property .nil
+      clear ih
+      aesop (config := {warnOnNonterminal := false})
+      . have := (g b s).property
         simp_all [bind, optBind_bind]
         aesop
-      | cons x xs ih =>
+      . have := (g b s).property
         simp_all
-        clear ih
-        aesop (config := {warnOnNonterminal := false})
-        . have := (g b s).property
-          simp_all [bind, optBind_bind]
-          aesop
-        . have := (g b s).property
+        generalize ho : List.foldr (fun x b s => do f x (← b (st x s)) s) z xs (st x s) = o at *
+        match o with
+        | .none => simp_all
+        | .some b' =>
           simp_all
-          generalize ho : List.foldr (fun x b s => do f x (← b (st x s)) s) z xs (st x s) = o at *
-          match o with
-          | .none => simp_all
-          | .some b' =>
-            simp_all
-            exists b'
-            exists st x s
-            apply And.intro
-            . simp_all [bind, optBind_bind]
-              exists .cons x b'
-            . rw [ho])
+          exists b'
+          exists st x s
+          apply And.intro
+          . simp_all [bind, optBind_bind]
+            exists .cons x b'
+          . rw [ho]
 
 abbrev synth_accuTreeM
     {α β σ : Type}

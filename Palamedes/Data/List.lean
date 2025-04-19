@@ -53,7 +53,7 @@ attribute [local simp]
   Functor.map
   optBind_bind
 in
-theorem List.unfoldr_unfoldr_support :
+theorem support_unfoldr :
     support (List.unfoldr f b) = List.unfoldr_support (λ b' => support (f b')) b := by
   funext xs
   simp_all
@@ -66,10 +66,7 @@ theorem List.unfoldr_unfoldr_support :
       cases v' <;> simp_all
       have ⟨v'', hv''⟩ := hv'2
       cases v'' <;> simp_all
-    . intro h
-      exists 1
-      simp
-      exists .nil
+    . aesop (add unsafe (by exists 1))
   | cons x xs ih =>
     apply Iff.intro
     . intro ⟨n, h⟩
