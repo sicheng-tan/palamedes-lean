@@ -1,6 +1,6 @@
 import Palamedes.Synth
 import Palamedes.Sample
-import Palamedes.Tree
+import Palamedes.Data.Tree
 import Mathlib.Tactic.Convert
 
 #set_up_palamedes_simp

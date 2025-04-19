@@ -1,8 +1,8 @@
 import Palamedes.Free
 import Palamedes.Support
 import Palamedes.Util
-import Palamedes.List
-import Palamedes.Tree
+import Palamedes.Data.List
+import Palamedes.Data.Tree
 import Palamedes.Decidable
 import Palamedes.RuleSets
 import Palamedes.InternalizeProofs
