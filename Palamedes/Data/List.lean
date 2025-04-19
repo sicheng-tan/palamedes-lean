@@ -29,16 +29,33 @@ def List.accuM
   | [] => z s
   | x :: xs => do f x (← List.accuM st f z xs (st x s)) s
 
+private def List.unfoldr_aux (n : Nat) (f : β → Gen (ListF α β)) (b : β) : Gen (Option (List α)) :=
+  match n with
+  | 0 => pure none
+  | n + 1 => do
+    match (← f b) with
+    | .nil => pure (some [])
+    | .cons x b' => .map (x :: .) <$> List.unfoldr_aux n f b'
+
+attribute [local simp]
+  bind
+  optBind_bind
+in
+theorem unfoldr_aux_monotonic :
+    some v ∈ 〚List.unfoldr_aux n f b〛 →
+    some v ∈ 〚List.unfoldr_aux (n + 1) f b〛 := by
+  induction n generalizing v f b <;> try simp
+  case succ n' ih =>
+  unfold List.unfoldr_aux
+  simp
+  intro l hl hv
+  exists l
+  apply And.intro hl
+  cases l <;> simp_all [Functor.map, Option.map]
+  aesop
+
 def List.unfoldr (f : β → Gen (ListF α β)) (b : β) : Gen (List α) :=
-  .sized (λ n => go n f b)
-  where
-    go (n : Nat) (f : β → Gen (ListF α β)) (b : β) : Gen (Option (List α)) :=
-      match n with
-      | 0 => pure none
-      | n + 1 => do
-        match (← f b) with
-        | .nil => pure (some [])
-        | .cons x b' => .map (x :: .) <$> go n f b'
+  .sized (λ n => List.unfoldr_aux n f b)
 
 @[simp]
 def List.unfoldr_support (P : β → ListF α β → Prop) (b : β) (xs : List α) : Prop :=
@@ -49,7 +66,7 @@ def List.unfoldr_support (P : β → ListF α β → Prop) (b : β) (xs : List �
 attribute [local simp]
   Bind.bind
   List.unfoldr
-  List.unfoldr.go
+  List.unfoldr_aux
   Functor.map
   optBind_bind
 in
