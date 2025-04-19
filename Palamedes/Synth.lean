@@ -1,5 +1,4 @@
 import Palamedes.Support
-import Palamedes.Util
 import Palamedes.Data.List
 import Palamedes.Data.Tree
 import Palamedes.Decidable
