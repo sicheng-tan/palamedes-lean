@@ -8,7 +8,7 @@ inductive Ty : Type where
 
 def genTy (n : Nat) : Gen (Option Ty) :=
   Nat.fold (λ _ (g : Gen (Option Ty)) =>
-    wpick (4, 1)
+    pick
       (pure (some Ty.unit))
       (do
         let g1 ← g
@@ -34,15 +34,15 @@ theorem genTy_monotonic
   | zero => simp_all
   | succ n' ih =>
     match v with
-    | .unit => simp_all [Nat.fold, wpick, optPick_pick, bind, optBind_bind]
+    | .unit => simp_all [Nat.fold, pick, optPick_pick, bind, optBind_bind]
     | .arrow τ₁ τ₂ =>
-      simp [Nat.fold, wpick, optPick_pick, bind, optBind_bind] at hn
+      simp [Nat.fold, pick, optPick_pick, bind, optBind_bind] at hn
       have ⟨τ₁', hτ₁, ⟨τ₂', hτ₂, heq⟩⟩ := hn
       have ⟨rfl, rfl⟩ : τ₁ = τ₁' ∧ τ₂ = τ₂' := by
         cases τ₁' <;> cases τ₂' <;> (simp_all [Option.map, Seq.seq]; try contradiction)
       clear heq
       unfold Nat.fold
-      simp [wpick, optPick_pick, bind, optBind_bind]
+      simp [pick, optPick_pick, bind, optBind_bind]
       exists some τ₁
       apply And.intro (ih hτ₁)
       exists some τ₂
@@ -58,13 +58,13 @@ instance : Arbitrary Ty where
       | unit =>
         simp_all
         exists 1
-        simp [Nat.fold, wpick, optPick_pick]
+        simp [Nat.fold, pick, optPick_pick]
       | arrow τ₁ τ₂ ih₁ ih₂ =>
         simp_all
         have ⟨n₁, ih₁⟩ := ih₁
         have ⟨n₂, ih₂⟩ := ih₂
         exists n₁ + n₂ + 1
-        simp_all [Nat.fold, wpick, optPick_pick, bind, optBind_bind]
+        simp_all [Nat.fold, pick, optPick_pick, bind, optBind_bind]
         exists some τ₁
         apply And.intro
         . conv =>

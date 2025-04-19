@@ -3,7 +3,7 @@ import Palamedes.Free
 @[simp]
 def support : Gen α → α → Prop
   | .ret v' => (. = v')
-  | .pick _ x y => λ v => support x v ∨ support y v
+  | .pick x y => λ v => support x v ∨ support y v
   | .sized f => λ v => ∃ n, support (f n) (some v)
   | .bind x f => λ v => ∃ v', support x v' ∧ support (f v') v
   | .guardIn P _ f => λ v => ∃ h : P, support (f h) v
@@ -25,7 +25,7 @@ class Arbitrary (α : Type) where
 instance : Arbitrary Unit where
   arbitrary := ⟨pure (), by simp⟩
 
-theorem optPick_pick (x y : Gen α) : support (optPick w x y) = support (.pick w x y) := by
+theorem optPick_pick (x y : Gen α) : support (optPick x y) = support (.pick x y) := by
   generalize hn : genMeasure x + genMeasure y = n
   induction n generalizing x y
   case zero =>

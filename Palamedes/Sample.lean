@@ -29,9 +29,9 @@ def next : SampleM Nat := ExceptT.lift Plausible.Rand.next
 def randBound (lo hi : Nat) (pf : lo ≤ hi) : SampleM {v : Nat // lo ≤ v ∧ v ≤ hi} := do
   ExceptT.lift (Plausible.Random.randBound Nat lo hi pf)
 
-def weightedChoice (w₁ w₂ : Nat) (g₁ g₂ : IO (SampleM α)) : SampleM α := do
-  let ⟨b, _⟩ ← SampleM.randBound 0 (w₁ + w₂ - 1) (by simp)
-  if b < w₁ then (← g₁) else (← g₂)
+def weightedChoice (g₁ g₂ : IO (SampleM α)) : SampleM α := do
+  let ⟨b, _⟩ ← SampleM.randBound 0 1 (by simp)
+  if b == 0 then (← g₁) else (← g₂)
 
 def run : SampleM α → IO α := (. >>= IO.ofExcept) ∘ Plausible.runRand ∘ ExceptT.run
 
@@ -51,7 +51,6 @@ partial def sizedLoop
 
 partial def backtrackLoop
     (cfg : SampleConfig)
-    (w₁ w₂ : Nat)
     (x y : Gen α)
     (remaining : Nat) :
     SampleM α :=
@@ -61,12 +60,12 @@ partial def backtrackLoop
     let x' := IO.lazyPure (λ () => sampleRand cfg x)
     let y' := IO.lazyPure (λ () => sampleRand cfg y)
     ExceptT.tryCatch
-      (weightedChoice w₁ w₂ x' y')
-      (λ () => backtrackLoop cfg w₁ w₂ x y remaining')
+      (weightedChoice x' y')
+      (λ () => backtrackLoop cfg x y remaining')
 
 partial def sampleRand (cfg : SampleConfig) : Gen α → SampleM α
   | .ret v' => pure v'
-  | .pick (w₁, w₂) x y => backtrackLoop cfg w₁ w₂ x y cfg.backtrackLimit
+  | .pick x y => backtrackLoop cfg x y cfg.backtrackLimit
   | .sized f => sizedLoop cfg cfg.sizeLimit f cfg.sizeRetryLimit
   | .bind x f => sampleRand cfg x >>= sampleRand cfg ∘ f
   | .guardIn p _ f => if h : p then sampleRand cfg (f h) else throw ()

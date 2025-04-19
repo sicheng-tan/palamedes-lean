@@ -14,8 +14,8 @@ def Gen.internalizeProofs
         exists a.val
         exact And.intro a.property h
       ⟩) <$> Gen.internalizeProofs (f a))
-  | .pick w x y =>
-    optPick w
+  | .pick x y =>
+    optPick
       ((λ ⟨x, h⟩ => ⟨x, by left; assumption⟩) <$> Gen.internalizeProofs x)
       ((λ ⟨x, h⟩ => ⟨x, by right; assumption⟩) <$> Gen.internalizeProofs y)
   | .guardIn P d f =>
@@ -35,7 +35,7 @@ def injProof_correct :
     ⟨a, h⟩ ∈ 〚Gen.internalizeProofs g〛 := by
   induction g with
   | ret v => simp
-  | pick _ x y ihx ihy => simp_all [Gen.internalizeProofs]
+  | pick x y ihx ihy => simp_all [Gen.internalizeProofs]
   | bind x f ihx ihf => simp_all [Gen.internalizeProofs]
   | sized f ihf =>
     intro hf

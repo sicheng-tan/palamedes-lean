@@ -2,7 +2,7 @@ import Palamedes.Support
 
 def total : Gen α → Prop
   | .ret _ => True
-  | .pick _ x y => total x ∧ total y
+  | .pick x y => total x ∧ total y
   | .sized f => ∀ n, total (f n)
   | .bind x f => total x ∧ ∀ v, v ∈ 〚x〛  → total (f v)
   | .guardIn P _ f => (h : P) → total (f h)
@@ -19,9 +19,9 @@ theorem total_optBind
 theorem total_optPick
     (hx : total x)
     (hy : total y) :
-    total (optPick w x y) := by
+    total (optPick x y) := by
   generalize hn : genMeasure x + genMeasure y = n
-  induction n generalizing x y w
+  induction n generalizing x y
   case zero =>
     cases hx : x with
     | guardIn P _ f =>
