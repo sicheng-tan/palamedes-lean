@@ -1,5 +1,15 @@
 import Palamedes.Support
 import Mathlib.Logic.Equiv.Basic
+import Mathlib.Control.Traversable.Basic
+
+class Traversable1 (t : Type u → Type u) extends Functor t where
+  -- Had to change the type of this slightly, previously it tried to enforce that
+  --   m : Type u → Type
+  -- but that ruled out Gen.
+  traverse : ∀ {m} [Monad m] {α β}, (α → m β) → t α → m (t β)
+
+-- def sequence [Traversable1 t] [Monad m] : t (m α) → m (t α) :=
+--   Traversable1.traverse id
 
 inductive ListF (α β : Type) where
   | nil : ListF α β
@@ -11,9 +21,6 @@ def iter (n : Nat) (f : α → α) : α → α :=
   | m + 1 => f ∘ iter m f
 
 abbrev Fix (f : Type → Type) := Σ n, iter n f Empty
-
-def foldFix [Functor f] (x : f (Fix f)) : Fix f :=
-  sorry
 
 def toFix : List α → Fix (ListF α)
   | [] => ⟨1, .nil⟩
@@ -34,14 +41,17 @@ theorem left_inverse : ofFix (toFix xs) = xs := by
 def Fix.fold [Functor f] (alg : f β → β) : Fix f → β
   | ⟨n + 1, x⟩ => alg ((Fix.fold alg ⟨n, ·⟩) <$> x)
 
-class Traversable (t : Type u → Type u) extends Functor t where
-  -- Had to change the type of this slightly, previously it tried to enforce that
-  --   m : Type u → Type
-  -- but that ruled out Gen.
-  traverse : ∀ {m} [Monad m] {α β}, (α → m β) → t α → m (t β)
-
-def sequence [Traversable t] [Monad m] : t (m α) → m (t α) :=
-  Traversable.traverse id
+instance {α} : Traversable1 (ListF α) where
+  map :=
+    λ f t =>
+      match t with
+      | .nil => .nil
+      | .cons x xs => .cons x (f xs)
+  traverse :=
+    λ f t =>
+      match t with
+      | .nil => pure .nil
+      | .cons x xs => .cons x <$> f xs
 
 instance {α} : Traversable (ListF α) where
   map :=
@@ -50,21 +60,23 @@ instance {α} : Traversable (ListF α) where
       | .nil => .nil
       | .cons x xs => .cons x (f xs)
   traverse :=
-    λ f t => do
+    λ f t =>
       match t with
       | .nil => pure .nil
       | .cons x xs => .cons x <$> f xs
 
--- def Fix.unfold [Traversable t] (coalg : β → Gen (t β)) : β → Gen (Fix t) :=
---   let rec go (b : β) (fuel : Nat) : Gen (Option (Fix t)) :=
---     match fuel with
---     | 0 => pure none
---     | fuel' + 1 => do
---       let x ← coalg b
---       let foo ← Traversable.traverse (λ b' => go b' fuel') x
---       let bar : Option (t (Fix t)) := sequence foo
---       pure bar
---   (λ b => .sized (go b))
+def Fix.unfold [Traversable1 t] [Traversable t] (coalg : β → Gen (t β)) : β → Gen (Fix t) :=
+  let rec go (b : β) (n : Nat) : Gen (Option (iter n t Empty)) :=
+    match n with
+    | 0 => pure none
+    | n' + 1 => do
+      let x ← coalg b
+      let res? ← sequence <$> Traversable1.traverse (λ b' => go b' n') x
+      pure res?
+  (λ b => .sized (λ n => do
+    match (← go b n) with
+    | some x => pure (some ⟨n, x⟩)
+    | none => pure none))
 
 def unfoldr'' (n : Nat) (f : β → Gen (ListF α β)) (b : β) : Gen (Option (Fix (ListF α))) :=
   match n with
@@ -185,7 +197,7 @@ theorem support_unfoldr'' :
         match v' with
         | .nil => aesop
         | .cons _ b'' =>
-          aesop?
+          aesop (config := {warnOnNonterminal := false})
           exists b''
           simp_all
           apply (@ih b'').mp
