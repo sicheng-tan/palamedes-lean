@@ -52,7 +52,7 @@ theorem genTy_monotonic
 attribute [local simp] genTy in
 instance : Arbitrary Ty where
   arbitrary := ⟨
-    Gen.sized genTy, by
+    Gen.indexed genTy, by
       intro τ
       induction τ with
       | unit =>
@@ -205,7 +205,7 @@ theorem Term.unfold'_monotonic
       | _, none => simp_all only [Option.pure_def, Option.bind_eq_bind, Option.none_bind, Option.bind_none, reduceCtorEq, and_false]
 
 def Term.unfold (f : β → Gen (TermF β)) (b : β) : Gen Term :=
-  Gen.sized (λ n => Term.unfold' n f b)
+  Gen.indexed (λ n => Term.unfold' n f b)
 
 @[simp]
 def Term.unfold_support (P : β → TermF β → Prop) (b : β) : Term → Prop
@@ -444,9 +444,8 @@ theorem support_elements
 
 def indicesOf [DecidableEq α] (xs : List α) (a : α) : Gen Nat :=
   let inds := (xs.enum.filter (λ (_, x) => x == a)).map (λ (n, _) => n)
-  .guardIn (inds.length > 0)
-           (if h : inds.length > 0 then isTrue h else isFalse h)
-           (λ h => elements inds h)
+  .assume (inds.length > 0)
+          (λ h => elements inds (by simp_all only [decide_eq_true_eq]))
 
 theorem Option.rec_exists : Option.rec False (λ _ => True) o ↔ ∃ v, o = some v := by
   match o with

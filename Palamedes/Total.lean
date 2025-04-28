@@ -3,9 +3,9 @@ import Palamedes.Support
 def total : Gen α → Prop
   | .ret _ => True
   | .pick x y => total x ∧ total y
-  | .sized f => ∀ n, total (f n)
+  | .indexed f => ∀ n, total (f n)
   | .bind x f => total x ∧ ∀ v, v ∈ 〚x〛  → total (f v)
-  | .guardIn P _ f => (h : P) → total (f h)
+  | .assume b f => (h : b) → total (f h)
 
 theorem total_optBind
     (hx : total x)
@@ -24,20 +24,20 @@ theorem total_optPick
   induction n generalizing x y
   case zero =>
     cases hx : x with
-    | guardIn P _ f =>
-      by_cases h : P
+    | assume b f =>
+      by_cases h : b
       . simp_all [optPick]
       . simp_all [optPick]
     | _ =>
       cases hy : y with
-      | guardIn Q _ g =>
-        by_cases h' : Q
+      | assume b g =>
+        by_cases h' : b
         . simp_all [optPick]
         . simp_all [optPick]
       | _ => aesop (add simp optPick) (add simp total)
   case succ m ih =>
     cases x with
-    | guardIn P _ f =>
+    | assume b f =>
       simp [optPick]
       split
       . simp_all [total]
@@ -50,8 +50,8 @@ theorem total_optPick
       . simp_all [total]
     | _ =>
       cases hy : y with
-      | guardIn Q _ g =>
-        by_cases h' : Q
+      | assume b g =>
+        by_cases h' : b
         . subst y
           simp_all [total]
           simp [optPick]

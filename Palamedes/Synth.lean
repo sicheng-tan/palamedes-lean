@@ -196,7 +196,7 @@ abbrev synth_accuTreeM
     (g : (b : β) → (s : σ) → CGen (TreeF.rec (z s = some b) (λ bl a br => f bl a br s = some b))) :
     CGen (λ v => Tree.accuM st f z v s = some b) :=
   Subtype.mk
-    (.sized (λ n => unfoldTree n (λ (b, s) => do
+    (.indexed (λ n => unfoldTree n (λ (b, s) => do
       match (← (g b s).val) with
       | .leaf => pure .leaf
       | .node bl x br =>
@@ -246,7 +246,7 @@ abbrev synth_true
 abbrev synth_between
     {lo hi : Nat} :
     CGen (λ v => lo ≤ v ∧ v ≤ hi) :=
-  Subtype.mk (.guardIn (lo ≤ hi) (Nat.decLe lo hi) (choose lo hi ·)) <| by
+  Subtype.mk (.assume (lo ≤ hi) (λ h => choose lo hi (by simp_all only [decide_eq_true_eq]))) <| by
     intro v
     simp_all
     exact Nat.le_trans

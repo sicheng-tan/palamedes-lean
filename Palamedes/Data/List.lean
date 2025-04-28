@@ -55,7 +55,7 @@ theorem unfoldr_aux_monotonic :
   aesop
 
 def List.unfoldr (f : β → Gen (ListF α β)) (b : β) : Gen (List α) :=
-  .sized (λ n => List.unfoldr_aux n f b)
+  .indexed (λ n => List.unfoldr_aux n f b)
 
 @[simp]
 def List.unfoldr_support (P : β → ListF α β → Prop) (b : β) (xs : List α) : Prop :=

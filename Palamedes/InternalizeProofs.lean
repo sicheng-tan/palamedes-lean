@@ -17,11 +17,11 @@ def Gen.internalizeProofs
     optPick
       ((λ ⟨x, h⟩ => ⟨x, by left; assumption⟩) <$> Gen.internalizeProofs x)
       ((λ ⟨x, h⟩ => ⟨x, by right; assumption⟩) <$> Gen.internalizeProofs y)
-  | .guardIn P d f =>
-    .guardIn P d (λ h =>
+  | .assume b f =>
+    .assume b (λ h =>
       (λ ⟨x, h'⟩ => ⟨x, by simp; exists h⟩) <$> Gen.internalizeProofs (f h))
-  | .sized f =>
-    .sized (λ n =>
+  | .indexed f =>
+    .indexed (λ n =>
       (λ ⟨x, h⟩ =>
         match hx : x with
         | none => none
@@ -34,9 +34,9 @@ def injProof_correct :
     ⟨a, h⟩ ∈ 〚Gen.internalizeProofs g〛 := by
   induction g with
   | ret v => simp
-  | pick x y ihx ihy => simp_all [Gen.internalizeProofs]
-  | bind x f ihx ihf => simp_all [Gen.internalizeProofs]
-  | sized f ihf =>
+  | pick _ _ _ _ => simp_all [Gen.internalizeProofs]
+  | bind _ _ _ _ => simp_all [Gen.internalizeProofs]
+  | indexed f ihf =>
     intro hf
     have ⟨n, hn⟩ := h
     simp
@@ -46,7 +46,7 @@ def injProof_correct :
     simp
     apply ihf
     exact hn
-  | guardIn P _ f => simp_all
+  | assume _ _ => simp_all
 
 def CGen.internalizeProofs
     {α : Type}

@@ -4,9 +4,9 @@ import Palamedes.Gen
 def support : Gen α → α → Prop
   | .ret v' => (. = v')
   | .pick x y => λ v => support x v ∨ support y v
-  | .sized f => λ v => ∃ n, support (f n) (some v)
+  | .indexed f => λ v => ∃ n, support (f n) (some v)
   | .bind x f => λ v => ∃ v', support x v' ∧ support (f v') v
-  | .guardIn P _ f => λ v => ∃ h : P, support (f h) v
+  | .assume b f => λ v => ∃ h : b, support (f h) v
 
 notation v " ∈ 〚" g "〛" => support g v
 
@@ -30,8 +30,8 @@ theorem optPick_pick (x y : Gen α) : support (optPick x y) = support (.pick x y
   induction n generalizing x y
   case zero =>
     cases hx : x with
-    | guardIn P _ f =>
-      by_cases h : P
+    | assume b f =>
+      by_cases h : b
       . simp_all [optPick]
       . simp_all [optPick]
         funext v
@@ -39,8 +39,8 @@ theorem optPick_pick (x y : Gen α) : support (optPick x y) = support (.pick x y
         simp_all only [not_false_eq_true, eq_iff_iff, iff_or_self, forall_exists_index, forall_false]
     | _ =>
       cases hy : y with
-      | guardIn Q _ g =>
-        by_cases h' : Q
+      | assume b g =>
+        by_cases h' : b
         . simp_all [optPick]
         . simp_all [optPick]
           funext x
@@ -49,8 +49,8 @@ theorem optPick_pick (x y : Gen α) : support (optPick x y) = support (.pick x y
       | _ => simp_all [optPick]
   case succ m ih =>
     cases x with
-    | guardIn P _ f =>
-      by_cases h : P
+    | assume b f =>
+      by_cases h : b
       . simp_all [optPick]
         rw [← ih]
         conv at hn =>
@@ -64,8 +64,8 @@ theorem optPick_pick (x y : Gen α) : support (optPick x y) = support (.pick x y
         simp_all only [not_false_eq_true, eq_iff_iff, iff_or_self, forall_exists_index, forall_false]
     | _ =>
       cases hy : y with
-      | guardIn Q _ g =>
-        by_cases h' : Q
+      | assume b g =>
+        by_cases h' : b
         . simp_all [optPick]
           conv at hn => lhs; rw [Nat.add_comm]
           simp_all
@@ -92,7 +92,7 @@ theorem optBind_bind : support (optBind x f) = support (.bind x f) := by
       exists a
       apply And.intro ha1
       exists v'
-  case guardIn P _ g ih =>
+  case assume b g ih =>
     apply Iff.intro
     . intro ⟨v', a, ⟨ha1, ha2⟩⟩
       exists a
@@ -114,7 +114,7 @@ def arbNat (fuel : Nat) : Gen (Option Nat) :=
 
 instance : Arbitrary Nat where
   arbitrary :=  ⟨
-      .sized arbNat,
+      .indexed arbNat,
       by
         intro v
         induction v with

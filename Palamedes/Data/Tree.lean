@@ -171,7 +171,7 @@ theorem unfoldTree_monotonic
       apply unfoldTree_monotonic' this
 
 theorem support_unfoldTree_ok :
-    support (.sized (λ n => unfoldTree n f b)) = support_unfoldTree (λ b' => support (f b')) b := by
+    support (.indexed (λ n => unfoldTree n f b)) = support_unfoldTree (λ b' => support (f b')) b := by
   funext t
   induction t generalizing b with
   | leaf =>
