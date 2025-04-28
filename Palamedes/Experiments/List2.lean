@@ -63,7 +63,7 @@ def Fix.unfold
       let x ← coalg b
       let res? ← traverse id <$> traverse (λ b' => go b' n') x
       pure res?
-  (λ b => .sized (λ n => do
+  (λ b => .indexed (λ n => do
     match (← go b n) with
     | some x => pure (some ⟨n, x⟩)
     | none => pure none))
