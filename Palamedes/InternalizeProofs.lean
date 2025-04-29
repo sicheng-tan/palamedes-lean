@@ -7,14 +7,14 @@ def Gen.internalizeProofs
   match g with
   | .ret v => .ret ⟨v, by simp⟩
   | .bind x f => do
-    optBind (Gen.internalizeProofs x) (λ a =>
+    bind (Gen.internalizeProofs x) (λ a =>
       (λ ⟨x, h⟩ => ⟨x, by
         simp
         exists a.val
         exact And.intro a.property h
       ⟩) <$> Gen.internalizeProofs (f a))
   | .pick x y =>
-    optPick
+    pick
       ((λ ⟨x, h⟩ => ⟨x, by left; assumption⟩) <$> Gen.internalizeProofs x)
       ((λ ⟨x, h⟩ => ⟨x, by right; assumption⟩) <$> Gen.internalizeProofs y)
   | .assume b f =>
@@ -55,9 +55,9 @@ def CGen.internalizeProofs
     (@CGen {v // P v} (λ v => P (↑v))) :=
   let ⟨g_val, g_property⟩ := g
   let g' := Gen.internalizeProofs g_val
-  ⟨optBind g' (λ ⟨x, pf⟩ => pure ⟨x, (g_property x).mp pf⟩),
+  ⟨bind g' (λ ⟨x, pf⟩ => pure ⟨x, (g_property x).mp pf⟩),
    by
-    simp [optBind_bind]
+    simp [optBind_bind, bind]
     intro a
     intro pf
     apply Iff.intro

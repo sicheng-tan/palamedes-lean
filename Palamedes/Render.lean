@@ -101,12 +101,25 @@ def cgenBST (lo hi : Nat) : CGen (λ v => isBST lo hi v = some ()) := by
 
 #extract_generator (λ lo hi => (cgenBST lo hi).val) as genBST'
 
+theorem bind_ret : (pure x : Gen α) >>= f = f x := by simp [bind, optBind]
+theorem bind_assume : Gen.assume b x >>= f = Gen.assume b (λ h => (x h >>= f)) := by simp [bind, optBind]
+axiom bind_assoc'
+  {α β γ : Type}
+  {x : Gen α}
+  {f : α → Gen β}
+  {g : β → Gen γ}
+  : (x >>= f) >>= g = x >>= (f >=> g)
+theorem pick_assume_r : pick x (Gen.assume b f) = if h : b then pick x (f h) else x :=
+  sorry
+
+theorem bind_optBind : optBind f x = bind f x := by simp [bind, optBind]
+
 attribute [local simp]
-  bind
-  optBind
-  pick
-  optPick
-  pure
+  bind_optBind
+  bind_ret
+  bind_assume
+  bind_assoc'
+  pick_assume_r
   CGen.internalizeProofs
   Gen.internalizeProofs
   Functor.map

@@ -197,11 +197,11 @@ abbrev synth_accuTreeM
     CGen (λ v => Tree.accuM st f z v s = some b) :=
   Subtype.mk
     (.indexed (λ n => unfoldTree n (λ (b, s) => do
-      match (← (g b s).val) with
-      | .leaf => pure .leaf
-      | .node bl x br =>
-        let (sl, sr) := st x s
-        pure (.node (bl, sl) x (br, sr))) (b, s)))
+      return match (← (g b s).val) with
+        | .leaf => .leaf
+        | .node bl x br =>
+          let (sl, sr) := st x s
+          (.node (bl, sl) x (br, sr))) (b, s)))
   (by
     rw [support_unfoldTree_ok]
     simp_all
