@@ -14,7 +14,6 @@ abbrev synth_pure
 abbrev synth_bind
     {P : α → Prop}
     {Q : α → β → Prop}
-    [(x : α) → Decidable (P x)]
     (hb : CGen P)
     (hf : (a : {v : α // P v}) → CGen (Q a)) :
     CGen (λ v => ∃ a, P a ∧ Q a v) :=
