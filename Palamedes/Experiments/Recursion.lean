@@ -39,8 +39,8 @@ abbrev synth_List_rec
     {f : α → Prop}
     (g : CGen (ListF.rec True (λ a () => f a))) :
     CGen (λ v => List.rec (motive := λ _ => Prop) True (λ h _ t => f h ∧ t) v) :=
-  Subtype.mk (.sized (λ n => unfoldr' n (λ b => g.val) ())) <| by
-    rw [support_unfoldr']
+  Subtype.mk (List.unfoldr (λ b => g.val) ()) <| by
+    rw [support_unfoldr]
     intro v
     induction v with
     | nil =>
