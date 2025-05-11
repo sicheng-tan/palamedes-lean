@@ -44,15 +44,17 @@ in
 theorem unfoldr_aux_monotonic :
     some v ∈ 〚List.unfoldr_aux n f b〛 →
     some v ∈ 〚List.unfoldr_aux (n + 1) f b〛 := by
-  induction n generalizing v f b <;> try simp
+  induction n generalizing v f b
+  case zero =>
+    simp [List.unfoldr_aux]
   case succ n' ih =>
-  unfold List.unfoldr_aux
-  simp
-  intro l hl hv
-  exists l
-  apply And.intro hl
-  cases l <;> simp_all [Functor.map, Option.map]
-  aesop
+    unfold List.unfoldr_aux
+    simp
+    intro l hl hv
+    exists l
+    apply And.intro hl
+    cases l <;> simp_all [Functor.map, Option.map]
+    aesop
 
 def List.unfoldr (f : β → Gen (ListF α β)) (b : β) : Gen (List α) :=
   .indexed (λ n => List.unfoldr_aux n f b)

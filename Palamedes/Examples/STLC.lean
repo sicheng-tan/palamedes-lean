@@ -7,20 +7,22 @@ inductive Ty : Type where
   deriving DecidableEq, Repr
 
 def genTy (n : Nat) : Gen (Option Ty) :=
-  Nat.fold (λ _ (g : Gen (Option Ty)) =>
-    pick
-      (pure (some Ty.unit))
-      (do
-        let g1 ← g
-        let g2 ← g
-        pure (Ty.arrow <$> g1 <*> g2)))
-    n
+  n.rec
     (pure none)
+    (λ _ (g : Gen (Option Ty)) =>
+      pick
+        (pure (some Ty.unit))
+        (do
+          let g1 ← g
+          let g2 ← g
+          pure (Ty.arrow <$> g1 <*> g2)))
+
 
 theorem Nat.fold_some
-    (hf : ∀ {n b v}, some v ∈ 〚f n b〛 → some v ∈ 〚f (n + 1) b〛)
-    (h : some v ∈ 〚Nat.fold f n (pure none)〛) :
-    some v ∈ 〚f n (Nat.fold f (n - 1) (pure none))〛 := by
+    (f )
+    (hf : ∀ {n b v}, some v ∈ 〚f n p b〛 → some v ∈ 〚f (n + 1) p b〛)
+    (h : some v ∈ 〚Nat.fold n f (pure none)〛) :
+    some v ∈ 〚f n (Nat.fold (n - 1) f (pure none))〛 := by
   induction n with
   | zero => simp_all
   | succ n' ih =>

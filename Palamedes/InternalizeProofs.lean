@@ -39,20 +39,20 @@ def injProof_correct :
     a ∈ 〚g〛 →
     ⟨a, h⟩ ∈ 〚Gen.internalizeProofs g〛 := by
   induction g with
-  | ret v => simp
+  | ret v => simp [Gen.internalizeProofs]
   | pick _ _ _ _ => simp_all [Gen.internalizeProofs]
   | bind _ _ _ _ => simp_all [Gen.internalizeProofs]
   | indexed f ihf =>
     intro hf
     have ⟨n, hn⟩ := h
-    simp
+    simp [Gen.internalizeProofs]
     exists n
     exists a
     exists hn
     simp
     apply ihf
     exact hn
-  | assume _ _ => simp_all
+  | assume _ _ => simp_all [Gen.internalizeProofs]
 
 def CGen.internalizeProofs
     {α : Type}

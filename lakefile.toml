@@ -10,16 +10,21 @@ name = "palamedes"
 root = "Main"
 
 [[require]]
-name = "Parser"
-git = "https://github.com/fgdorais/lean4-parser"
-rev = "711662ab6f3c4c0080f6379737b41b1089d3d3f8"
-
-[[require]]
 name = "mathlib"
 git = "https://github.com/leanprover-community/mathlib4"
-rev = "v4.14.0"
+rev = "v4.18.0"
+
+[[require]]
+name = "aesop"
+git = "https://github.com/leanprover-community/aesop"
+rev = "v4.18.0"
 
 [[require]]
 name = "plausible"
 git = "https://github.com/leanprover-community/plausible"
-rev = "v4.14.0"
+rev = "v4.18.0"
+
+[[require]]
+name = "egg"
+git = "https://github.com/marcusrossel/lean-egg"
+rev = "nightly-2025-04-18"

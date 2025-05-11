@@ -111,7 +111,7 @@ theorem unfoldTree_monotonic'
   induction v generalizing n b with
   | leaf =>
     match n with
-    | 0 => simp_all
+    | 0 => simp_all [unfoldTree]
     | .succ _ =>
       simp_all [unfoldTree, bind, optBind_bind]
       have ⟨v', hv'1, hv'2⟩ := hn
@@ -125,7 +125,7 @@ theorem unfoldTree_monotonic'
         | .some _, .some _ => simp_all
   | node l x r ihl ihr =>
     match n with
-    | 0 => simp_all
+    | 0 => simp_all [unfoldTree]
     | .succ n' =>
       simp_all [unfoldTree, bind, optBind_bind]
       have ⟨v', hv'1, hv'2⟩ := hn
@@ -179,7 +179,7 @@ theorem support_unfoldTree_ok :
     apply Iff.intro
     . intro ⟨n, h⟩
       match n with
-      | 0 => simp_all
+      | 0 => simp_all [unfoldTree]
       | n + 1 =>
         simp_all [unfoldTree, bind, optBind_bind]
         have ⟨v', hv'1, hv'2⟩ := h
@@ -203,7 +203,7 @@ theorem support_unfoldTree_ok :
     apply Iff.intro
     . intro ⟨n, h⟩
       match n with
-      | 0 => simp_all
+      | 0 => simp_all [unfoldTree]
       | n + 1 =>
         simp_all [unfoldTree, bind, optBind_bind]
         have ⟨v', hv'1, hv'2⟩ := h
