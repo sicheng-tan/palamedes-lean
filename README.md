@@ -11,17 +11,17 @@ Files:
     * [deps: `Palamedes.Gen`, `Plausible.Random`]
 * `Support.lean`: TODO
     * [deps: `Aesop`, `Palamedes.Gen`]
-* `Total.lean`: predicate and theorems for backtracking-free generators
-    * [deps: `Palamedes.Support`]
-* `InternalizeProofs.lean`: converts a proof that a generator's outputs satisfy a predicate into a generator of values with accompanying proofs that they satisfy the predicate
-    * [deps: `Palamedes.Support`]
 * `Data`: lemmas for building generators for common recursive data structures
     * `List.lean`
         * [deps: `Palamedes.Support`]
     * `Tree.lean`
         * [deps: `Palamedes.Support`]
+* `InternalizeProofs.lean`: converts a proof that a generator's outputs satisfy a predicate into a generator of values with accompanying proofs that they satisfy the predicate
+    * [deps: `Palamedes.Support`]
 * `Synth.lean`: generator synthesis rules and tactics
     * [deps: `Palamedes.Support`, `Palamedes.Data.List`, `Palamedes.Data.Tree`, `Palamedes.Decidable`, `Palamedes.RuleSets`, `Palamedes.InternalizeProofs`]
+* `Total.lean`: predicate and theorems for backtracking-free generators
+    * [deps: `Palamedes.Support`]
 * `Basic.lean`: simple examples
     * [deps: `Palamedes.Synth`, `Palamedes.Sample`, `Palamedes.Data.Tree`, `Mathlib.Tactic.Convert`]
 * `Examples`: extended examples
