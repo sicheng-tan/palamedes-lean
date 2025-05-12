@@ -17,7 +17,7 @@ abbrev synth_bind
     (hb : CGen P)
     (hf : (a : {v : α // P v}) → CGen (Q a)) :
     CGen (λ v => ∃ a, P a ∧ Q a v) :=
-  Subtype.mk (optBind (hb.internalizeProofs).val λ a => (hf a).val) <| by
+  Subtype.mk (optBind hb.internalizeProofs.val λ a => (hf a).val) <| by
     intro v
     rw [optBind_bind]
     obtain ⟨val, property⟩ := hb

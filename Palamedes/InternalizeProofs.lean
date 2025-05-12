@@ -51,7 +51,7 @@ def injProof_correct :
 def CGen.internalizeProofs
     {α : Type}
     {P : α → Prop}
-    (g : CGen P) :
+    (g : @CGen α P) :
     (@CGen {v // P v} (λ v => P (↑v))) :=
   let ⟨g_val, g_property⟩ := g
   let g' := Gen.internalizeProofs g_val
