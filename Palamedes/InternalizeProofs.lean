@@ -1,5 +1,11 @@
 import Palamedes.Support
 
+/-
+Convert a proof that, for some generator g of type Gen α, all the values g
+generates satisfy some proposition P into a generator that produces pairs of
+values and proofs that those values satisfy P.
+-/
+
 def Gen.internalizeProofs
     {α : Type}
     (g : Gen α) :

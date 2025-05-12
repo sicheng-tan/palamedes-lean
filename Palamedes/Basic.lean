@@ -3,6 +3,10 @@ import Palamedes.Sample
 import Palamedes.Data.Tree
 import Mathlib.Tactic.Convert
 
+/-
+Simple examples using palamedes.
+-/
+
 #set_up_palamedes_simp
 
 def genTwo : CGen (λ v => v = 2) := by

@@ -1,6 +1,10 @@
 import Palamedes.Gen
 import Plausible.Random
 
+/-
+Infrastructure for sampling from a generator.
+-/
+
 def replicateM [Monad m] (n : Nat) (mx : m α) : m (List α) :=
   match n with
   | 0 => pure []

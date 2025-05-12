@@ -1,5 +1,9 @@
 import Palamedes.Support
 
+/-
+Predicate and lemmas for backtracking-free generators.
+-/
+
 def total : Gen α → Prop
   | .ret _ => True
   | .pick x y => total x ∧ total y

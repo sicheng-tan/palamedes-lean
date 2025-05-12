@@ -3,6 +3,10 @@ import Palamedes.Sample
 import Palamedes.Examples.BST
 import Mathlib.Tactic.Convert
 
+/-
+Simplifications to improve readability of synthesized generators.
+-/
+
 @[simp]
 theorem simp_CGen_cast
     {x : Gen α}

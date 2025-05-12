@@ -1,3 +1,8 @@
+/-
+Lemmas for rewriting terms with `if` that compile to matches on Decidable P for
+some Prop P.
+-/
+
 theorem deforest_decidable_bind
     {α β : Type}
     {p : Prop}

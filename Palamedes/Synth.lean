@@ -5,6 +5,10 @@ import Palamedes.Decidable
 import Palamedes.RuleSets
 import Palamedes.InternalizeProofs
 
+/-
+Generator synthesis rules and related tactics.
+-/
+
 abbrev synth_pure
     (v' : α) :
     CGen (λ v => v = v') :=
