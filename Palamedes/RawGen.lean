@@ -1,5 +1,3 @@
-import Aesop
-
 inductive Gen : Type → Type 1 where
   | ret : α → Gen α
   | bind : Gen α → (α → Gen β) → Gen β
