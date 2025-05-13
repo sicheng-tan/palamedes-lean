@@ -607,6 +607,8 @@ add_aesop_rules unsafe [
   (by (conv => congr; intro v; rw [exists_comm]); apply synth_bind_arb),
 ]
 
+set_option maxHeartbeats 1000000
+
 def genWellTyped (Γ : Ctx) : CGen (λ (v : Term) =>
     match hasType Γ v with
     | some _ => True
