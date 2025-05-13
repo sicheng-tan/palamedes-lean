@@ -223,3 +223,38 @@ theorem coerce_to_foldr
     (h2 : ∀ x xs, f (x :: xs) = g x (f xs)) :
     f xs = xs.foldr g x := by
   induction xs <;> simp_all
+
+theorem coerce_to_foldrM
+    {xs : List α}
+    {f : List α → Bool}
+    {p : α → Bool}
+    (h1 : f [] = true)
+    (h2 : ∀ x xs, f (x :: xs) = (p x && f xs)) :
+    (f xs = true) = (xs.foldrM (λ x () => guard (p x)) () = some ()) := by
+  induction xs with
+  | nil => simp [h1]
+  | cons x xs ih =>
+    simp [h2, List.foldrM_cons]
+    match hfoldrM : List.foldrM (fun x x_1 => guard (p x = true)) () xs with
+    | none => simp_all
+    | some v => simp_all [guard]
+
+-- theorem coerce_to_foldrM
+--     {xs : List α}
+--     {f : α → Bool → Bool}
+--     {p : α → Bool}
+--     (h₁ : ∀ x, f x true = p x)
+--     (h₂ : ∀ x, f x false = false) :
+--     (xs.foldr f true = true) = (xs.foldrM (λ x () => guard (p x)) () = some ()) := by
+--   induction xs with
+--   | nil => simp
+--   | cons x xs ih =>
+--     simp only [List.foldr, List.foldrM_cons]
+--     match
+--       hfoldr : List.foldr f true xs,
+--       hfoldrM : List.foldrM (fun x x_1 => guard (p x = true)) () xs
+--     with
+--     | true, some () => simp [h₁, guard]
+--     | false, none => simp [h₂]
+--     | true, none => aesop
+--     | false, some () => aesop

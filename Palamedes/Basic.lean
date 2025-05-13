@@ -36,7 +36,12 @@ def genThreeAndTwo : CGen (λ (v : Int × Int) => v.snd = 3 ∧ v.fst = 2) := by
 def genThreeAndTwo' : CGen (λ (v : Int × Int) => ∃ a, ∃ b, b = 3 ∧ a = 2 ∧ v = (a, b)) := by
   palamedes
 
-def genAllTwos : CGen (λ v => List.foldrM (λ x () => guard (x == 2)) () v = Option.some ()) := by
+@[aesop simp (rule_sets := [palamedes])]
+def allTwos : List Nat → Bool
+  | [] => true
+  | x :: xs => x == 2 && allTwos xs
+
+def genAllTwos : CGen (λ v => allTwos v = true) := by
   palamedes
 
 def genInRange : CGen (λ v => 10 ≤ v ∧ v ≤ 20) := by
