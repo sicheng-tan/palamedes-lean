@@ -79,12 +79,17 @@ def genTwoInRange : CGen (λ (v : Nat × Nat) => 0 ≤ v.1 ∧ v.1 ≤ v.2 ∧ v
 def genTwoBetweens : CGen (λ (v : Nat × Nat) => ∃ x, (2 ≤ x ∧ x ≤ 6) ∧ ∃ y, (2 ≤ y ∧ y ≤ 100) ∧ v = (x,y)) := by
   palamedes
 
+@[aesop simp (rule_sets := [palamedes])]
+def evenLength : List α → Bool
+  | [] => true
+  | _ :: xs => not (evenLength xs)
+
 def genEvenLength [Arbitrary α] :
-    CGen (λ (v : List α) => List.foldr (λ _ b => not b) true v) := by
+    CGen (λ (v : List α) => evenLength v = true) := by
   palamedes
 
 def genLengthK {k : Nat} [Arbitrary α] :
-    CGen (λ (v : List α) => List.foldr (λ _ len_xs => len_xs + 1) 0 v = k) := by
+    CGen (λ (v : List α) => List.length v = k) := by
   palamedes
 
 def genEvenLengthTwos :

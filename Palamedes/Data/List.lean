@@ -213,3 +213,13 @@ theorem merge_foldM
         | .none, _ => simp_all
         | _, .none => simp_all
         | .some x₁, .some x₂ => simp_all
+
+theorem coerce_to_foldr
+    {xs : List α}
+    {f : List α → β}
+    {x : β}
+    {g : α → β → β}
+    (h1 : f [] = x)
+    (h2 : ∀ x xs, f (x :: xs) = g x (f xs)) :
+    f xs = xs.foldr g x := by
+  induction xs <;> simp_all

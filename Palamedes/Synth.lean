@@ -315,6 +315,7 @@ add_aesop_rules unsafe (rule_sets := [palamedes]) [
 add_aesop_rules 5% (rule_sets := [palamedes]) [
   cases Nat,
   cases Bool,
+  (by conv => arg 1; intro v; lhs; apply coerce_to_foldr (by aesop) (by aesop)),
 ]
 
 macro "simp_in_proof" : tactic =>
