@@ -246,7 +246,7 @@ theorem coerce_to_accuM
     {t : α → σ → σ}
     (h₁ : ∀ s, f [] s = true)
     (h₂ : ∀ x xs s, f (x :: xs) s = (p x s && f xs (t x s))) :
-    (f xs s = true) = (xs.accuM t (λ x () s => guard (p x s)) (λ _ => pure ()) s = some ()) := by
+    (f xs s = true) = (xs.accuM t (λ x () s => guard (p x s)) (λ _ => some ()) s = some ()) := by
   induction xs generalizing s with
   | nil => simp [List.accuM, h₁]
   | cons x xs ih =>
@@ -255,8 +255,12 @@ theorem coerce_to_accuM
     . aesop
     . intro h
       have := @ih (t x s)
-      match
-        haccuM : List.accuM t (fun x x_1 s => guard (p x s = true)) (fun x => some ()) xs (t x s)
-      with
-      | none => simp_all [pure, haccuM, guard]
-      | some v => simp_all [pure, haccuM, guard]
+      cases
+        haccuM :
+          List.accuM
+            t
+            (fun x x_1 s => guard (p x s = true))
+            (fun x => some ())
+            xs
+            (t x s)
+        <;> simp_all [haccuM, guard]
