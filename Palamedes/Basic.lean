@@ -128,12 +128,13 @@ def genTreeIncreasingByOne :
 def genBetween : CGen (λ v => 3 ≤ v ∧ v ≤ 10) := by
   palamedes
 
+@[aesop simp (rule_sets := [palamedes])]
+def sortedBetween (hi : Nat) : List Nat → Nat → Bool := λ xs lo =>
+  match xs with
+  | [] => true
+  | x :: xs => lo ≤ x && x ≤ hi && sortedBetween hi xs x
+
 def genSortedBetween
     (lo hi : Nat) :
-    CGen (λ v =>
-      List.accuM (λ x _ => x)
-                 (λ x () => λ (prev : Nat) => do guard (prev ≤ x ∧ x ≤ hi))
-                 (λ _ => pure ())
-                 v
-                 lo = some ()) := by
+    CGen (λ v => sortedBetween hi v lo = true) := by
   palamedes
