@@ -239,22 +239,24 @@ theorem coerce_to_foldrM
     | none => simp_all
     | some v => simp_all [guard]
 
--- theorem coerce_to_foldrM
---     {xs : List α}
---     {f : α → Bool → Bool}
---     {p : α → Bool}
---     (h₁ : ∀ x, f x true = p x)
---     (h₂ : ∀ x, f x false = false) :
---     (xs.foldr f true = true) = (xs.foldrM (λ x () => guard (p x)) () = some ()) := by
---   induction xs with
---   | nil => simp
---   | cons x xs ih =>
---     simp only [List.foldr, List.foldrM_cons]
---     match
---       hfoldr : List.foldr f true xs,
---       hfoldrM : List.foldrM (fun x x_1 => guard (p x = true)) () xs
---     with
---     | true, some () => simp [h₁, guard]
---     | false, none => simp [h₂]
---     | true, none => aesop
---     | false, some () => aesop
+theorem coerce_to_accuM
+    {xs : List α}
+    {f : List α → σ → Bool}
+    {p : α → σ → Bool}
+    {t : α → σ → σ}
+    (h₁ : ∀ s, f [] s = true)
+    (h₂ : ∀ x xs s, f (x :: xs) s = (p x s && f xs (t x s))) :
+    (f xs s = true) = (xs.accuM t (λ x () s => guard (p x s)) (λ _ => pure ()) s = some ()) := by
+  induction xs generalizing s with
+  | nil => simp [List.accuM, h₁]
+  | cons x xs ih =>
+    simp [List.accuM, h₂]
+    apply Iff.intro
+    . aesop
+    . intro h
+      have := @ih (t x s)
+      match
+        haccuM : List.accuM t (fun x x_1 s => guard (p x s = true)) (fun x => some ()) xs (t x s)
+      with
+      | none => simp_all [pure, haccuM, guard]
+      | some v => simp_all [pure, haccuM, guard]

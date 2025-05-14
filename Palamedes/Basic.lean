@@ -107,13 +107,13 @@ def genLengthKTwos (k : Nat) :
       List.foldrM (λ x () => guard (x == 2)) () v = Option.some ()) := by
   palamedes
 
-def genIncreasingByOne :
-    CGen (λ v =>
-      List.accuM (λ x _ => x)
-                 (λ x () => λ (prev : Int) => do guard (x == prev + 1))
-                 (λ _ => pure ())
-                 v
-                 0 = some ()) := by
+@[aesop simp (rule_sets := [palamedes])]
+def increasingByOne : List Int → Int → Bool := λ xs prev =>
+  match xs with
+  | [] => true
+  | x :: xs => x == prev + 1 && increasingByOne xs x
+
+def genIncreasingByOne : CGen (λ (v : List Int) => increasingByOne v 0) := by
   palamedes
 
 def genTreeIncreasingByOne :

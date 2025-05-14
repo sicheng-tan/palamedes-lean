@@ -317,6 +317,7 @@ add_aesop_rules 5% (rule_sets := [palamedes]) [
   cases Bool,
   (by conv => arg 1; intro v; lhs; apply coerce_to_foldr (by aesop) (by aesop)),
   (by conv => arg 1; intro v; apply (coerce_to_foldrM (by aesop) (by aesop))),
+  (by conv => congr; intro v; apply coerce_to_accuM (by aesop) (by aesop)),
 ]
 
 macro "simp_in_proof" : tactic =>
