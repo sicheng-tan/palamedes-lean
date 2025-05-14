@@ -254,13 +254,5 @@ theorem coerce_to_accuM
     apply Iff.intro
     . aesop
     . intro h
-      have := @ih (t x s)
-      cases
-        haccuM :
-          List.accuM
-            t
-            (fun x x_1 s => guard (p x s = true))
-            (fun x => some ())
-            xs
-            (t x s)
-        <;> simp_all [haccuM, guard]
+      simp_all [Option.bind, guard]
+      aesop

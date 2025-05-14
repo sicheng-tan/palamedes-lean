@@ -254,3 +254,22 @@ theorem TreeF_or
   match t with
   | .leaf => simp
   | .node _ _ _ => aesop
+
+theorem Tree.coerce_to_accuM
+    {t : Tree α}
+    {f : Tree α → σ → Bool}
+    {p : α → σ → Bool}
+    {st₁ : α → σ → σ}
+    {st₂ : α → σ → σ}
+    (h₁ : ∀ s, f .leaf s = true)
+    (h₂ : ∀ l x r s, f (.node l x r) s = (p x s && f l (st₁ x s) && f r (st₂ x s))) :
+    (f t s = true) = (t.accuM (λ x s => ⟨st₁ x s, st₂ x s⟩) (λ () x () s => guard (p x s)) (λ _ => some ()) s = some ()) := by
+  induction t generalizing s with
+  | leaf => simp [Tree.accuM, h₁]
+  | node l x r ih =>
+    simp [Tree.accuM, h₂]
+    apply Iff.intro
+    . aesop
+    . intro h
+      simp_all [Option.bind, guard]
+      aesop
