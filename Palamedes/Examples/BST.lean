@@ -5,7 +5,6 @@ import Mathlib.Tactic.Convert
 
 #set_up_palamedes_simp
 
-@[aesop simp (rule_sets := [palamedes])]
 def isBST : Tree Nat → (Nat × Nat) → Bool := λ t ⟨lo, hi⟩ =>
   match t with
   | .leaf => true

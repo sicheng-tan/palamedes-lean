@@ -261,11 +261,12 @@ theorem Tree.coerce_to_accuM
     {p : α → σ → Bool}
     {st₁ : α → σ → σ}
     {st₂ : α → σ → σ}
-    (h₁ : ∀ s, f .leaf s = true)
+    {z : σ → Bool}
+    (h₁ : ∀ s, f .leaf s = z s)
     (h₂ : ∀ l x r s, f (.node l x r) s = (p x s && f l (st₁ x s) && f r (st₂ x s))) :
-    (f t s = true) = (t.accuM (λ x s => ⟨st₁ x s, st₂ x s⟩) (λ () x () s => guard (p x s)) (λ _ => some ()) s = some ()) := by
+    (f t s = true) = (t.accuM (λ x s => ⟨st₁ x s, st₂ x s⟩) (λ () x () s => guard (p x s)) (λ s => guard (z s)) s = some ()) := by
   induction t generalizing s with
-  | leaf => simp [Tree.accuM, h₁]
+  | leaf => simp [Tree.accuM, h₁, guard]
   | node l x r ih =>
     simp [Tree.accuM, h₂]
     apply Iff.intro
