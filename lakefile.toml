@@ -23,8 +23,3 @@ rev = "v4.18.0"
 name = "plausible"
 git = "https://github.com/leanprover-community/plausible"
 rev = "v4.18.0"
-
-[[require]]
-name = "egg"
-git = "https://github.com/marcusrossel/lean-egg"
-rev = "nightly-2025-04-18"

@@ -267,6 +267,8 @@ abbrev synth_conv
     rw [←h]
     exact g.property v
 
+-- TODO: This kind of setup leads to some significant unpredicability. We should look for ways to
+-- determinize the simplification process.
 macro "#set_up_palamedes_simp" : command =>
   `(attribute [local simp]
       guard
@@ -280,7 +282,7 @@ macro "#set_up_palamedes_simp" : command =>
       fold_foldM
       merge_foldM
 
-    attribute [-simp] Prod.forall)
+    attribute [-simp] Prod.forall List.foldr_add_const)
 
 -- attribute [simp]
 --   guard

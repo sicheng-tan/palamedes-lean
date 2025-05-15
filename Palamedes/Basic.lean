@@ -7,6 +7,8 @@ import Mathlib.Tactic.Convert
 Simple examples using palamedes.
 -/
 
+set_option maxHeartbeats 1000000
+
 #set_up_palamedes_simp
 
 def genTwo : CGen (λ v => v = 2) := by
