@@ -49,8 +49,7 @@ theorem total_optPick
         . apply hx
           simp
         . apply hy
-        . simp_arith at hn
-          exact hn
+        . omega
       . simp_all [total]
     | _ =>
       cases hy : y with
@@ -66,7 +65,7 @@ theorem total_optPick
               try apply hx
             . apply hy
               simp
-            . simp_arith at hn
+            . simp +arith at hn
               subst hn
               simp [genMeasure]
           . contradiction

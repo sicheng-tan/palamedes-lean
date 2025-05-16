@@ -111,7 +111,7 @@ theorem unfoldTree_monotonic'
   induction v generalizing n b with
   | leaf =>
     match n with
-    | 0 => simp_all
+    | 0 => simp_all [unfoldTree]
     | .succ _ =>
       simp_all [unfoldTree, bind, optBind_bind]
       have ⟨v', hv'1, hv'2⟩ := hn
@@ -125,7 +125,7 @@ theorem unfoldTree_monotonic'
         | .some _, .some _ => simp_all
   | node l x r ihl ihr =>
     match n with
-    | 0 => simp_all
+    | 0 => simp_all [unfoldTree]
     | .succ n' =>
       simp_all [unfoldTree, bind, optBind_bind]
       have ⟨v', hv'1, hv'2⟩ := hn
@@ -179,7 +179,7 @@ theorem support_unfoldTree_ok :
     apply Iff.intro
     . intro ⟨n, h⟩
       match n with
-      | 0 => simp_all
+      | 0 => simp_all [unfoldTree]
       | n + 1 =>
         simp_all [unfoldTree, bind, optBind_bind]
         have ⟨v', hv'1, hv'2⟩ := h
@@ -203,7 +203,7 @@ theorem support_unfoldTree_ok :
     apply Iff.intro
     . intro ⟨n, h⟩
       match n with
-      | 0 => simp_all
+      | 0 => simp_all [unfoldTree]
       | n + 1 =>
         simp_all [unfoldTree, bind, optBind_bind]
         have ⟨v', hv'1, hv'2⟩ := h
@@ -254,3 +254,44 @@ theorem TreeF_or
   match t with
   | .leaf => simp
   | .node _ _ _ => aesop
+
+#check Tree.accuM
+
+-- theorem Tree.merge_accuM
+--     {t : Tree α}
+--     {st₁ : α → σ₁ → σ₁ × σ₁}
+--     {st₂ : α → σ₂ → σ₂ × σ₂}
+--     {f₁ : β₁ → α → β₁ → σ₁ → Option β₁}
+--     {f₂ : β₂ → α → β₂ → σ₂ → Option β₂}
+--     {s₁ : σ₁} {s₂ : σ₂}
+--     {b₁ : β₁} {b₂ : β₂}
+--     {z₁ : σ₁ → Option β₁} {z₂ : σ₂ → Option β₂}
+--     :
+--     (t.accuM st₁ f₁ z₁ s₁ = some b₁ ∧ t.accuM st₂ f₂ z₂ s₂ = some b₂)
+--     =
+--     (t.accuM
+--       (λ x (s₁, s₂) => (((st₁ x s₁).1, (st₂ x s₂).1), ((st₁ x s₁).2, (st₂ x s₂).2)))
+--       (λ (bl₁, bl₂) x (br₁, br₂) (s₁, s₂) => do (← f₁ bl₁ x br₁ s₁, ← f₂ bl₂ x br₂ s₂))
+--       (λ (s₁, s₂) => do (← z₁ s₁, ← z₂ s₂))
+--       (s₁, s₂) = some (b₁, b₂)) := by
+--   sorry
+
+theorem Tree.coerce_to_accuM
+    {t : Tree α}
+    {f : Tree α → σ → Bool}
+    {p : α → σ → Bool}
+    {st₁ : α → σ → σ}
+    {st₂ : α → σ → σ}
+    {z : σ → Bool}
+    (h₁ : ∀ s, f .leaf s = z s)
+    (h₂ : ∀ l x r s, f (.node l x r) s = (p x s && f l (st₁ x s) && f r (st₂ x s))) :
+    (f t s) = (t.accuM (λ x s => ⟨st₁ x s, st₂ x s⟩) (λ () x () s => guard (p x s)) (λ s => guard (z s)) s = some ()) := by
+  induction t generalizing s with
+  | leaf => simp [Tree.accuM, h₁, guard]
+  | node l x r ih =>
+    simp [Tree.accuM, h₂]
+    apply Iff.intro
+    . aesop
+    . intro h
+      simp_all [Option.bind, guard]
+      aesop

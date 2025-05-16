@@ -7,6 +7,8 @@ import Mathlib.Tactic.Convert
 Simple examples using palamedes.
 -/
 
+set_option maxHeartbeats 1000000
+
 #set_up_palamedes_simp
 
 def genTwo : CGen (λ v => v = 2) := by
@@ -36,7 +38,12 @@ def genThreeAndTwo : CGen (λ (v : Int × Int) => v.snd = 3 ∧ v.fst = 2) := by
 def genThreeAndTwo' : CGen (λ (v : Int × Int) => ∃ a, ∃ b, b = 3 ∧ a = 2 ∧ v = (a, b)) := by
   palamedes
 
-def genAllTwos : CGen (λ v => List.foldrM (λ x () => guard (x == 2)) () v = Option.some ()) := by
+@[aesop simp (rule_sets := [palamedes])]
+def allTwos : List Nat → Bool
+  | [] => true
+  | x :: xs => x == 2 && allTwos xs
+
+def genAllTwos : CGen (λ v => allTwos v = true) := by
   palamedes
 
 def genInRange : CGen (λ v => 10 ≤ v ∧ v ≤ 20) := by
@@ -79,12 +86,17 @@ def genTwoInRange : CGen (λ (v : Nat × Nat) => 0 ≤ v.1 ∧ v.1 ≤ v.2 ∧ v
 def genTwoBetweens : CGen (λ (v : Nat × Nat) => ∃ x, (2 ≤ x ∧ x ≤ 6) ∧ ∃ y, (2 ≤ y ∧ y ≤ 100) ∧ v = (x,y)) := by
   palamedes
 
+@[aesop simp (rule_sets := [palamedes])]
+def evenLength : List α → Bool
+  | [] => true
+  | _ :: xs => not (evenLength xs)
+
 def genEvenLength [Arbitrary α] :
-    CGen (λ (v : List α) => List.foldr (λ _ b => not b) true v) := by
+    CGen (λ (v : List α) => evenLength v = true) := by
   palamedes
 
 def genLengthK {k : Nat} [Arbitrary α] :
-    CGen (λ (v : List α) => List.foldr (λ _ len_xs => len_xs + 1) 0 v = k) := by
+    CGen (λ (v : List α) => List.length v = k) := by
   palamedes
 
 def genEvenLengthTwos :
@@ -97,13 +109,13 @@ def genLengthKTwos (k : Nat) :
       List.foldrM (λ x () => guard (x == 2)) () v = Option.some ()) := by
   palamedes
 
-def genIncreasingByOne :
-    CGen (λ v =>
-      List.accuM (λ x _ => x)
-                 (λ x () => λ (prev : Int) => do guard (x == prev + 1))
-                 (λ _ => pure ())
-                 v
-                 0 = some ()) := by
+@[aesop simp (rule_sets := [palamedes])]
+def increasingByOne : List Int → Int → Bool := λ xs prev =>
+  match xs with
+  | [] => true
+  | x :: xs => x == prev + 1 && increasingByOne xs x
+
+def genIncreasingByOne : CGen (λ (v : List Int) => increasingByOne v 0) := by
   palamedes
 
 def genTreeIncreasingByOne :
@@ -118,12 +130,13 @@ def genTreeIncreasingByOne :
 def genBetween : CGen (λ v => 3 ≤ v ∧ v ≤ 10) := by
   palamedes
 
+@[aesop simp (rule_sets := [palamedes])]
+def sortedBetween (hi : Nat) : List Nat → Nat → Bool := λ xs lo =>
+  match xs with
+  | [] => true
+  | x :: xs => lo ≤ x && x ≤ hi && sortedBetween hi xs x
+
 def genSortedBetween
     (lo hi : Nat) :
-    CGen (λ v =>
-      List.accuM (λ x _ => x)
-                 (λ x () => λ (prev : Nat) => do guard (prev ≤ x ∧ x ≤ hi))
-                 (λ _ => pure ())
-                 v
-                 lo = some ()) := by
+    CGen (λ v => sortedBetween hi v lo = true) := by
   palamedes

@@ -267,6 +267,8 @@ abbrev synth_conv
     rw [←h]
     exact g.property v
 
+-- TODO: This kind of setup leads to some significant unpredicability. We should look for ways to
+-- determinize the simplification process.
 macro "#set_up_palamedes_simp" : command =>
   `(attribute [local simp]
       guard
@@ -280,7 +282,7 @@ macro "#set_up_palamedes_simp" : command =>
       fold_foldM
       merge_foldM
 
-    attribute [-simp] Prod.forall)
+    attribute [-simp] Prod.forall List.foldr_add_const)
 
 -- attribute [simp]
 --   guard
@@ -315,6 +317,10 @@ add_aesop_rules unsafe (rule_sets := [palamedes]) [
 add_aesop_rules 5% (rule_sets := [palamedes]) [
   cases Nat,
   cases Bool,
+  (by conv => arg 1; intro v; lhs; apply coerce_to_foldr (by aesop) (by aesop)),
+  (by conv => arg 1; intro v; apply (coerce_to_foldrM (by aesop) (by aesop))),
+  (by conv => congr; intro v; apply coerce_to_accuM (by aesop) (by aesop)),
+  (by conv => arg 1; intro v; apply Tree.coerce_to_accuM (by aesop) (by aesop)),
 ]
 
 macro "simp_in_proof" : tactic =>

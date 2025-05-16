@@ -44,15 +44,17 @@ in
 theorem unfoldr_aux_monotonic :
     some v ∈ 〚List.unfoldr_aux n f b〛 →
     some v ∈ 〚List.unfoldr_aux (n + 1) f b〛 := by
-  induction n generalizing v f b <;> try simp
+  induction n generalizing v f b
+  case zero =>
+    simp [List.unfoldr_aux]
   case succ n' ih =>
-  unfold List.unfoldr_aux
-  simp
-  intro l hl hv
-  exists l
-  apply And.intro hl
-  cases l <;> simp_all [Functor.map, Option.map]
-  aesop
+    unfold List.unfoldr_aux
+    simp
+    intro l hl hv
+    exists l
+    apply And.intro hl
+    cases l <;> simp_all [Functor.map, Option.map]
+    aesop
 
 def List.unfoldr (f : β → Gen (ListF α β)) (b : β) : Gen (List α) :=
   .indexed (λ n => List.unfoldr_aux n f b)
@@ -213,3 +215,46 @@ theorem merge_foldM
         | .none, _ => simp_all
         | _, .none => simp_all
         | .some x₁, .some x₂ => simp_all
+
+theorem coerce_to_foldr
+    {xs : List α}
+    {f : List α → β}
+    {z : β}
+    {g : α → β → β}
+    (h1 : f [] = z)
+    (h2 : ∀ x xs, f (x :: xs) = g x (f xs)) :
+    f xs = xs.foldr g z := by
+  induction xs <;> simp_all
+
+theorem coerce_to_foldrM
+    {xs : List α}
+    {f : List α → Bool}
+    {p : α → Bool}
+    (h1 : f [] = true)
+    (h2 : ∀ x xs, f (x :: xs) = (p x && f xs)) :
+    (f xs = true) = (xs.foldrM (λ x () => guard (p x)) () = some ()) := by
+  induction xs with
+  | nil => simp [h1]
+  | cons x xs ih =>
+    simp [h2, List.foldrM_cons]
+    match hfoldrM : List.foldrM (fun x x_1 => guard (p x = true)) () xs with
+    | none => simp_all
+    | some v => simp_all [guard]
+
+theorem coerce_to_accuM
+    {xs : List α}
+    {f : List α → σ → Bool}
+    {p : α → σ → Bool}
+    {t : α → σ → σ}
+    (h₁ : ∀ s, f [] s = true)
+    (h₂ : ∀ x xs s, f (x :: xs) s = (p x s && f xs (t x s))) :
+    (f xs s = true) = (xs.accuM t (λ x () s => guard (p x s)) (λ _ => some ()) s = some ()) := by
+  induction xs generalizing s with
+  | nil => simp [List.accuM, h₁]
+  | cons x xs ih =>
+    simp [List.accuM, h₂]
+    apply Iff.intro
+    . aesop
+    . intro h
+      simp_all [Option.bind, guard]
+      aesop
