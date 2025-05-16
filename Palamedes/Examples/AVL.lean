@@ -3,6 +3,8 @@ import Palamedes.Sample
 import Palamedes.Data.Tree
 import Mathlib.Tactic.Convert
 
+namespace AVL
+
 #set_up_palamedes_simp
 
 @[aesop simp (rule_sets := [palamedes])]
@@ -31,5 +33,25 @@ def genBalanced (height : Nat) : CGen (λ v => isBalanced v height) := by
   conv => arg 1; intro v; apply Tree.coerce_to_accuM (by aesop) (by aesop)
   palamedes
 
--- def genAVL (height lo hi : Nat) : CGen (λ t => isBalanced t height && isBST t (lo, hi)) := by
---   sorry -- TODO: Implement a fusion law
+set_option maxHeartbeats 1000000
+
+-- def genAVL
+--     (height lo hi : Nat) :
+--     CGen (λ t => isBalanced t height ∧ isBST t (lo, hi)) := by
+--   conv =>
+--     arg 1
+--     intro t
+--     lhs
+--     apply Tree.coerce_to_accuM (by aesop) (by aesop)
+--   conv =>
+--     arg 1
+--     intro t
+--     rhs
+--     apply Tree.coerce_to_accuM (by aesop) (by aesop)
+--   simp [Tree.merge_accuM]
+--   apply synth_accuTreeM
+--   intro b s
+--   simp [isBalanced, isBST]
+--   apply synth_or
+--   . exact ⟨.assume (s.fst ≤ 1) (λ _ => .ret TreeF.leaf), by simp⟩
+--   . palamedes

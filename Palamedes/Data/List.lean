@@ -219,11 +219,11 @@ theorem merge_foldM
 theorem coerce_to_foldr
     {xs : List α}
     {f : List α → β}
-    {x : β}
+    {z : β}
     {g : α → β → β}
-    (h1 : f [] = x)
+    (h1 : f [] = z)
     (h2 : ∀ x xs, f (x :: xs) = g x (f xs)) :
-    f xs = xs.foldr g x := by
+    f xs = xs.foldr g z := by
   induction xs <;> simp_all
 
 theorem coerce_to_foldrM
