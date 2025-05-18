@@ -136,3 +136,20 @@ def genOneToTen' : Gen Nat :=
 
 def genFourOrFive' : Gen Nat :=
   generator_for? (λ v => v = 4 ∨ v = 5)
+
+open Lean Elab Tactic Command Meta Lean.Meta.Tactic.TryThis
+
+syntax (name := showGenTactic) "show_gen " tacticSeq : tactic
+
+@[tactic showGenTactic]
+def expandShowGen : Tactic := λ stx =>
+  withMainContext do
+    let g ← getMainGoal
+    match stx with
+    | `(tactic| show_gen%$tk $t) =>
+        evalTactic t
+        let e ← instantiateMVars (mkMVar g)
+        let { ctx, simprocs, dischargeWrapper := _ } ← mkSimpContext stx (eraseLocal := false)
+        let ({expr := e, ..}, _) ← simp e ctx (simprocs := simprocs) (discharge? := none)
+        addExactSuggestion tk e (origSpan? := ← getRef)
+    | _ => Lean.Meta.throwTacticEx `show_gen g m!"invalid syntax"
