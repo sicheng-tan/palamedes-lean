@@ -207,6 +207,6 @@ theorem choose_support :
         . right
           apply (ih _).mpr <;> omega
 
-theorem optimize_support (g : Gen α) : support (optimize' g) = support g := by
+theorem optimize_support (g : Gen α) : support (optimize g) = support g := by
   funext v
-  induction g <;> simp_all [optimize', optBind_bind, optPick_pick]
+  induction g <;> simp_all [optimize, optBind_bind, optPick_pick]

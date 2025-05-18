@@ -54,25 +54,7 @@ assumption in the second.
 -/
 def optimize : Gen α → Gen α
   | .ret v => .ret v
-  | .bind x f => match optimize x with
-    | .ret v => optimize (f v)
-    | .bind x' g  => sorry
-      --.bind x' (λ y => .bind (g y) (λ y => optimize (f y)))
-    | .assume b g => .assume b (λ h => .bind (g h) (λ y => optimize (f y)))
-    | x' => .bind x' (λ y => optimize (f y))
-  | .pick x y => match optimize x, optimize y with
-    | .assume b f, y' => if h : b then .pick (f h) y' else y'
-    | x', .assume b g => if h : b then .pick x' (g h) else x'
-    | x', y' => .pick x' y'
+  | .bind x f => optBind (optimize x) (λ a => optimize (f a))
+  | .pick x y => optPick (optimize x) (optimize y)
   | .indexed f => .indexed (λ n => optimize (f n))
   | .assume b g => .assume b (λ h => optimize (g h))
-
-def optimize' : Gen α → Gen α
-  | .ret v => .ret v
-  | .bind x f => optBind (optimize' x) (λ a => optimize' (f a))
-  | .pick x y => optPick (optimize' x) (optimize' y)
-  | .indexed f => .indexed (λ n => optimize' (f n))
-  | .assume b g => .assume b (λ h => optimize' (g h))
-
--- -- an example that we currently cannot handle
--- def ex : Gen Int := optimize (.pick (.bind (.pick (.ret 2) (.ret 3)) (fun _ => .assume False (fun _ => .ret 3))) (.ret 4))
