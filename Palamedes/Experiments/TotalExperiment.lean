@@ -2,12 +2,50 @@ import Palamedes.Synth
 import Palamedes.Sample
 import Palamedes.Total
 import Mathlib.Tactic.Convert
+import Mathlib.Tactic.FailIfNoProgress
 
 namespace TotalExperiment
 
-#set_up_palamedes_simp
+-- Define simplifier tactic that will be used in Aesop rules
+macro "simp_palamedes" : tactic =>
+  `(tactic|
+    simp [
+        guard,
+        failure,
+        ite,
+        deforest_decidable_bind,
+        deforest_decidable_eq,
+        decidable_or,
+        ListF_or,
+        TreeF_or,
+        fold_foldM,
+        merge_foldM
+      ])
 
-@[aesop simp]
+-- Define Aesop rules that should be applied
+add_aesop_rules unsafe (rule_sets := [palamedes']) [
+  (by apply synth_gt),
+  (by apply synth_tuple),
+  (by apply synth_conv (by ext; rw [Tree.coerce_to_accuM (by aesop) (by aesop)]) (synth_accuTreeM _)),
+  (by apply synth_pure),
+  (by first
+    | apply synth_or
+    | apply synth_conv (by simp_palamedes; exact rfl) (synth_or _ _)),
+  (by first
+    | apply synth_bind
+    | apply synth_conv (by ext; congr!; rw [true_and]) (synth_bind _ _)
+    | apply synth_conv (by ext; conv => rhs; congr; intro; rw [and_comm]) (synth_bind _ _)
+    | apply synth_conv (by simp_palamedes; exact rfl) (synth_bind _ _)),
+  (by apply synth_true),
+  (by apply synth_between),
+  (by fail_if_no_progress intros),
+]
+
+-- Define a tactic for generator synthesis, critically not using Aesop's simplifier or default rules
+macro "synthesize_generator" : tactic =>
+  `(tactic| aesop (rule_sets := [-default, -builtin, palamedes']) (config := {enableSimp := false}))
+
+-- BST Example
 def isBST : Tree Nat → (Nat × Nat) → Bool := λ t ⟨lo, hi⟩ =>
   match t with
   | .leaf => true
@@ -16,35 +54,32 @@ def isBST : Tree Nat → (Nat × Nat) → Bool := λ t ⟨lo, hi⟩ =>
     isBST l ⟨lo, x - 1⟩ &&
     isBST r ⟨x + 1, hi⟩
 
+attribute [local simp] isBST in
 def genBST (lo hi : Nat) : CGen (λ v => isBST v ⟨lo, hi⟩) := by
-  -- TODO: Turn coercions into ones that use synth_conv
-  apply synth_conv (by ext v; rw [Tree.coerce_to_accuM (by aesop) (by aesop)]) _
-  apply synth_accuTreeM
-  intro b s
-  -- TODO: Replace Aesop's simplification with simplification within synth_conv
-  apply synth_conv (by simp; exact rfl) _
-  apply synth_or
-  · apply synth_pure -- TODO: Again, allow Aesop to do this kind of simplification
-  · apply synth_conv (by ext v; congr!; rw [true_and]) (synth_bind _ _)
-    . apply Arbitrary.arbitrary
-    . intro a
-      apply synth_conv (by ext v; conv => rhs; congr; intro a; rw [and_comm]) (synth_bind _ _)
-      · apply synth_between
-      · intro a_1
-        apply synth_conv (by ext v; congr!; rw [true_and]) (synth_bind _ _)
-        . apply Arbitrary.arbitrary
-        . intro a_1
-          apply synth_pure
+  synthesize_generator
 
-add_aesop_rules unsafe [
+-- Define rules for proving totality
+add_aesop_rules unsafe (rule_sets := [palamedes_total]) [
   total_optBind,
   total_optPick,
   total_unfoldTree,
   total_choose,
   total_internalizeProofs,
-  (by simp [total])
 ]
 
+add_aesop_rules simp (rule_sets := [palamedes_total]) [
+  total,
+  pick,
+  bind,
+  Functor.map,
+  CGen.internalizeProofs,
+  Gen.internalizeProofs
+]
+
+-- Define tactic for proving totality
+macro "prove_total" : tactic =>
+  `(tactic| aesop (rule_sets := [palamedes_total]))
+
 example {lo hi : Nat} : total (genBST lo hi).val := by
-  simp [genBST, total, pick, bind, Functor.map, CGen.internalizeProofs, Gen.internalizeProofs]
-  aesop
+  unfold genBST
+  prove_total
