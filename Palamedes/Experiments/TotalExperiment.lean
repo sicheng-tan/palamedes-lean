@@ -42,7 +42,7 @@ add_aesop_rules unsafe (rule_sets := [palamedes']) [
 ]
 
 -- Define a tactic for generator synthesis, critically not using Aesop's simplifier or default rules
-macro "synthesize_generator" : tactic =>
+macro "generator_search" : tactic =>
   `(tactic| aesop (rule_sets := [-default, -builtin, palamedes']) (config := {enableSimp := false}))
 
 -- BST Example
@@ -56,7 +56,7 @@ def isBST : Tree Nat → (Nat × Nat) → Bool := λ t ⟨lo, hi⟩ =>
 
 attribute [local simp] isBST in
 def genBST (lo hi : Nat) : CGen (λ v => isBST v ⟨lo, hi⟩) := by
-  synthesize_generator
+  generator_search
 
 -- Define rules for proving totality
 add_aesop_rules unsafe (rule_sets := [palamedes_total]) [
@@ -77,9 +77,9 @@ add_aesop_rules simp (rule_sets := [palamedes_total]) [
 ]
 
 -- Define tactic for proving totality
-macro "prove_total" : tactic =>
+macro "totality" : tactic =>
   `(tactic| aesop (rule_sets := [palamedes_total]))
 
 example {lo hi : Nat} : total (genBST lo hi).val := by
   unfold genBST
-  prove_total
+  totality
