@@ -31,7 +31,7 @@ def expandOptimizeMacro : TermElab := λ stx ty =>
     let e ← elabTerm t ty
     let e ← instantiateMVars e
     optExpr e
-  | _ => throwError "invalid syntax"
+  | stx => throwError "invalid syntax: {stx}"
 
 def g : Gen Nat :=
   optimize!
