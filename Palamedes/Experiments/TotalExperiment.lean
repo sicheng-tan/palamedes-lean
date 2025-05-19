@@ -6,23 +6,21 @@ import Mathlib.Tactic.FailIfNoProgress
 
 namespace TotalExperiment
 
--- Define simplifier tactic that will be used in Aesop rules
 macro "simp_palamedes" : tactic =>
   `(tactic|
     simp [
-        guard,
-        failure,
-        ite,
-        deforest_decidable_bind,
-        deforest_decidable_eq,
-        decidable_or,
-        ListF_or,
-        TreeF_or,
-        fold_foldM,
-        merge_foldM
-      ])
+      guard,
+      failure,
+      ite,
+      deforest_decidable_bind,
+      deforest_decidable_eq,
+      decidable_or,
+      ListF_or,
+      TreeF_or,
+      fold_foldM,
+      merge_foldM
+    ])
 
--- Define Aesop rules that should be applied
 add_aesop_rules unsafe (rule_sets := [palamedes']) [
   (by apply synth_gt),
   (by apply synth_tuple),
@@ -41,24 +39,12 @@ add_aesop_rules unsafe (rule_sets := [palamedes']) [
   (by fail_if_no_progress intros),
 ]
 
--- Define a tactic for generator synthesis, critically not using Aesop's simplifier or default rules
-macro "generator_search" : tactic =>
-  `(tactic| aesop (rule_sets := [-default, -builtin, palamedes']) (config := {enableSimp := false}))
+macro "cgenerator_search" : tactic =>
+  `(tactic|
+    aesop
+      (rule_sets := [-default, -builtin, palamedes'])
+      (config := {enableSimp := false}))
 
--- BST Example
-def isBST : Tree Nat → (Nat × Nat) → Bool := λ t ⟨lo, hi⟩ =>
-  match t with
-  | .leaf => true
-  | .node l x r =>
-    (lo <= x && x <= hi) &&
-    isBST l ⟨lo, x - 1⟩ &&
-    isBST r ⟨x + 1, hi⟩
-
-attribute [local simp] isBST in
-def genBST (lo hi : Nat) : CGen (λ v => isBST v ⟨lo, hi⟩) := by
-  generator_search
-
--- Define rules for proving totality
 add_aesop_rules unsafe (rule_sets := [palamedes_total]) [
   total_optBind,
   total_optPick,
@@ -73,13 +59,30 @@ add_aesop_rules simp (rule_sets := [palamedes_total]) [
   bind,
   Functor.map,
   CGen.internalizeProofs,
-  Gen.internalizeProofs
+  Gen.internalizeProofs,
 ]
 
--- Define tactic for proving totality
-macro "totality" : tactic =>
-  `(tactic| aesop (rule_sets := [palamedes_total]))
+macro "totality" : tactic => `(tactic| aesop (rule_sets := [palamedes_total]))
 
-example {lo hi : Nat} : total (genBST lo hi).val := by
-  unfold genBST
-  totality
+macro "generator_search " t:term : tactic =>
+  `(tactic|
+    next =>
+      let go : CGen $t := by cgenerator_search
+      have : total go.val := by totality
+      exact go.val)
+
+--
+-- BST Example
+--
+
+def isBST : Tree Nat → (Nat × Nat) → Bool := λ t (lo, hi) =>
+  match t with
+  | .leaf => true
+  | .node l x r =>
+    (lo <= x && x <= hi) &&
+    isBST l (lo, x - 1) &&
+    isBST r (x + 1, hi)
+
+attribute [local simp] isBST in
+def genBST (lo hi : Nat) : Gen (Tree Nat) := by
+  generator_search (λ v => isBST v (lo, hi))
