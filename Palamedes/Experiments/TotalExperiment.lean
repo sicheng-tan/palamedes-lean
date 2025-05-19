@@ -1,39 +1,50 @@
 import Palamedes.Synth
 import Palamedes.Sample
-import Palamedes.Examples.BST
 import Palamedes.Total
 import Mathlib.Tactic.Convert
 
 namespace TotalExperiment
 
--- def genBST' (lo hi : Nat) : Gen (Tree Nat) :=
---   Gen.sized fun n =>
---     unfoldTree n
---       (fun x =>
---         optBind
---           (if h : x.2.fst ≤ x.2.snd then
---             Gen.pick (1, 1) (Gen.ret TreeF.leaf)
---               ((Gen.choose x.2.fst x.2.snd h).bind fun a =>
---                 Gen.guardIn (x.2.fst ≤ a ∧ a ≤ x.2.snd) instDecidableAnd fun _ =>
---                   Gen.ret (TreeF.node () a ()))
---           else Gen.ret TreeF.leaf)
---           fun __do_lift =>
---           match __do_lift with
---           | TreeF.leaf => Gen.ret TreeF.leaf
---           | TreeF.node bl x_1 br =>
---             Gen.ret (TreeF.node (bl, x.snd.fst, x_1 - 1) x_1 (br, x_1 + 1, x.snd.snd)))
---       ((), lo, hi)
+#set_up_palamedes_simp
 
--- example {lo hi : Nat} : total (genBST' lo hi) := by
---   intro n
---   induction n generalizing lo hi <;>
---     aesop
---       (add simp total_optBind)
---       (add simp unfoldTree)
---       (add simp pure)
---       (add simp bind)
---       (add simp optBind)
---       (add simp optPick)
---       (add simp total)
+@[aesop simp]
+def isBST : Tree Nat → (Nat × Nat) → Bool := λ t ⟨lo, hi⟩ =>
+  match t with
+  | .leaf => true
+  | .node l x r =>
+    (lo <= x && x <= hi) &&
+    isBST l ⟨lo, x - 1⟩ &&
+    isBST r ⟨x + 1, hi⟩
 
-end TotalExperiment
+def genBST (lo hi : Nat) : CGen (λ v => isBST v ⟨lo, hi⟩) := by
+  -- TODO: Turn coercions into ones that use synth_conv
+  apply synth_conv (by ext v; rw [Tree.coerce_to_accuM (by aesop) (by aesop)]) _
+  apply synth_accuTreeM
+  intro b s
+  -- TODO: Replace Aesop's simplification with simplification within synth_conv
+  apply synth_conv (by simp; exact rfl) _
+  apply synth_or
+  · apply synth_pure -- TODO: Again, allow Aesop to do this kind of simplification
+  · apply synth_conv (by ext v; congr!; rw [true_and]) (synth_bind _ _)
+    . apply Arbitrary.arbitrary
+    . intro a
+      apply synth_conv (by ext v; conv => rhs; congr; intro a; rw [and_comm]) (synth_bind _ _)
+      · apply synth_between
+      · intro a_1
+        apply synth_conv (by ext v; congr!; rw [true_and]) (synth_bind _ _)
+        . apply Arbitrary.arbitrary
+        . intro a_1
+          apply synth_pure
+
+add_aesop_rules unsafe [
+  total_optBind,
+  total_optPick,
+  total_unfoldTree,
+  total_choose,
+  total_internalizeProofs,
+  (by simp [total])
+]
+
+example {lo hi : Nat} : total (genBST lo hi).val := by
+  simp [genBST, total, pick, bind, Functor.map, CGen.internalizeProofs, Gen.internalizeProofs]
+  aesop
