@@ -39,6 +39,10 @@ def Tree.fold
   | .leaf => z
   | .node l x r => f (Tree.fold f z l) x (Tree.fold f z r)
 
+@[simp] theorem fold_leaf : Tree.fold f z .leaf = z := rfl
+@[simp] theorem fold_node {x} {l r : Tree α} {f : β → α → β → β} {z} :
+    Tree.fold f z (.node l x r) = f (Tree.fold f z l) x (Tree.fold f z r) := rfl
+
 def Tree.foldM
     [Monad m]
     {α β : Type}
@@ -50,6 +54,11 @@ def Tree.foldM
   | .leaf => z
   | .node l x r => do
     f (← Tree.foldM f z l) x (← Tree.foldM f z r)
+
+@[simp] theorem foldM_leaf [Monad m] {f : β → α → β → m β} {z : m β} : Tree.foldM f z .leaf = z := rfl
+@[simp] theorem foldM_cons [Monad m] [LawfulMonad m] {x : α} {l r : Tree α} {f : β → α → β → m β} {z : m β} :
+    Tree.foldM f z (.node l x r) = l.foldM f z >>= λ vL => r.foldM f z >>= f vL x := by
+  simp only [Tree.foldM]
 
 def Tree.accuM
     [Monad m]
@@ -313,6 +322,48 @@ theorem Tree.merge_accuM
       replace IHl := @IHl st₁ st₂ f₁ f₂ (st₁ x s₁).fst (st₂ x s₂).fst z₁ z₂ lv₁ lv₂
       replace IHr := @IHr st₁ st₂ f₁ f₂ (st₁ x s₁).snd (st₂ x s₂).snd z₁ z₂ rv₁ rv₂
       simp_all
+
+/-
+def Tree.foldM
+    [Monad m]
+    {α β : Type}
+    (f : β → α → β → m β)
+    (z : m β)
+    (t : Tree α) :
+    m β :=
+  match t with
+  | .leaf => z
+  | .node l x r => do
+    f (← Tree.foldM f z l) x (← Tree.foldM f z r)
+-/
+
+theorem coerce_to_fold
+    {t : Tree α}
+    {f : Tree α → β} -- function to be coerced
+    {z : β}
+    {g : β → α → β → β}
+    (h1 : f .leaf = z)
+    (h2 : ∀ l x r, f (.node l x r) = g (f l) x (f r)) :
+    f t = t.fold g z := by
+  induction t <;> simp_all
+
+theorem coerce_to_foldM
+    {t : Tree α}
+    {f : Tree α → Bool} -- function to be coerced
+    {p : α → Bool}
+    (h1 : f .leaf = true)
+    (h2 : ∀ l x r, f (.node l x r) = (p x && f l && f r)) :
+    (f t = true) = (t.foldM (λ () x () => guard (p x)) () = some ()) := by
+  induction t with
+  | leaf =>
+    simp [h1]
+  | node l x r ih =>
+    simp [h2]
+    match Hl : Tree.foldM (λ () y () => guard (p y)) () l with
+    | none => simp_all
+    | some vL => match Hr : Tree.foldM (λ () y () => guard (p y)) () r with
+      | none => simp_all
+      | some vR => simp_all [guard]
 
 theorem Tree.coerce_to_accuM
     {t : Tree α}
