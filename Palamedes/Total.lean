@@ -1,4 +1,6 @@
 import Palamedes.Support
+import Palamedes.InternalizeProofs
+import Palamedes.Data.Tree
 
 /-
 Predicate and lemmas for backtracking-free generators.
@@ -71,3 +73,71 @@ theorem total_optPick
           . contradiction
         . simp_all [optPick]
       | _ => simp_all [optPick]
+
+theorem total_choose : total (choose lo hi h) := by
+  induction hdiff : hi - lo generalizing lo hi with
+  | zero =>
+    have heq : lo = hi := by omega
+    simp [heq, total, choose]
+  | succ diff' ih =>
+    unfold choose
+    split
+    . simp [total]
+    . apply total_optPick
+      . simp [total]
+      . exact ih (by omega)
+
+theorem total_internalizeProofs (h : total g) : total g.internalizeProofs := by
+  induction g with
+  | ret v => simp [Gen.internalizeProofs, total]
+  | pick x y ihx ihy =>
+    simp [Gen.internalizeProofs, total]
+    simp [total] at h
+    obtain ⟨hx, hy⟩ := h
+    apply And.intro
+    . simp [Functor.map]
+      apply total_optBind
+      . exact ihx hx
+      . exact fun {v} a => trivial
+    . simp [Functor.map]
+      apply total_optBind
+      . exact ihy hy
+      . simp [total]
+  | bind x f ihx ihf =>
+    simp [Gen.internalizeProofs, total]
+    simp [total] at h
+    obtain ⟨hx, hf⟩ := h
+    apply And.intro
+    . simp [*]
+    . intro a b h
+      simp [Functor.map]
+      apply total_optBind <;> simp_all [forall_const, total]
+  | indexed f ihf =>
+    simp [Gen.internalizeProofs, total]
+    intro n
+    simp [Functor.map]
+    apply total_optBind
+    . exact ihf n (h n)
+    . intro v hv
+      simp [total]
+  | assume b f ihf =>
+    simp [Gen.internalizeProofs, total]
+    intro hb
+    simp [Functor.map]
+    apply total_optBind
+    . exact ihf hb (h hb)
+    . simp [total]
+
+theorem total_unfoldTree
+    (h : ∀ {b'}, total (f b')) :
+    total (unfoldTree n f b) := by
+  induction n generalizing b with
+  | zero => simp [unfoldTree, total]
+  | succ n' ih =>
+    simp [unfoldTree, total, bind]
+    apply total_optBind
+    . simp [h]
+    . intro v hv
+      match v with
+      | .leaf => simp [total]
+      | .node _ _ _ => simp [total_optBind, ih, total]
