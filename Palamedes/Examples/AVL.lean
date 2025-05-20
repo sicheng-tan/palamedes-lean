@@ -24,7 +24,8 @@ def isBalanced : Tree Nat → Nat → Bool := λ t height =>
   match t with
   | .leaf => height <= 1
   | .node l _ r =>
-    height > 0 && -- TODO: Try to find a way to get rid of this
+    height > 0 &&
+    -- TODO: formerly we had to have `true` here; try to find a way to make that unnecessary
     isBalanced l (height - 1) &&
     isBalanced r (height - 1)
 
