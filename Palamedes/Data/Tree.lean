@@ -323,21 +323,7 @@ theorem Tree.merge_accuM
       replace IHr := @IHr st₁ st₂ f₁ f₂ (st₁ x s₁).snd (st₂ x s₂).snd z₁ z₂ rv₁ rv₂
       simp_all
 
-/-
-def Tree.foldM
-    [Monad m]
-    {α β : Type}
-    (f : β → α → β → m β)
-    (z : m β)
-    (t : Tree α) :
-    m β :=
-  match t with
-  | .leaf => z
-  | .node l x r => do
-    f (← Tree.foldM f z l) x (← Tree.foldM f z r)
--/
-
-theorem coerce_to_fold
+theorem Tree.coerce_to_fold
     {t : Tree α}
     {f : Tree α → β} -- function to be coerced
     {z : β}
@@ -347,13 +333,13 @@ theorem coerce_to_fold
     f t = t.fold g z := by
   induction t <;> simp_all
 
-theorem coerce_to_foldM
+theorem Tree.coerce_to_foldM
     {t : Tree α}
     {f : Tree α → Bool} -- function to be coerced
     {p : α → Bool}
     (h1 : f .leaf = true)
     (h2 : ∀ l x r, f (.node l x r) = (p x && f l && f r)) :
-    (f t = true) = (t.foldM (λ () x () => guard (p x)) () = some ()) := by
+    (f t) = (t.foldM (λ () x () => guard (p x)) () = some ()) := by
   induction t with
   | leaf =>
     simp [h1]
