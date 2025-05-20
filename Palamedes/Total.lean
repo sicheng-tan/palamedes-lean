@@ -11,7 +11,7 @@ def total : Gen α → Prop
   | .pick x y => total x ∧ total y
   | .indexed f => ∀ n, total (f n)
   | .bind x f => total x ∧ ∀ v, v ∈ 〚x〛  → total (f v)
-  | .assume b f => (h : b) → total (f h)
+  | .assume b f => ∃ (h : b), total (f h)
 
 theorem total_optBind
     (hx : total x)
@@ -49,7 +49,6 @@ theorem total_optPick
       . simp_all [total]
         apply ih
         . apply hx
-          simp
         . apply hy
         . omega
       . simp_all [total]
@@ -66,7 +65,6 @@ theorem total_optPick
             . simp [total]
               try apply hx
             . apply hy
-              simp
             . simp +arith at hn
               subst hn
               simp [genMeasure]
@@ -122,10 +120,12 @@ theorem total_internalizeProofs (h : total g) : total g.internalizeProofs := by
       simp [total]
   | assume b f ihf =>
     simp [Gen.internalizeProofs, total]
-    intro hb
     simp [Functor.map]
+    simp [total] at h
+    obtain ⟨h, htot⟩ := h
+    exists h
     apply total_optBind
-    . exact ihf hb (h hb)
+    . exact ihf ((Iff.of_eq (Eq.refl (b = true))).mpr ((Iff.of_eq (Eq.refl (b = true))).mpr h)) htot
     . simp [total]
 
 theorem total_unfoldTree

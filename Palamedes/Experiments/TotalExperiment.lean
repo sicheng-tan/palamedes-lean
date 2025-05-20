@@ -1,6 +1,7 @@
 import Palamedes.Synth
 import Palamedes.Sample
 import Palamedes.Total
+import Palamedes.Experiments.Optimizer
 import Mathlib.Tactic.Convert
 import Mathlib.Tactic.FailIfNoProgress
 
@@ -54,13 +55,20 @@ add_aesop_rules unsafe (rule_sets := [palamedes_total]) [
 ]
 
 add_aesop_rules simp (rule_sets := [palamedes_total]) [
-  total,
-  pick,
-  bind,
-  Functor.map,
+  total
 ]
 
-macro "totality" : tactic => `(tactic| aesop (rule_sets := [palamedes_total]))
+macro "totality" : tactic => `(tactic|
+  next =>
+    simp [total, pick, optPick, optBind, CGen.internalizeProofs, Gen.internalizeProofs, bind, Functor.map]
+    aesop (rule_sets := [palamedes_total]))
+
+-- macro "generator_search " t:term : tactic =>
+--   `(tactic|
+--     next =>
+--       let cg : CGen $t := by cgenerator_search
+--       have : total cg.val := by unfold cg; totality
+--       exact cg.val)
 
 open Lean Tactic Elab Meta Tactic in
 def solveGoalWithTactic (goalType : Expr) (tactic : TSyntax `tactic) : TacticM Expr := do
@@ -104,5 +112,4 @@ def isBST : Tree Nat → (Nat × Nat) → Bool := λ t (lo, hi) =>
 
 attribute [local simp] isBST in
 def genBST (lo hi : Nat) : Gen (Tree Nat) := by
-  show_term
   generator_search (λ v => isBST v (lo, hi))
