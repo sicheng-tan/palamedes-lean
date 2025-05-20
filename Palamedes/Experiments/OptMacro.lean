@@ -4,6 +4,8 @@ import Palamedes.Total
 import Mathlib.Tactic.Convert
 import Mathlib.Tactic.FailIfNoProgress
 
+namespace OptMacro
+
 open Lean Elab Term Meta
 
 syntax (name := optimizeMacro) "optimize! " term : term
