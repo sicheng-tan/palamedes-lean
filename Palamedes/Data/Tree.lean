@@ -255,26 +255,95 @@ theorem TreeF_or
   | .leaf => simp
   | .node _ _ _ => aesop
 
-#check Tree.accuM
+def combineSteppers
+  (st₁ : α → σ₁ → σ₁ × σ₁)
+  (st₂ : α → σ₂ → σ₂ × σ₂)
+  : α -> σ₁ × σ₂ → (σ₁ × σ₂) × σ₁ × σ₂ := λ x (i₁, i₂) =>
+  -- let s₁ := st₁ x i₁
+  -- let s₂ := st₂ x i₂
+  -- let s₁L := s₁.1
+  -- let s₂L := s₂.1
+  -- let s₁R := s₁.2
+  -- let s₂R := s₂.2
+  -- ((s₁L, s₂L), (s₁R, s₂R))
+  (((st₁ x i₁).1, (st₂ x i₂).1), ((st₁ x i₁).2, (st₂ x i₂).2))
 
--- theorem Tree.merge_accuM
---     {t : Tree α}
---     {st₁ : α → σ₁ → σ₁ × σ₁}
---     {st₂ : α → σ₂ → σ₂ × σ₂}
---     {f₁ : β₁ → α → β₁ → σ₁ → Option β₁}
---     {f₂ : β₂ → α → β₂ → σ₂ → Option β₂}
---     {s₁ : σ₁} {s₂ : σ₂}
---     {b₁ : β₁} {b₂ : β₂}
---     {z₁ : σ₁ → Option β₁} {z₂ : σ₂ → Option β₂}
---     :
---     (t.accuM st₁ f₁ z₁ s₁ = some b₁ ∧ t.accuM st₂ f₂ z₂ s₂ = some b₂)
---     =
---     (t.accuM
---       (λ x (s₁, s₂) => (((st₁ x s₁).1, (st₂ x s₂).1), ((st₁ x s₁).2, (st₂ x s₂).2)))
---       (λ (bl₁, bl₂) x (br₁, br₂) (s₁, s₂) => do (← f₁ bl₁ x br₁ s₁, ← f₂ bl₂ x br₂ s₂))
---       (λ (s₁, s₂) => do (← z₁ s₁, ← z₂ s₂))
---       (s₁, s₂) = some (b₁, b₂)) := by
---   sorry
+def combineCombinators
+  (f₁ : β₁ → α → β₁ → σ₁ → Option β₁)
+  (f₂ : β₂ → α → β₂ → σ₂ → Option β₂)
+  : (β₁ × β₂) → α → (β₁ × β₂) → (σ₁ × σ₂) -> Option (β₁ × β₂) :=
+  λ (lv₁, lv₂) x (rv₁, rv₂) (s₁, s₂) => do
+    let v₁ ← f₁ lv₁ x rv₁ s₁
+    let v₂ ← f₂ lv₂ x rv₂ s₂
+    return (v₁, v₂)
+
+def combineAccs (z₁ : σ₁ → Option β₁) (z₂ : σ₂ → Option β₂)
+  : (σ₁ × σ₂) → Option (β₁ × β₂) := λ (s₁, s₂) => do
+    let v₁ ← z₁ s₁
+    let v₂ ← z₂ s₂
+    return (v₁, v₂)
+
+theorem Tree.merge_accuM
+    {t : Tree α}
+    {st₁ : α → σ₁ → σ₁ × σ₁}
+    {st₂ : α → σ₂ → σ₂ × σ₂}
+    {f₁ : β₁ → α → β₁ → σ₁ → Option β₁}
+    {f₂ : β₂ → α → β₂ → σ₂ → Option β₂}
+    {s₁ : σ₁} {s₂ : σ₂}
+    {z₁ : σ₁ → Option β₁} {z₂ : σ₂ → Option β₂}
+    {b₁ : β₁} {b₂ : β₂}
+    :
+    (t.accuM st₁ f₁ z₁ s₁ = some b₁ ∧ t.accuM st₂ f₂ z₂ s₂ = some b₂)
+    ↔
+    (t.accuM
+      (combineSteppers st₁ st₂)
+      (combineCombinators f₁ f₂)
+      (combineAccs z₁ z₂)
+      -- (λ x (s₁, s₂) => (((st₁ x s₁).1, (st₂ x s₂).1), ((st₁ x s₁).2, (st₂ x s₂).2)))
+      -- (λ (bl₁, bl₂) x (br₁, br₂) (s₁, s₂) => do (← f₁ bl₁ x br₁ s₁, ← f₂ bl₂ x br₂ s₂))
+      -- (λ (s₁, s₂) => do (← z₁ s₁, ← z₂ s₂))
+      (s₁, s₂) = some (b₁, b₂)) := by
+  induction t generalizing st₁ st₂ f₁ f₂ s₁ s₂ z₁ z₂ b₁ b₂
+  case leaf =>
+    simp [accuM, combineAccs]
+    apply Iff.intro <;> intro H
+    . -- (->)
+      rw [H.left, H.right]
+      simp
+    . -- (<-)
+      generalize Hx1 : (z₁ s₁) = x1
+      generalize Hx2 : (z₂ s₂) = x2
+      cases x1 <;> cases x2 <;> simp_all
+  case node l x r IHl IHr =>
+    apply Iff.intro
+    . -- (->)
+      intro ⟨ H1, H2 ⟩
+      unfold accuM at H1 H2 ⊢
+      simp [combineSteppers] at H1 H2 ⊢
+      rw [Option.bind_eq_some] at H1 H2
+      replace ⟨ lv₁, ⟨ Hlv₁, H1 ⟩  ⟩ := @H1
+      replace ⟨ lv₂, ⟨ Hlv₂, H2 ⟩  ⟩ := @H2
+      rw [Option.bind_eq_some] at H1 H2
+      replace ⟨ rv₁, ⟨ Hrv₁, H1 ⟩  ⟩ := @H1
+      replace ⟨ rv₂, ⟨ Hrv₂, H2 ⟩  ⟩ := @H2
+      replace IHl := @IHl st₁ st₂ f₁ f₂ (st₁ x s₁).fst (st₂ x s₂).fst z₁ z₂ lv₁ lv₂
+      replace IHr := @IHr st₁ st₂ f₁ f₂ (st₁ x s₁).snd (st₂ x s₂).snd z₁ z₂ rv₁ rv₂
+      simp_all [combineCombinators]
+    . -- (<-)
+      intro H
+      unfold accuM at H ⊢
+      simp [combineSteppers] at H ⊢
+      rw [Option.bind_eq_some] at H
+      replace ⟨ ⟨ lv₁, lv₂ ⟩ , ⟨ Hlv, H ⟩  ⟩ := @H
+      rw [Option.bind_eq_some] at H
+      replace ⟨ ⟨ rv₁, rv₂ ⟩ , ⟨ Hrv, H ⟩ ⟩ := @H
+      rw [combineCombinators, Option.bind_eq_bind, Option.bind_eq_some] at H
+      replace ⟨ v₁, ⟨ Hv₁ , H ⟩ ⟩ := @H
+      rw [Option.bind_eq_bind, Option.bind_eq_some] at H
+      replace ⟨ v₂, ⟨ Hv₂ , H ⟩ ⟩ := @H
+      replace IHl := @IHl st₁ st₂ f₁ f₂ (st₁ x s₁).fst (st₂ x s₂).fst z₁ z₂ lv₁ lv₂
+      replace IHr := @IHr st₁ st₂ f₁ f₂ (st₁ x s₁).snd (st₂ x s₂).snd z₁ z₂ rv₁ rv₂
+      simp_all [combineCombinators]
 
 theorem Tree.coerce_to_accuM
     {t : Tree α}
