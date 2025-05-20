@@ -6,12 +6,39 @@ import Mathlib.Tactic.FailIfNoProgress
 
 namespace OptMacro
 
+
+
+
+#print Gen
+
+theorem pure_bind {v : α} {f : α → Gen β} : pure v >>= f = f v := by
+  sorry -- Not true :(
+
+-- ... rw [pure_bind]
+
+theorem support_pure_bind {v : α} {f : α → Gen β} : support (pure v >>= f) = support (f v) := by
+  simp [bind, optBind_bind]
+
+#print optimize
+#print optBind
+
+
+
+
+
+
 open Lean Elab Term Meta
 
 syntax (name := optimizeMacro) "optimize! " term : term
 
--- NOTE: May not need to be in `TermElabM`
-def optExpr (e : Expr) : TermElabM Expr := do
+/-
+TODO:
+- Use Lean.Meta.transform
+  - Takes care of simplification
+- Use match_expr
+- https://github.com/leanprover-community/quote4
+-/
+def optExpr (e : Expr) : MetaM Expr := do
   match e with
   | .app f a =>
     match ← optExpr f, ← optExpr a with
