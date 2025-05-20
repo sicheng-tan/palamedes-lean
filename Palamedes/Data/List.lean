@@ -237,7 +237,7 @@ theorem coerce_to_foldrM
   | nil => simp [h1]
   | cons x xs ih =>
     simp [h2, List.foldrM_cons]
-    match hfoldrM : List.foldrM (fun x x_1 => guard (p x = true)) () xs with
+    match hfoldrM : List.foldrM (fun x x_1 => guard (p x)) () xs with
     | none => simp_all
     | some v => simp_all [guard]
 
