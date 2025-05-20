@@ -6,6 +6,7 @@ generates satisfy some proposition P into a generator that produces pairs of
 values and proofs that those values satisfy P.
 -/
 
+@[reducible]
 def Gen.internalizeProofs
     {α : Type}
     (g : Gen α) :
@@ -54,6 +55,7 @@ def injProof_correct :
     exact hn
   | assume _ _ => simp_all [Gen.internalizeProofs]
 
+@[reducible]
 def CGen.internalizeProofs
     {α : Type}
     {P : α → Prop}
