@@ -71,7 +71,7 @@ theorem StackF_or
   | .cons _ _ => aesop
   | .ret_cons _ _ => aesop
 
-/- Folds, etc. -/
+/- Recursion schemes -/
 
 -- fold variants
 -- def Stack.fold

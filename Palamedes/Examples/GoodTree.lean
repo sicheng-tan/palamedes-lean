@@ -15,4 +15,5 @@ def isGoodTree : Tree α → Nat → Nat → Bool := λ t n1 n2 =>
 def genCompleteTree (n1 n2 : Nat) [Arbitrary α] : CGen (λ (v : Tree α) => isGoodTree v n1 n2) := by
   -- palamedes
   -- TODO: this will fundamentally be partial.
+  -- try to synthesize .assume (n1 == n2) (.ret .leaf)
   sorry
