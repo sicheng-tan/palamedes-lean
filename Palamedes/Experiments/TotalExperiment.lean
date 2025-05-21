@@ -1,7 +1,6 @@
 import Palamedes.Synth
 import Palamedes.Sample
 import Palamedes.Total
-import Palamedes.Experiments.Optimizer
 import Mathlib.Tactic.Convert
 import Mathlib.Tactic.FailIfNoProgress
 

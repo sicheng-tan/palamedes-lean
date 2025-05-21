@@ -1,5 +1,6 @@
 import Palamedes.Total
 import Palamedes.Experiments.Optimizer
+import Palamedes.Experiments.TotalExperiment
 import Mathlib.Tactic.FailIfNoProgress
 
 namespace OptMacro
@@ -19,12 +20,11 @@ macro "optimized" : tactic =>
       (rule_sets := [-builtin, -default, palamedes_optimize]))
 
 @[reducible]
-def g' {b : Bool} :
-    {g : Gen Nat //
-      support (.pick (.assume b (λ _ =>.ret 10)) (.bind (.ret 4) λ x => .ret (x + 1))) =
-      support g ∧
-      total g} := by
+def g' (b : Bool) : OptGen (.pick (.assume b (λ _ =>.ret 10)) (.bind (.ret 4) λ x => .ret (x + 1))) := by
   optimized
+
+example {b : Bool} : total (g' b).val := by
+  totality
 
 open Lean Elab Term Meta in
 def traceConstWithTransparency (md : TransparencyMode) (c : Name) :
