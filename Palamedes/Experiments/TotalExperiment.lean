@@ -54,22 +54,48 @@ add_aesop_rules unsafe (rule_sets := [palamedes_total]) [
 ]
 
 add_aesop_rules simp (rule_sets := [palamedes_total]) [
-  total,
-  pick,
-  bind,
-  Functor.map,
-  CGen.internalizeProofs,
-  Gen.internalizeProofs,
+  total
 ]
 
-macro "totality" : tactic => `(tactic| aesop (rule_sets := [palamedes_total]))
+macro "totality" : tactic => `(tactic|
+  next =>
+    simp [total, pick, optPick, optBind, CGen.internalizeProofs, Gen.internalizeProofs, bind, Functor.map]
+    aesop (rule_sets := [palamedes_total]))
 
-macro "generator_search " t:term : tactic =>
-  `(tactic|
-    next =>
-      let go : CGen $t := by cgenerator_search
-      have : total go.val := by totality
-      exact go.val)
+-- macro "generator_search " t:term : tactic =>
+--   `(tactic|
+--     next =>
+--       let cg : CGen $t := by cgenerator_search
+--       have : total cg.val := by unfold cg; totality
+--       exact cg.val)
+
+open Lean Tactic Elab Meta Tactic in
+def solveGoalWithTactic (goalType : Expr) (tactic : TSyntax `tactic) : TacticM Expr := do
+  let .mvar m ← mkFreshExprMVar goalType
+    | throwError "impossible"
+  let [] ← evalTacticAt tactic m
+    | throwError "generator search left goals unsolved"
+  instantiateMVars (.mvar m)
+
+open Lean Tactic Elab Meta Tactic in
+elab "generator_search " t:term : tactic => withMainContext do
+  let cgen ←
+    solveGoalWithTactic
+      (← do
+        let ty := .forallE `α (← mkFreshExprMVar none) (.sort 0) .default
+        let mpred ← elabTerm t (some ty)
+        mkAppM ``CGen #[mpred])
+      (← `(tactic| cgenerator_search))
+
+  let gen ← mkAppM ``Subtype.val #[cgen]
+  let gen ← withReducible (reduce gen)
+
+  let _ ←
+    solveGoalWithTactic
+      (← mkAppM ``total #[gen])
+      (← `(tactic| totality))
+
+  closeMainGoal `generator_search gen
 
 --
 -- BST Example
