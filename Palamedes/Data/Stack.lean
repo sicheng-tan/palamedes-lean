@@ -4,8 +4,8 @@ import Palamedes.Support
 /- adapted from https://github.com/QuickChick/QuickChick/tree/master/examples/ifc-basic -/
 
 inductive Label where
-  | L
-  | H
+  | low
+  | high
 
 inductive Atom where
   | atm (z : Int) (l : Label)
@@ -15,11 +15,85 @@ inductive Stack where
   | cons (a : Atom) (s : Stack)
   | ret_cons (pc : Atom) (s : Stack)
 
-/- Arbitrary instances -/
+/- Base functor -/
+
+inductive StackF (α : Type) where
+  | mty : StackF α
+  | cons : (z : Atom) → (s : α) → StackF α
+  | ret_cons : (pc : Atom) → (s : α) → StackF α
+
+
+theorem StackF_or
+  {α : Type}
+  {P : Prop}
+  {Q : Atom → α → Prop}
+  {R : Atom → α → Prop}
+  {s : StackF α} :
+  StackF.rec P Q R s ↔
+    (P ∧ s = .mty)
+    ∨ (∃ z s', s = .cons z s' ∧ Q z s')
+    ∨ (∃ pc s', s = .ret_cons pc s' ∧ R pc s') := by
+  match s with
+  | .mty => simp
+  | .cons _ _ => aesop
+  | .ret_cons _ _ => aesop
+
+/- Recursion schemes -/
+
+
+
+/- (unclear if we need these) -/
+-- theorem Stack.accuM_mty
+-- theorem Stack.accuM_cons
+-- theorem Stack.accuM_ret_cons
+
+/- Fold special cases -/
+
+-- theorem Stack.fold_accu_Option_basic
+-- theorem Stack.fold_accu_Option_true
+-- theorem Stack.fold_accu_Option_function
+-- theorem Stack.fold_accu_Option_function_true
+
+/- Unfold -/
+
+-- def Stack.unfold_support
+-- theorem Stack.unfold_monotonic
+-- theorem Stack.unfold_support_ok
+
+/- Conversion of recursive functions to fold -/
+-- theorem Stack.coerce_to_fold
+
+/- Merging two accumulators-/
+-- theorem Stack.merge_accuM
+
+
+/- Pretty printing -/
+def Label.toString : Label → String
+  | .low => "low"
+  | .high => "high"
+
+instance : ToString Label where
+  toString := Label.toString
+
+def Atom.toString : Atom → String
+  | .atm z l => s!"({z} {l})"
+
+instance : ToString Atom where
+  toString := Atom.toString
+
+def Stack.toString : Stack → String
+  | .mty => "(empty)"
+  | .cons a s  => s!"(cons {a} {Stack.toString s})"
+  | .ret_cons pc s => s!"(ret_cons {pc} {Stack.toString s})"
+
+instance : ToString Stack where
+  toString := Stack.toString
+
+/- Arbitrary instances for supporting types -/
 
 instance : Arbitrary Label where
   arbitrary := ⟨
-      pick (pure .L) (pure .H),
+      pick (pure .low) (pure .high),
       by intro v <;> cases v <;> simp [pick, optPick]
     ⟩
 
@@ -46,82 +120,3 @@ instance : Arbitrary Atom where
         intro ⟨ z, l ⟩
         exists z, l
     ⟩
-
-/- base functor for Stack -/
-
-inductive StackF (α : Type) where
-  | mty : StackF α
-  | cons : (z : Atom) → (s : α) → StackF α
-  | ret_cons : (pc : Atom) → (s : α) → StackF α
-
-#print StackF.rec
-
-theorem StackF_or
-  {α : Type}
-  {P : Prop}
-  {Q : Atom → α → Prop}
-  {R : Atom → α → Prop}
-  {s : StackF α} :
-  StackF.rec P Q R s ↔
-    (P ∧ s = .mty)
-    ∨ (∃ z s', s = .cons z s' ∧ Q z s')
-    ∨ (∃ pc s', s = .ret_cons pc s' ∧ R pc s') := by
-  match s with
-  | .mty => simp
-  | .cons _ _ => aesop
-  | .ret_cons _ _ => aesop
-
-/- Recursion schemes -/
-
--- fold variants
--- def Stack.fold
--- def Stack.accuM
-
-/- (unclear if we need these) -/
--- theorem accuM_mty
--- theorem accuM_cons
--- theorem accuM_ret_cons
-
-/- Fold special cases -/
-
--- theorem fold_accu_Option_basic
--- theorem fold_accu_Option_true
--- theorem fold_accu_Option_function
--- theorem fold_accu_Option_function_true
-
-/- Unfold -/
-
--- def unfoldStack
--- def unfoldStack_support
--- def support_unfoldStack ??
--- theorem unfoldStack_monotonic
--- theorem support_unfoldStack
-
-/- Conversion of recursive functions to fold -/
--- theorem coerce_to_fold
-
-/- Merging two accumulators-/
--- theorem merge_accuM
-
-
-/- Pretty printing -/
-def labelToString : Label → String
-  | .L => "L"
-  | .H => "H"
-
-instance : ToString Label where
-  toString := labelToString
-
-def atomToString : Atom → String
-  | .atm z l => s!"({z} {l})"
-
-instance : ToString Atom where
-  toString := atomToString
-
-def stackToString : Stack → String
-  | .mty => "(empty)"
-  | .cons a s  => s!"(cons {a} {stackToString s})"
-  | .ret_cons pc s => s!"(ret_cons {pc} {stackToString s})"
-
-instance : ToString Stack where
-  toString := stackToString
