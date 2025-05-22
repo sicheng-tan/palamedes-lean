@@ -20,14 +20,14 @@ macro "totality" : tactic =>
 
 macro "optimize_generator" : tactic =>
   `(tactic|
-    aesop (rule_sets := [optimization]))
+    aesop
+      (rule_sets := [-default, -builtin, optimization])
+      (config := {enableSimp := false}))
 
 open Lean Tactic Elab Meta Tactic in
 def solveGoalWithTactic (goalType : Expr) (tactic : TSyntax `tactic) : TacticM Expr := do
-  let .mvar m ← mkFreshExprMVar goalType
-    | throwError "impossible"
-  let [] ← evalTacticAt tactic m
-    | throwError "generator search left goals unsolved"
+  let .mvar m ← mkFreshExprMVar goalType | throwError "impossible"
+  let [] ← evalTacticAt tactic m | throwError "goals left unsolved"
   instantiateMVars (.mvar m)
 
 open Lean Tactic Elab Meta Tactic in
@@ -64,6 +64,6 @@ elab "generator_search " t:term p:"allow_partial"? : tactic => withMainContext d
           (← mkAppM ``Gen.total #[gen])
           (← `(tactic| totality))
       catch e =>
-        throwError m!"Failed during totality checking.\n{e.toMessageData}\nYou can use `generator_search {t} allow_partial to turn off this check."
+        throwError m!"Failed during totality checking.\n\n{e.toMessageData}\n\n{gen}\nis not total.\n\nYou can use `generator_search {t} allow_partial to turn off this check."
 
   closeMainGoal `generator_search gen

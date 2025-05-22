@@ -1,5 +1,7 @@
 import Palamedes.V2.Synthesizer
-import Palamedes.V2.Data.Arbitrary
+import Palamedes.V2.Data.Unit
+import Palamedes.V2.Data.Nat
+import Palamedes.V2.Data.Bool
 
 def genUnit : Gen Unit := by
   generator_search (fun _ => True)

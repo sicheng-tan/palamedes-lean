@@ -32,11 +32,18 @@ def opt_assume_self : OptGen (assume b f) :=
 def opt_map_self : OptGen (f <$> x) :=
   Subtype.mk (f <$> x) (by rfl)
 
+@[reducible]
+def opt_pick_assume : OptGen (pick x (assume b f)) :=
+  Subtype.mk (if h : b then pick x (f h) else x) <| by
+    split <;> aesop
+
 end OptGen
 
 end Gen
 
 add_aesop_rules unsafe (rule_sets := [optimization]) [
+  (by apply Gen.OptGen.opt_pick_assume),
+
   (by apply Gen.OptGen.opt_pure_self),
   (by apply Gen.OptGen.opt_bind_self),
   (by apply Gen.OptGen.opt_pick_self),

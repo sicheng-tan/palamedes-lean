@@ -3,11 +3,17 @@ import Palamedes.V2.CorrectGen
 import Palamedes.V2.Total
 import Palamedes.V2.RuleSets
 import Palamedes.V2.Optimizer
-import Palamedes.V2.Data.Arbitrary
 
 namespace Gen
 
-def gt (lo : Nat) : Gen Nat := (lo + 1 + · ) <$> (Arbitrary.arbitrary.val : Gen Nat)
+@[irreducible]
+def arbNat : Gen Nat := indexed go
+  where
+    go : Nat → Gen (Option Nat)
+      | 0 => pure none
+      | n + 1 => pick (pure (some 0)) (.map (1 + .) <$> go n)
+
+def gt (lo : Nat) : Gen Nat := (lo + 1 + · ) <$> arbNat
 
 def choose (lo hi : Nat) (h : lo ≤ hi := by simp) : Gen Nat :=
   if h' : lo = hi then pure lo else pick (pure lo) (choose (lo + 1) hi (by omega))
@@ -15,10 +21,24 @@ def choose (lo hi : Nat) (h : lo ≤ hi := by simp) : Gen Nat :=
 namespace Gen
 
 @[simp]
+theorem support_arbNat :
+    support arbNat = fun _ => True := by
+  simp [arbNat, arbNat.go]
+  funext v
+  induction v with
+  | zero => simp; exists 1; simp [arbNat, arbNat.go]
+  | succ n ih =>
+    simp_all
+    have ⟨n', hn'⟩ := ih
+    exists n' + 1
+    simp [arbNat, arbNat.go]
+    exists some n
+    simp +arith [hn']
+
+@[simp]
 theorem support_gt :
     support (gt lo) = fun a => lo < a := by
   simp [gt]
-  rw [Arbitrary.arbitrary.property]
   funext a
   simp
   apply Iff.intro
@@ -65,6 +85,12 @@ end Gen
 namespace CorrectGen
 
 @[reducible]
+def carbNat : @CorrectGen Nat (λ _ => True) :=
+  Subtype.mk arbNat <| by
+    funext v
+    simp
+
+@[reducible]
 def cbetween
     {lo hi : Nat}
     (h : lo ≤ hi) :
@@ -94,6 +120,13 @@ end CorrectGen
 namespace Total
 
 @[simp]
+def total_arbNat : total arbNat := by
+  simp [arbNat]
+  apply total_indexed
+  intro n
+  induction n <;> simp [arbNat.go, *]
+
+@[simp]
 def total_choose : total (choose lo hi h) := by
   generalize hn : hi - lo = n
   induction n generalizing lo hi h with
@@ -118,6 +151,10 @@ end Total
 namespace OptGen
 
 @[reducible]
+def opt_arbNat_self : OptGen arbNat :=
+  Subtype.mk arbNat (by rfl)
+
+@[reducible]
 def opt_gt_self : OptGen (gt lo) :=
   Subtype.mk (gt lo) (by rfl)
 
@@ -130,12 +167,14 @@ end OptGen
 end Gen
 
 add_aesop_rules unsafe (rule_sets := [synthesis]) [
+  (by apply Gen.CorrectGen.carbNat),
   (by apply Gen.CorrectGen.cgt),
   (by apply Gen.CorrectGen.cbetween (by first | aesop | omega)),
   (by apply Gen.CorrectGen.cbetween_partial),
 ]
 
 add_aesop_rules unsafe (rule_sets := [optimization]) [
+  (by apply Gen.OptGen.opt_arbNat_self),
   (by apply Gen.OptGen.opt_gt_self),
   (by apply Gen.OptGen.opt_choose_self),
 ]

@@ -1,4 +1,4 @@
-import Palamedes.V2.Data.Range
+import Palamedes.V2.Data.Nat
 import Palamedes.V2.Synthesizer
 
 def genGt5 : Gen Nat := by
