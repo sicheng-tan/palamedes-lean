@@ -75,54 +75,34 @@ theorem StackF_or
 
 -- fold variants
 -- def Stack.fold
--- def Stack.foldM
--- def Stack.accu
 -- def Stack.accuM
 
--- theorem fold_mty
--- theorem fold_cons
--- theorem fold_ret_cons
-
--- theorem foldM_mty
--- theorem foldM_cons
--- theorem foldM_ret_cons
-
--- theorem accu_mty
--- theorem accu_cons
--- theorem accu_ret_cons
-
+/- (unclear if we need these) -/
 -- theorem accuM_mty
 -- theorem accuM_cons
 -- theorem accuM_ret_cons
 
--- relationships between fold variants
+/- Fold special cases -/
 
--- theorem fold_foldM
--- theorem fold_accu
--- theorem fold_accuM
+-- theorem fold_accu_Option_basic
+-- theorem fold_accu_Option_true
+-- theorem fold_accu_Option_function
+-- theorem fold_accu_Option_function_true
 
--- unfold
+/- Unfold -/
 
 -- def unfoldStack
 -- def unfoldStack_support
--- def support_unfoldStack
+-- def support_unfoldStack ??
 -- theorem unfoldStack_monotonic
 -- theorem support_unfoldStack
--- theorem support_unfoldStack_ok
 
--- merge lemmas
+/- Conversion of recursive functions to fold -/
+-- theorem coerce_to_fold
 
--- theorem merge_fold
--- theorem merge_foldM
--- theorem merge_accu
+/- Merging two accumulators-/
 -- theorem merge_accuM
 
--- coercion lemmas
-
--- theorem coerce_to_fold
--- theorem coerce_to_foldM
--- theorem coerce_to_accu
--- theorem coerce_to_accuM
 
 /- Pretty printing -/
 def labelToString : Label → String
