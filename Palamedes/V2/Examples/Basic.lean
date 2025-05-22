@@ -13,6 +13,9 @@ macro "simp_predicate" : tactic =>
 
 add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by apply Gen.CorrectGen.cpure),
+  (by apply Gen.CorrectGen.cpick),
+  (by apply Gen.CorrectGen.cbind),
+  (by fail_if_no_progress intros),
   -- (by first
   --   | apply synth_or
   --   | apply synth_conv (by simp_predicate; exact rfl) (synth_or _ _)),
@@ -23,7 +26,6 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   --   | apply synth_conv (by simp_predicate; exact rfl) (synth_bind _ _)),
   -- (by apply synth_true),
   -- (by apply synth_between),
-  -- (by fail_if_no_progress intros),
 ]
 
 macro "cgenerator_search" : tactic =>
@@ -69,4 +71,13 @@ elab "generator_search " t:term : tactic => withMainContext do
   closeMainGoal `generator_search gen
 
 def genEq2 : Gen Nat := by
+  show_term
   generator_search (· = 2)
+
+def genEq2Or5 : Gen Nat := by
+  show_term
+  generator_search (fun a => a = 2 ∨ a = 5)
+
+def genThreePlusOne : Gen Nat := by
+  show_term
+  generator_search (fun b => ∃ a, a = 2 ∧ b = a + 1)
