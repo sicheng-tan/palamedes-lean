@@ -1,5 +1,7 @@
 import Palamedes.V2.Total
 import Palamedes.V2.CorrectGen
+import Palamedes.V2.Optimizer
+import Palamedes.V2.RuleSets
 
 namespace Gen
 
@@ -13,7 +15,7 @@ def tuple
 
 namespace CorrectGen
 
-@[reducible]
+@[reducible, aesop unsafe (rule_sets := [synthesis])]
 def ctuple
     {P : α → Prop}
     {Q : α → β → Prop}
@@ -30,6 +32,7 @@ end CorrectGen
 
 namespace Total
 
+@[simp]
 def total_tuple
     (hx : total x)
     (hy : ∀ {a}, a ∈ 〚x〛 → total (f a)) :
@@ -40,5 +43,13 @@ def total_tuple
   simp [hy hv]
 
 end Total
+
+namespace OptGen
+
+@[reducible, aesop unsafe (rule_sets := [optimization])]
+def opt_tuple_self : OptGen (tuple x f) :=
+  Subtype.mk (tuple x f) rfl
+
+end OptGen
 
 end Gen

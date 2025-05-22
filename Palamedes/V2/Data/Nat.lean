@@ -84,7 +84,7 @@ end Gen
 
 namespace CorrectGen
 
-@[reducible]
+@[reducible, aesop unsafe (rule_sets := [synthesis])]
 def carbNat : @CorrectGen Nat (λ _ => True) :=
   Subtype.mk arbNat <| by
     funext v
@@ -99,7 +99,11 @@ def cbetween
     funext v
     simp
 
-@[reducible]
+add_aesop_rules unsafe (rule_sets := [synthesis]) [
+  (by apply Gen.CorrectGen.cbetween (by first | aesop | omega))
+]
+
+@[reducible, aesop unsafe (rule_sets := [synthesis])]
 def cbetween_partial
     {lo hi : Nat} :
     CorrectGen (λ v => lo ≤ v ∧ v ≤ hi) :=
@@ -108,7 +112,7 @@ def cbetween_partial
     simp
     exact Nat.le_trans
 
-@[reducible]
+@[reducible, aesop unsafe (rule_sets := [synthesis])]
 def cgt
     {lo : Nat} :
     CorrectGen (λ v => lo < v) :=
@@ -150,31 +154,18 @@ end Total
 
 namespace OptGen
 
-@[reducible]
+@[reducible, aesop unsafe (rule_sets := [optimization])]
 def opt_arbNat_self : OptGen arbNat :=
   Subtype.mk arbNat (by rfl)
 
-@[reducible]
+@[reducible, aesop unsafe (rule_sets := [optimization])]
 def opt_gt_self : OptGen (gt lo) :=
   Subtype.mk (gt lo) (by rfl)
 
-@[reducible]
+@[reducible, aesop unsafe (rule_sets := [optimization])]
 def opt_choose_self : OptGen (choose lo hi h) :=
   Subtype.mk (choose lo hi h) (by rfl)
 
 end OptGen
 
 end Gen
-
-add_aesop_rules unsafe (rule_sets := [synthesis]) [
-  (by apply Gen.CorrectGen.carbNat),
-  (by apply Gen.CorrectGen.cgt),
-  (by apply Gen.CorrectGen.cbetween (by first | aesop | omega)),
-  (by apply Gen.CorrectGen.cbetween_partial),
-]
-
-add_aesop_rules unsafe (rule_sets := [optimization]) [
-  (by apply Gen.OptGen.opt_arbNat_self),
-  (by apply Gen.OptGen.opt_gt_self),
-  (by apply Gen.OptGen.opt_choose_self),
-]
