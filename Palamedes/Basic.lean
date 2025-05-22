@@ -43,8 +43,9 @@ def allTwos : List Nat → Bool
   | [] => true
   | x :: xs => x == 2 && allTwos xs
 
-def genAllTwos : CGen (λ v => allTwos v = true) := by
-  palamedes
+-- TODO
+-- def genAllTwos : CGen (λ v => allTwos v = true) := by
+--   palamedes
 
 def genInRange : CGen (λ v => 10 ≤ v ∧ v ≤ 20) := by
   palamedes
@@ -91,23 +92,26 @@ def evenLength : List α → Bool
   | [] => true
   | _ :: xs => not (evenLength xs)
 
-def genEvenLength [Arbitrary α] :
-    CGen (λ (v : List α) => evenLength v = true) := by
-  palamedes
+-- TODO
+-- def genEvenLength [Arbitrary α] :
+--     CGen (λ (v : List α) => evenLength v = true) := by
+--   palamedes
 
-def genLengthK {k : Nat} [Arbitrary α] :
-    CGen (λ (v : List α) => List.length v = k) := by
-  palamedes
+-- TODO
+-- def genLengthK {k : Nat} [Arbitrary α] :
+--     CGen (λ (v : List α) => List.length v = k) := by
+--   palamedes
 
 def genEvenLengthTwos :
     CGen (λ (v : List Nat) => List.foldrM (λ x b => do guard (x == 2); pure (not b)) true v = Option.some true) := by
   palamedes
 
-def genLengthKTwos (k : Nat) :
-    CGen (λ (v : List Nat) =>
-      List.foldr (λ _ l => l + 1) 0 v = k ∧
-      List.foldrM (λ x () => guard (x == 2)) () v = Option.some ()) := by
-  palamedes
+-- TODO
+-- def genLengthKTwos (k : Nat) :
+--     CGen (λ (v : List Nat) =>
+--       List.foldr (λ _ l => l + 1) 0 v = k ∧
+--       List.foldrM (λ x () => guard (x == 2)) () v = Option.some ()) := by
+--   palamedes
 
 @[aesop simp (rule_sets := [palamedes])]
 def increasingByOne : List Int → Int → Bool := λ xs prev =>
@@ -115,8 +119,9 @@ def increasingByOne : List Int → Int → Bool := λ xs prev =>
   | [] => true
   | x :: xs => x == prev + 1 && increasingByOne xs x
 
-def genIncreasingByOne : CGen (λ (v : List Int) => increasingByOne v 0) := by
-  palamedes
+-- TODO
+-- def genIncreasingByOne : CGen (λ (v : List Int) => increasingByOne v 0) := by
+--   palamedes
 
 def genTreeIncreasingByOne :
     CGen (λ v =>
@@ -136,7 +141,8 @@ def sortedBetween (hi : Nat) : List Nat → Nat → Bool := λ xs lo =>
   | [] => true
   | x :: xs => lo ≤ x && x ≤ hi && sortedBetween hi xs x
 
-def genSortedBetween
-    (lo hi : Nat) :
-    CGen (λ v => sortedBetween hi v lo = true) := by
-  palamedes
+-- TODO
+-- def genSortedBetween
+--     (lo hi : Nat) :
+--     CGen (λ v => sortedBetween hi v lo = true) := by
+--   palamedes

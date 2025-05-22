@@ -101,8 +101,8 @@ abbrev synth_unfoldM
     {b z : β}
     (g : (b : β) → CGen (ListF.rec (b = z) (λ a b' => f a b' = some b))) :
     CGen (λ v => List.foldrM f z v = .some b) :=
-  Subtype.mk (List.unfoldr (λ b => (g b).val) b) <| by
-    rw [support_unfoldr]
+  Subtype.mk (List.unfold (λ b => (g b).val) b) <| by
+    rw [List.unfold_support_ok]
     intro v
     induction v generalizing b with
     | nil =>
@@ -115,6 +115,7 @@ abbrev synth_unfoldM
       | .none => simp_all
       | .some b' => aesop
 
+/- TODO: Can likely remove this
 abbrev synth_accu
     {α β σ : Type}
     {st : α → σ → σ}
@@ -143,6 +144,7 @@ abbrev synth_accu
       have := (g b s).property (.cons x (List.foldr (fun x b s => f x (b (st x s)) s) z xs (st x s)))
       simp_all [bind, optBind_bind]
       aesop
+-/
 
 abbrev synth_accuM
     {α β σ : Type}
@@ -154,14 +156,14 @@ abbrev synth_accuM
     (g : (b : β) → (s : σ) → CGen (ListF.rec (z s = some b) (λ a b' => f a b' s = some b))) :
     CGen (λ v => List.accuM st f z v s = some b) :=
   Subtype.mk
-    (List.unfoldr (λ (b, s) => do
+    (List.unfold (λ (b, s) => do
       match (← (g b s).val) with
       | .nil => pure .nil
       | .cons x b' => pure (.cons x (b', st x s))) (b, s)) <| by
-    rw [support_unfoldr]
+    rw [List.unfold_support_ok]
     simp_all
     intro xs
-    rw [←foldr_accuM]
+    rw [←List.fold_accuM]
     on_goal 2 => exact Eq.refl _
     induction xs generalizing s b with
     | nil =>
@@ -199,14 +201,14 @@ abbrev synth_accuTreeM
     (g : (b : β) → (s : σ) → CGen (TreeF.rec (z s = some b) (λ bl a br => f bl a br s = some b))) :
     CGen (λ v => Tree.accuM st f z v s = some b) :=
   Subtype.mk
-    (.indexed (λ n => unfoldTree n (λ (b, s) => do
+    (.indexed (λ n => Tree.unfold n (λ (b, s) => do
       return match (← (g b s).val) with
         | .leaf => .leaf
         | .node bl x br =>
           let (sl, sr) := st x s
           (.node (bl, sl) x (br, sr))) (b, s)))
   (by
-    rw [support_unfoldTree_ok]
+    rw [Tree.unfold_support_ok]
     simp_all
     intro t
     induction t generalizing s b with
@@ -279,8 +281,10 @@ macro "#set_up_palamedes_simp" : command =>
       decidable_or
       ListF_or
       TreeF_or
-      fold_foldM
-      merge_foldM
+      List.coerce_to_fold
+      Tree.coerce_to_fold
+      List.merge_accuM
+      Tree.merge_accuM
 
     attribute [-simp] Prod.forall List.foldr_add_const)
 
