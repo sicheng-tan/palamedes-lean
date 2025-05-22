@@ -1,33 +1,28 @@
 import Palamedes.Support
 
+/- Type definition -/
+
 inductive Tree (α : Type) where
   | leaf : Tree α
   | node : (l : Tree α) → (x : α) → (r : Tree α) → Tree α
 
-def treeToString [ToString α] : Tree α → String
-  | .leaf => "(leaf)"
-  | .node l x r => s!"(node {treeToString l} {x} {treeToString r})"
-
-instance [ToString α] : ToString (Tree α) where
-  toString := treeToString
+/- Base functor -/
 
 inductive TreeF (α β : Type) where
   | leaf : TreeF α β
   | node : (l : β) → (x : α) → (r : β) → TreeF α β
 
-def Tree.accu
-    {α β σ : Type}
-    (st : α → σ → σ × σ)
-    (f : β → α → β → σ → β)
-    (z : σ → β)
-    (t : Tree α)
-    (s : σ) :
-    β :=
+theorem TreeF_or
+    {α β : Type}
+    {P : Prop}
+    {Q : β → α → β → Prop}
+    {t : TreeF α β} :
+    TreeF.rec P Q t ↔ (P ∧ t = .leaf) ∨ (∃ bl x br, t = .node bl x br ∧ Q bl x br) := by
   match t with
-  | .leaf => z s
-  | .node l x r =>
-    let (sl, sr) := st x s
-    f (Tree.accu st f z l sl) x (Tree.accu st f z r sr) s
+  | .leaf => simp
+  | .node _ _ _ => aesop
+
+/- Recursion schemes -/
 
 def Tree.fold
     {α β : Type}
@@ -42,23 +37,6 @@ def Tree.fold
 @[simp] theorem fold_leaf : Tree.fold f z .leaf = z := rfl
 @[simp] theorem fold_node {x} {l r : Tree α} {f : β → α → β → β} {z} :
     Tree.fold f z (.node l x r) = f (Tree.fold f z l) x (Tree.fold f z r) := rfl
-
-def Tree.foldM
-    [Monad m]
-    {α β : Type}
-    (f : β → α → β → m β)
-    (z : m β)
-    (t : Tree α) :
-    m β :=
-  match t with
-  | .leaf => z
-  | .node l x r => do
-    f (← Tree.foldM f z l) x (← Tree.foldM f z r)
-
-@[simp] theorem foldM_leaf [Monad m] {f : β → α → β → m β} {z : m β} : Tree.foldM f z .leaf = z := rfl
-@[simp] theorem foldM_node [Monad m] [LawfulMonad m] {x : α} {l r : Tree α} {f : β → α → β → m β} {z : m β} :
-    Tree.foldM f z (.node l x r) = l.foldM f z >>= λ vL => r.foldM f z >>= f vL x := by
-  simp only [Tree.foldM]
 
 def Tree.accuM
     [Monad m]
@@ -75,67 +53,45 @@ def Tree.accuM
     let (sl, sr) := st x s
     f (← Tree.accuM st f z l sl) x (← Tree.accuM st f z r sr) s
 
-theorem foldM_accuM
-    [Monad m]
-    {α β σ : Type}
-    {st : α → σ → σ × σ}
-    {s : σ}
-    {t : Tree α}
-    {z : σ → m β}
-    {f : β → α → β → σ → m β}
-    {f' : (σ → m β) → α → (σ → m β) → σ → m β} :
-    f' = (λ bl x br => λ s => do
-      let (sl, sr) := st x s
-      f (← bl sl) x (← br sr) s) →
-    Tree.fold f' z t s = Tree.accuM st f z t s := by
-  induction t generalizing s <;> simp_all [Tree.fold, Tree.accuM]
+/- Fold special cases -/
 
-theorem fold_accuM
-    {α β : Type}
-    {t : Tree α}
-    {z : β}
-    {f : β → α → β → β} :
-    Tree.fold f z t =
-    Id.run (Tree.accuM
-      (fun _ _ => ((), ()))
-      (fun l x r _ => pure (f l x r))
-      (fun _ => pure z)
-      t
-      ()) := by induction t <;> simp_all [Tree.fold, Tree.accuM, Id.run]
 
-def unfoldTree (n : Nat) (f : β → Gen (TreeF α β)) (b : β) : Gen (Option (Tree α)) :=
+
+/- Unfold -/
+
+def Tree.unfold (n : Nat) (f : β → Gen (TreeF α β)) (b : β) : Gen (Option (Tree α)) :=
   match n with
   | 0 => pure none
   | n + 1 => do
     match (← f b) with
     | .leaf => pure (some .leaf)
     | .node bl x br => do
-      let l ← unfoldTree n f bl
-      let r ← unfoldTree n f br
+      let l ← Tree.unfold n f bl
+      let r ← Tree.unfold n f br
       pure (do pure (.node (← l) x (← r)))
 
 @[simp]
-def support_unfoldTree (P : β → TreeF α β → Prop) (b : β) (xs : Tree α) : Prop :=
+def Tree.unfold_support (P : β → TreeF α β → Prop) (b : β) (xs : Tree α) : Prop :=
   match xs with
   | .leaf => P b .leaf
   | .node l x r => ∃ bl br,
     P b (.node bl x br) ∧
-    support_unfoldTree P bl l ∧
-    support_unfoldTree P br r
+    Tree.unfold_support P bl l ∧
+    Tree.unfold_support P br r
 
-theorem unfoldTree_monotonic'
+theorem Tree.unfold_monotonic'
     {n : Nat}
     {f : β → Gen (TreeF α β)}
     {b : β} :
-    .some v ∈ 〚unfoldTree n f b〛→
-    .some v ∈ 〚unfoldTree (n + 1) f b〛:= by
+    .some v ∈ 〚Tree.unfold n f b〛→
+    .some v ∈ 〚Tree.unfold (n + 1) f b〛:= by
   intro hn
   induction v generalizing n b with
   | leaf =>
     match n with
-    | 0 => simp_all [unfoldTree]
+    | 0 => simp_all [Tree.unfold]
     | .succ _ =>
-      simp_all [unfoldTree, bind, optBind_bind]
+      simp_all [Tree.unfold, bind, optBind_bind]
       have ⟨v', hv'1, hv'2⟩ := hn
       exists v'
       match v' with
@@ -147,21 +103,21 @@ theorem unfoldTree_monotonic'
         | .some _, .some _ => simp_all
   | node l x r ihl ihr =>
     match n with
-    | 0 => simp_all [unfoldTree]
+    | 0 => simp_all [Tree.unfold]
     | .succ n' =>
-      simp_all [unfoldTree, bind, optBind_bind]
+      simp_all [Tree.unfold, bind, optBind_bind]
       have ⟨v', hv'1, hv'2⟩ := hn
       exists v'
       match v' with
       | .node bl y br =>
-        simp_all [unfoldTree, bind, optBind_bind]
+        simp_all [Tree.unfold, bind, optBind_bind]
         have ⟨ll, hll, rr, hrr, h⟩ := hv'2
         clear hv'2
         match ll, rr with
         | .none, _ => simp_all
         | _, .none => simp_all
         | .some ll, some rr =>
-          simp_all [unfoldTree, bind, optBind_bind]
+          simp_all [Tree.unfold, bind, optBind_bind]
           cases h
           replace ihl := ihl hll
           replace ihr := ihr hrr
@@ -172,13 +128,13 @@ theorem unfoldTree_monotonic'
           . aesop
           . aesop
 
-theorem unfoldTree_monotonic
+theorem Tree.unfold_monotonic
     {n m : Nat}
     {f : β → Gen (TreeF α β)}
     {b : β} :
     n ≤ m →
-    .some v ∈ 〚unfoldTree n f b〛→
-    .some v ∈ 〚unfoldTree m f b〛:= by
+    .some v ∈ 〚Tree.unfold n f b〛→
+    .some v ∈ 〚Tree.unfold m f b〛:= by
   intro hlt hn
   induction m generalizing n with
   | zero =>
@@ -190,10 +146,10 @@ theorem unfoldTree_monotonic
     | .inl h => subst h; simp_all
     | .inr h =>
       have := ih h hn
-      apply unfoldTree_monotonic' this
+      apply Tree.unfold_monotonic' this
 
-theorem support_unfoldTree_ok :
-    support (.indexed (λ n => unfoldTree n f b)) = support_unfoldTree (λ b' => support (f b')) b := by
+theorem Tree.unfold_support_ok :
+    support (.indexed (λ n => Tree.unfold n f b)) = Tree.unfold_support (λ b' => support (f b')) b := by
   funext t
   induction t generalizing b with
   | leaf =>
@@ -201,14 +157,14 @@ theorem support_unfoldTree_ok :
     apply Iff.intro
     . intro ⟨n, h⟩
       match n with
-      | 0 => simp_all [unfoldTree]
+      | 0 => simp_all [Tree.unfold]
       | n + 1 =>
-        simp_all [unfoldTree, bind, optBind_bind]
+        simp_all [Tree.unfold, bind, optBind_bind]
         have ⟨v', hv'1, hv'2⟩ := h
         match v' with
         | .leaf => simp_all
         | .node _ _ _ =>
-          simp_all [unfoldTree, bind, optBind_bind]
+          simp_all [Tree.unfold, bind, optBind_bind]
           have ⟨l'', hl'', r'', hr''⟩ := hv'2
           match l'', r'' with
           | .none, _ => simp_all
@@ -218,21 +174,21 @@ theorem support_unfoldTree_ok :
           | .some (.node _ _ _), .some (.node _ _ _) => simp_all
     . intro h
       exists 1
-      simp [unfoldTree, bind, optBind_bind]
+      simp [Tree.unfold, bind, optBind_bind]
       exists .leaf
   | node l x r ih_l ih_r =>
     simp_all
     apply Iff.intro
     . intro ⟨n, h⟩
       match n with
-      | 0 => simp_all [unfoldTree]
+      | 0 => simp_all [Tree.unfold]
       | n + 1 =>
-        simp_all [unfoldTree, bind, optBind_bind]
+        simp_all [Tree.unfold, bind, optBind_bind]
         have ⟨v', hv'1, hv'2⟩ := h
         match v' with
         | .leaf => simp_all
         | .node bl'' x br'' =>
-          simp_all [unfoldTree, bind, optBind_bind]
+          simp_all [Tree.unfold, bind, optBind_bind]
           have ⟨l'', hl'', r'', hr'', hv''⟩ := hv'2
           match l'', r'' with
           | .none, _ => simp_all
@@ -252,30 +208,33 @@ theorem support_unfoldTree_ok :
       have ⟨nl, hl⟩ := ih_l.mpr hl
       have ⟨nr, hr⟩ := ih_r.mpr hr
       exists nl + nr + 1
-      simp_all [unfoldTree, bind, optBind_bind]
+      simp_all [Tree.unfold, bind, optBind_bind]
       exists .node bl x br
-      simp_all [unfoldTree, bind, optBind_bind]
+      simp_all [Tree.unfold, bind, optBind_bind]
       exists some l
       apply And.intro
-      . apply @unfoldTree_monotonic _ _ _ nl (nl + nr)
+      . apply @Tree.unfold_monotonic _ _ _ nl (nl + nr)
         . simp
         . assumption
       . exists some r
         apply And.intro
-        . apply @unfoldTree_monotonic _ _ _ nr (nl + nr)
+        . apply @Tree.unfold_monotonic _ _ _ nr (nl + nr)
           . simp
           . assumption
         . simp
 
-theorem TreeF_or
-    {α β : Type}
-    {P : Prop}
-    {Q : β → α → β → Prop}
-    {t : TreeF α β} :
-    TreeF.rec P Q t ↔ (P ∧ t = .leaf) ∨ (∃ bl x br, t = .node bl x br ∧ Q bl x br) := by
-  match t with
-  | .leaf => simp
-  | .node _ _ _ => aesop
+/- Conversion of recursive functions to fold -/
+theorem Tree.coerce_to_fold
+    {t : Tree α}
+    {f : Tree α → β} -- function to be coerced
+    {z : β}
+    {g : β → α → β → β}
+    (h1 : f .leaf = z)
+    (h2 : ∀ l x r, f (.node l x r) = g (f l) x (f r)) :
+    f t = t.fold g z := by
+  induction t <;> simp_all
+
+/- Merging two accumulators -/
 
 theorem Tree.merge_accuM
     {t : Tree α}
@@ -336,15 +295,47 @@ theorem Tree.merge_accuM
       replace IHr := @IHr st₁ st₂ f₁ f₂ (st₁ x s₁).snd (st₂ x s₂).snd z₁ z₂ rv₁ rv₂
       simp_all
 
-theorem Tree.coerce_to_fold
-    {t : Tree α}
-    {f : Tree α → β} -- function to be coerced
-    {z : β}
-    {g : β → α → β → β}
-    (h1 : f .leaf = z)
-    (h2 : ∀ l x r, f (.node l x r) = g (f l) x (f r)) :
-    f t = t.fold g z := by
-  induction t <;> simp_all
+/- Pretty printing -/
+
+def Tree.toString [ToString α] : Tree α → String
+  | .leaf => "(leaf)"
+  | .node l x r => s!"(node {Tree.toString l} {x} {Tree.toString r})"
+
+instance [ToString α] : ToString (Tree α) where
+  toString := Tree.toString
+
+/- TODO: can probably remove these
+
+def Tree.accu
+    {α β σ : Type}
+    (st : α → σ → σ × σ)
+    (f : β → α → β → σ → β)
+    (z : σ → β)
+    (t : Tree α)
+    (s : σ) :
+    β :=
+  match t with
+  | .leaf => z s
+  | .node l x r =>
+    let (sl, sr) := st x s
+    f (Tree.accu st f z l sl) x (Tree.accu st f z r sr) s
+
+def Tree.foldM
+    [Monad m]
+    {α β : Type}
+    (f : β → α → β → m β)
+    (z : m β)
+    (t : Tree α) :
+    m β :=
+  match t with
+  | .leaf => z
+  | .node l x r => do
+    f (← Tree.foldM f z l) x (← Tree.foldM f z r)
+
+@[simp] theorem foldM_leaf [Monad m] {f : β → α → β → m β} {z : m β} : Tree.foldM f z .leaf = z := rfl
+@[simp] theorem foldM_node [Monad m] [LawfulMonad m] {x : α} {l r : Tree α} {f : β → α → β → m β} {z : m β} :
+    Tree.foldM f z (.node l x r) = l.foldM f z >>= λ vL => r.foldM f z >>= f vL x := by
+  simp only [Tree.foldM]
 
 theorem Tree.coerce_to_foldM
     {t : Tree α}
@@ -383,3 +374,5 @@ theorem Tree.coerce_to_accuM
     . intro h
       simp_all [Option.bind, guard]
       aesop
+
+-/
