@@ -55,7 +55,90 @@ def Tree.accuM
 
 /- Fold special cases -/
 
+theorem Tree.fold_accu_Option_basic
+    {α β : Type}
+    {v : β}
+    {t : Tree α}
+    {z : β}
+    {f : β → α → β → β} :
+    Tree.fold f z t = v ↔
+    Tree.accuM
+      (fun _ _ => ((), ()))
+      (fun l x r _ => some (f l x r))
+      (fun _ => some z)
+      t
+      () = some v := by
+    induction t generalizing v <;> simp_all [Tree.fold, Tree.accuM]
+    case node l x r ihl ihr =>
+      apply Iff.intro <;> intro h
+      . -- TODO there must be a way to automate this
+        -- have hl : Tree.accuM (fun x x => ((), ())) (fun l x r x_1 => some (f l x r)) (fun x => some z) l () = some v := by
+        --   rw [ihl]
+        --   sorry
+        have hvl : Tree.fold f z l = Tree.fold f z l := by rfl
+        simp [hvl] at ihl
+        sorry
+      .
+        sorry
 
+theorem Tree.fold_accu_Option_true
+    {α : Type}
+    {t : Tree α}
+    {g : α → Bool}
+    {f : Bool → α → Bool → Bool}
+    (h : ∀ accL x accR, f accL x accR = (g x && accL && accR)) :
+    Tree.fold f true t = true ↔
+    Tree.accuM
+      (fun _ _ => ((), ()))
+      (fun _ x _ _ => guard (g x))
+      (fun _ => some ())
+      t
+      () = some () := by
+  induction t <;> simp_all [Tree.fold, Tree.accuM]
+  sorry
+
+theorem Tree.fold_accu_Option_function
+    {α β γ : Type}
+    {i : σ}
+    {v : (σ → β)}
+    {t : Tree α}
+    {z : (σ → β)}
+    {f : (σ → β) → α → (σ → β) → (σ → β)}
+    -- (h : something about f and a g we make up)
+      --   (f' = (λ bl x br => λ s => do
+      -- let (sl, sr) := st x s
+      -- f (← bl sl) x (← br sr) s))
+      -- f accl x accr = g ?
+    :
+    Tree.fold f z t = v ↔
+    Tree.accuM
+      (fun x s => (i, i)) -- changes
+      (fun l x r s => some (f l x r)) -- use s??????
+      (fun s => some z) -- use s :(((((
+      t
+      i = some v := by sorry
+
+
+-- theorem Tree.fold_accu_Option_function_true
+--     {α β σ : Type}
+--     {i : σ}
+--     {v : (σ → β)}
+--     {t : Tree α}
+--     {z : (σ → β)}
+--     {f : (σ → β) → α → (σ → β) → (σ → β)}
+--     -- (h : something about f and a g we make up)
+--       --   (f' = (λ bl x br => λ s => do
+--       -- let (sl, sr) := st x s
+--       -- f (← bl sl) x (← br sr) s))
+--       -- f b as gweqg = g asdihfqg;ie
+--     :
+--     Tree.fold f z t = v ↔
+--     Tree.accuM
+--       (fun x s => ((), ())) -- changes
+--       (fun l x r s => some (f l x r)) -- use s??????
+--       (fun s => some z) -- use s :(((((
+--       t
+--       i = some v := by sorry
 
 /- Unfold -/
 

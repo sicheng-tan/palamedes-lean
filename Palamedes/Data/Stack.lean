@@ -22,7 +22,6 @@ inductive StackF (α : Type) where
   | cons : (z : Atom) → (s : α) → StackF α
   | ret_cons : (pc : Atom) → (s : α) → StackF α
 
-
 theorem StackF_or
   {α : Type}
   {P : Prop}
@@ -40,7 +39,30 @@ theorem StackF_or
 
 /- Recursion schemes -/
 
+def Stack.fold
+  {α : Type}
+  (f : (Atom ⊕ Atom) → α → α)
+  (z : α)
+  (s : Stack) : α :=
+  match s with
+  | .mty => z
+  | .cons x s' => f (Sum.inl x) (Stack.fold f z s')
+  | .ret_cons pc s' => f (Sum.inr pc) (Stack.fold f z s')
 
+def Stack.accuM
+  [Monad m]
+  {α σ : Type}
+  (st : (Atom ⊕ Atom) → σ → σ)
+  (f : (Atom ⊕ Atom) → α → σ → m α)
+  (z : σ → m α)
+  (s : Stack)
+  (i : σ) : m α :=
+  match s with
+  | .mty => z i
+  | .cons x s' => do
+     f (Sum.inl x) (← Stack.accuM st f z s' (st (Sum.inl x) i)) i
+  | .ret_cons pc s' => do
+     f (Sum.inr pc) (← Stack.accuM st f z s' (st (Sum.inr pc) i)) i
 
 /- (unclear if we need these) -/
 -- theorem Stack.accuM_mty
@@ -56,6 +78,19 @@ theorem StackF_or
 
 /- Unfold -/
 
+def Stack.unfold (n : Nat) (f : α → Gen (StackF α)) (x : α)
+  : Gen (Option Stack) :=
+  match n with
+  | 0 => pure none
+  | n' + 1 => do
+    match (← f x) with
+    | .mty => pure (some .mty)
+    | .cons x vs => do
+      let s ← Stack.unfold n' f vs
+      pure (do pure (.cons x (← s)))
+    | .ret_cons pc vs => do
+      let s ← Stack.unfold n' f vs
+      pure (do pure (.ret_cons pc (← s)))
 -- def Stack.unfold_support
 -- theorem Stack.unfold_monotonic
 -- theorem Stack.unfold_support_ok
