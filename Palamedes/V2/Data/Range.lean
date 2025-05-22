@@ -1,6 +1,8 @@
 import Palamedes.V2.Gen
 import Palamedes.V2.CorrectGen
 import Palamedes.V2.Total
+import Palamedes.V2.RuleSets
+import Palamedes.V2.Optimizer
 import Palamedes.V2.Data.Arbitrary
 
 namespace Gen
@@ -113,4 +115,27 @@ def total_gt : total (gt lo) := by simp [gt]
 
 end Total
 
+namespace OptGen
+
+@[reducible]
+def opt_gt_self : OptGen (gt lo) :=
+  Subtype.mk (gt lo) (by rfl)
+
+@[reducible]
+def opt_choose_self : OptGen (choose lo hi h) :=
+  Subtype.mk (choose lo hi h) (by rfl)
+
+end OptGen
+
 end Gen
+
+add_aesop_rules unsafe (rule_sets := [synthesis]) [
+  (by apply Gen.CorrectGen.cgt),
+  (by apply Gen.CorrectGen.cbetween (by first | aesop | omega)),
+  (by apply Gen.CorrectGen.cbetween_partial),
+]
+
+add_aesop_rules unsafe (rule_sets := [optimization]) [
+  (by apply Gen.OptGen.opt_gt_self),
+  (by apply Gen.OptGen.opt_choose_self),
+]

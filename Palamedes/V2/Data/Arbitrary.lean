@@ -1,6 +1,8 @@
 import Palamedes.V2.Gen
 import Palamedes.V2.CorrectGen
 import Palamedes.V2.Total
+import Palamedes.V2.RuleSets
+import Palamedes.V2.Optimizer
 
 namespace Gen
 
@@ -61,4 +63,30 @@ def total_arb_Nat : total (Arbitrary.arbitrary.val : Gen Nat) := by
 
 end Total
 
+namespace OptGen
+
+@[simp]
+def opt_arb_Unit_self : OptGen (Arbitrary.arbitrary.val : Gen Unit) :=
+  Subtype.mk (Arbitrary.arbitrary.val : Gen Unit) rfl
+
+@[simp]
+def opt_arb_Bool_self : OptGen (Arbitrary.arbitrary.val : Gen Bool) :=
+  Subtype.mk (Arbitrary.arbitrary.val : Gen Bool) rfl
+
+@[simp]
+def opt_arb_Nat_self : OptGen (Arbitrary.arbitrary.val : Gen Nat) :=
+  Subtype.mk (Arbitrary.arbitrary.val : Gen Nat) rfl
+
+end OptGen
+
 end Gen
+
+add_aesop_rules unsafe (rule_sets := [synthesis]) [
+  (by apply Gen.CorrectGen.caribtrary),
+]
+
+add_aesop_rules unsafe (rule_sets := [optimization]) [
+  (by apply Gen.Gen.OptGen.opt_arb_Unit_self),
+  (by apply Gen.Gen.OptGen.opt_arb_Bool_self),
+  (by apply Gen.Gen.OptGen.opt_arb_Nat_self),
+]
