@@ -10,7 +10,7 @@ def arbUnit : Gen Unit := pure ()
 
 namespace CorrectGen
 
-@[reducible]
+@[reducible, aesop unsafe (rule_sets := [synthesis])]
 def carbUnit : @CorrectGen Unit (fun _ => True) :=
   Subtype.mk arbUnit (by simp [arbUnit])
 
@@ -26,18 +26,10 @@ end Total
 
 namespace OptGen
 
-@[simp]
+@[reducible, aesop unsafe (rule_sets := [optimization])]
 def opt_arbUnit_self : OptGen (arbUnit : Gen Unit) :=
   Subtype.mk (arbUnit : Gen Unit) rfl
 
 end OptGen
 
 end Gen
-
-add_aesop_rules unsafe (rule_sets := [synthesis]) [
-  (by apply Gen.CorrectGen.carbUnit),
-]
-
-add_aesop_rules unsafe (rule_sets := [optimization]) [
-  (by apply Gen.Gen.OptGen.opt_arbUnit_self),
-]

@@ -10,7 +10,7 @@ def arbBool : Gen Bool := pick (pure true) (pure false)
 
 namespace CorrectGen
 
-@[reducible]
+@[reducible, aesop unsafe (rule_sets := [synthesis])]
 def carbBool : @CorrectGen Bool (fun _ => True) :=
   Subtype.mk arbBool (by simp [arbBool])
 
@@ -26,18 +26,10 @@ end Total
 
 namespace OptGen
 
-@[simp]
+@[reducible, aesop unsafe (rule_sets := [optimization])]
 def opt_arbBool_self : OptGen (arbBool : Gen Bool) :=
   Subtype.mk (arbBool : Gen Bool) rfl
 
 end OptGen
 
 end Gen
-
-add_aesop_rules unsafe (rule_sets := [synthesis]) [
-  (by apply Gen.CorrectGen.carbBool),
-]
-
-add_aesop_rules unsafe (rule_sets := [optimization]) [
-  (by apply Gen.Gen.OptGen.opt_arbBool_self),
-]
