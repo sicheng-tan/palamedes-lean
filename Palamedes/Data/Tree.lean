@@ -53,16 +53,15 @@ def Tree.accuM
     let (sl, sr) := st x i
     f (← Tree.accuM st f z l sl) x (← Tree.accuM st f z r sr) i
 
-@[simp] theorem accuM_leaf
+@[simp] theorem Tree.accuM_leaf
   [Monad m] {α σ} {st : α → σ → σ × σ} {f : β → α → β → σ → m β} {z : σ → m β} {i : σ} :
   Tree.accuM st f z (.leaf : Tree α) i = z i := rfl
--- @[simp] theorem accuM_node
+--@[simp] theorem Tree.accuM_node
 --   [Monad m] {α σ} {st : α → σ → σ × σ} {f : β → α → β → σ → m β} {z : σ → m β} {i : σ} {x} {l r : Tree α} :
---   Tree.accuM st f z (.node l x r) i = do
---       let (sl, sr) := st x i
---       let v₁ ← Tree.accuM st f z l sl
---       let v₂ ← Tree.accuM st f z r sr
---         f v₁ x v₂ i := by rfl
+--   Tree.accuM st f z (.node l x r) i =
+--    do
+--     let (sl, sr) := st x i
+--     f (← Tree.accuM st f z l sl) x (← Tree.accuM st f z r sr) i := by sorry
 
 /- Fold special cases -/
 
@@ -158,15 +157,15 @@ theorem Tree.fold_accu_Option_function
 
 /- Unfold -/
 
-def Tree.unfold (n : Nat) (f : β → Gen (TreeF α β)) (b : β) : Gen (Option (Tree α)) :=
-  match n with -- TODO: indexed
+private def Tree.unfold_aux (n : Nat) (f : β → Gen (TreeF α β)) (b : β) : Gen (Option (Tree α)) :=
+  match n with
   | 0 => pure none
   | n + 1 => do
     match (← f b) with
     | .leaf => pure (some .leaf)
     | .node bl x br => do
-      let l ← Tree.unfold n f bl
-      let r ← Tree.unfold n f br
+      let l ← Tree.unfold_aux n f bl
+      let r ← Tree.unfold_aux n f br
       pure (do pure (.node (← l) x (← r)))
 
 @[simp]
@@ -182,15 +181,15 @@ theorem Tree.unfold_monotonic_aux
     {n : Nat}
     {f : β → Gen (TreeF α β)}
     {b : β} :
-    .some v ∈ 〚Tree.unfold n f b〛→
-    .some v ∈ 〚Tree.unfold (n + 1) f b〛:= by
+    .some v ∈ 〚Tree.unfold_aux n f b〛→
+    .some v ∈ 〚Tree.unfold_aux (n + 1) f b〛:= by
   intro hn
   induction v generalizing n b with
   | leaf =>
     match n with
-    | 0 => simp_all [Tree.unfold]
+    | 0 => simp_all [Tree.unfold_aux]
     | .succ _ =>
-      simp_all [Tree.unfold, bind, optBind_bind]
+      simp_all [Tree.unfold_aux, bind, optBind_bind]
       have ⟨v', hv'1, hv'2⟩ := hn
       exists v'
       match v' with
@@ -202,21 +201,21 @@ theorem Tree.unfold_monotonic_aux
         | .some _, .some _ => simp_all
   | node l x r ihl ihr =>
     match n with
-    | 0 => simp_all [Tree.unfold]
+    | 0 => simp_all [Tree.unfold_aux]
     | .succ n' =>
-      simp_all [Tree.unfold, bind, optBind_bind]
+      simp_all [Tree.unfold_aux, bind, optBind_bind]
       have ⟨v', hv'1, hv'2⟩ := hn
       exists v'
       match v' with
       | .node bl y br =>
-        simp_all [Tree.unfold, bind, optBind_bind]
+        simp_all [Tree.unfold_aux, bind, optBind_bind]
         have ⟨ll, hll, rr, hrr, h⟩ := hv'2
         clear hv'2
         match ll, rr with
         | .none, _ => simp_all
         | _, .none => simp_all
         | .some ll, some rr =>
-          simp_all [Tree.unfold, bind, optBind_bind]
+          simp_all [Tree.unfold_aux, bind, optBind_bind]
           cases h
           replace ihl := ihl hll
           replace ihr := ihr hrr
@@ -232,8 +231,8 @@ theorem Tree.unfold_monotonic
     {f : β → Gen (TreeF α β)}
     {b : β} :
     n ≤ m →
-    .some v ∈ 〚Tree.unfold n f b〛→
-    .some v ∈ 〚Tree.unfold m f b〛:= by
+    .some v ∈ 〚Tree.unfold_aux n f b〛→
+    .some v ∈ 〚Tree.unfold_aux m f b〛:= by
   intro hlt hn
   induction m generalizing n with
   | zero =>
@@ -247,23 +246,26 @@ theorem Tree.unfold_monotonic
       have := ih h hn
       apply Tree.unfold_monotonic_aux this
 
+def Tree.unfold (f : β → Gen (TreeF α β)) (v : β) : Gen (Tree α) :=
+  .indexed (λ n => Tree.unfold_aux n f v)
+
 theorem Tree.unfold_support_ok :
-    support (.indexed (λ n => Tree.unfold n f b)) = Tree.unfold_support (λ b' => support (f b')) b := by
+    support (Tree.unfold f v) = Tree.unfold_support (λ v' => support (f v')) v := by
   funext t
-  induction t generalizing b with
+  induction t generalizing v with
   | leaf =>
     simp_all
     apply Iff.intro
     . intro ⟨n, h⟩
       match n with
-      | 0 => simp_all [Tree.unfold]
+      | 0 => simp_all [Tree.unfold_aux]
       | n + 1 =>
-        simp_all [Tree.unfold, bind, optBind_bind]
+        simp_all [Tree.unfold_aux, bind, optBind_bind]
         have ⟨v', hv'1, hv'2⟩ := h
         match v' with
         | .leaf => simp_all
         | .node _ _ _ =>
-          simp_all [Tree.unfold, bind, optBind_bind]
+          simp_all [bind, optBind_bind]
           have ⟨l'', hl'', r'', hr''⟩ := hv'2
           match l'', r'' with
           | .none, _ => simp_all
@@ -273,21 +275,21 @@ theorem Tree.unfold_support_ok :
           | .some (.node _ _ _), .some (.node _ _ _) => simp_all
     . intro h
       exists 1
-      simp [Tree.unfold, bind, optBind_bind]
+      simp [Tree.unfold_aux, bind, optBind_bind]
       exists .leaf
   | node l x r ih_l ih_r =>
     simp_all
     apply Iff.intro
     . intro ⟨n, h⟩
       match n with
-      | 0 => simp_all [Tree.unfold]
+      | 0 => simp_all [Tree.unfold_aux]
       | n + 1 =>
-        simp_all [Tree.unfold, bind, optBind_bind]
+        simp_all [Tree.unfold_aux, bind, optBind_bind]
         have ⟨v', hv'1, hv'2⟩ := h
         match v' with
         | .leaf => simp_all
         | .node bl'' x br'' =>
-          simp_all [Tree.unfold, bind, optBind_bind]
+          simp_all [bind, optBind_bind]
           have ⟨l'', hl'', r'', hr'', hv''⟩ := hv'2
           match l'', r'' with
           | .none, _ => simp_all
@@ -307,9 +309,9 @@ theorem Tree.unfold_support_ok :
       have ⟨nl, hl⟩ := ih_l.mpr hl
       have ⟨nr, hr⟩ := ih_r.mpr hr
       exists nl + nr + 1
-      simp_all [Tree.unfold, bind, optBind_bind]
+      simp_all [Tree.unfold_aux, bind, optBind_bind]
       exists .node bl x br
-      simp_all [Tree.unfold, bind, optBind_bind]
+      simp_all [bind, optBind_bind]
       exists some l
       apply And.intro
       . apply @Tree.unfold_monotonic _ _ _ nl (nl + nr)
@@ -323,6 +325,7 @@ theorem Tree.unfold_support_ok :
         . simp
 
 /- Conversion of recursive functions to fold -/
+
 theorem Tree.coerce_to_fold
     {t : Tree α}
     {f : Tree α → β} -- function to be coerced
