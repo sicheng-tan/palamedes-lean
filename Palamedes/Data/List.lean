@@ -145,7 +145,7 @@ theorem List.coerce_to_fold
 
 /- Merging two accumulators -/
 theorem List.merge_accuM
-    {t : List α}
+    {xs : List α}
     {st₁ : α → σ₁ → σ₁}
     {st₂ : α → σ₂ → σ₂}
     {f₁ : α → β₁ → σ₁ → Option β₁}
@@ -154,13 +154,31 @@ theorem List.merge_accuM
     {z₁ : σ₁ → Option β₁} {z₂ : σ₂ → Option β₂}
     {b₁ : β₁} {b₂ : β₂}
     :
-    (t.accuM st₁ f₁ z₁ s₁ = some b₁ ∧ t.accuM st₂ f₂ z₂ s₂ = some b₂)
+    (xs.accuM st₁ f₁ z₁ s₁ = some b₁ ∧ xs.accuM st₂ f₂ z₂ s₂ = some b₂)
     ↔
-    (t.accuM
+    (xs.accuM
       (λ x (s₁, s₂) => (st₁ x s₁, st₂ x s₂))
       (λ x (b₁, b₂) (s₁, s₂) => do (← f₁ x b₁ s₁, ← f₂ x b₂ s₂))
       (λ (s₁, s₂) => do (← z₁ s₁, ← z₂ s₂))
-      (s₁, s₂) = some (b₁, b₂)) := by sorry
+      (s₁, s₂) = some (b₁, b₂)) := by
+    induction xs generalizing st₁ st₂ f₁ f₂ s₁ s₂ z₁ z₂ b₁ b₂
+    case nil => simp_all [List.accuM, Option.bind_eq_some]
+    case cons y ys ih =>
+      simp_all [List.accuM, Option.bind_eq_some]
+      apply Iff.intro
+      . -- (->)
+        intro ⟨ ⟨ v₁, ⟨ hv1h, hv1tl ⟩ ⟩ , ⟨ v₂, ⟨ hv2h, hv2tl ⟩ ⟩ ⟩
+        exists v₁, v₂
+        replace ih := @ih st₁ st₂ f₁ f₂ (st₁ y s₁) (st₂ y s₂) z₁ z₂ v₁ v₂
+        simp_all [List.accuM, Option.bind_eq_some]
+      . -- (<-)
+        intro ⟨ v₁, v₂, h, h1, h2 ⟩
+        replace ih := @ih st₁ st₂ f₁ f₂ (st₁ y s₁) (st₂ y s₂) z₁ z₂ v₁ v₂
+        apply And.intro
+        . exists v₁
+          simp_all [List.accuM, Option.bind_eq_some]
+        . exists v₂
+          simp_all [List.accuM, Option.bind_eq_some]
 
 /-
 TODO: we can probably remove these
