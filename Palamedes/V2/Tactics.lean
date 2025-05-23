@@ -6,7 +6,8 @@ import Palamedes.V2.Total
 
 macro "simp_predicate" : tactic =>
   `(tactic|
-    aesop (rule_sets := [simplification]))
+    aesop
+      (rule_sets := [simplification]))
 
 macro "cgenerator_search" : tactic =>
   `(tactic|
@@ -16,13 +17,22 @@ macro "cgenerator_search" : tactic =>
 
 macro "totality" : tactic =>
   `(tactic|
-    aesop (rule_sets := [totality]))
+    aesop
+      (rule_sets := [totality]))
 
 macro "optimize_generator" : tactic =>
   `(tactic|
     aesop
       (rule_sets := [-default, -builtin, optimization])
       (config := {enableSimp := false}))
+
+-- Borrowed from Aesop
+def printAsMillis (n : Nat) : String :=
+  let str := toString (n.toFloat / 1000000)
+  match str.split λ c => c == '.' with
+  | [beforePoint] => beforePoint ++ "ms"
+  | [beforePoint, afterPoint] => beforePoint ++ "." ++ afterPoint.take 1 ++ "ms"
+  | _ => unreachable!
 
 open Lean Tactic Elab Meta Tactic in
 def solveGoalWithTactic (goalType : Expr) (tactic : TSyntax `tactic) : TacticM Expr := do
@@ -31,39 +41,56 @@ def solveGoalWithTactic (goalType : Expr) (tactic : TSyntax `tactic) : TacticM E
   instantiateMVars (.mvar m)
 
 open Lean Tactic Elab Meta Tactic in
-elab "generator_search " t:term p:"allow_partial"? : tactic => withMainContext do
+def generatorSearchElab (t : Term) (checkTotal : Bool) (verbose : Bool) : TacticM Unit := do
+  let startTime ← IO.monoNanosNow
+
   let g ← getMainGoal
   let .app (.const ``Gen []) α ← g.getType | throwError "goal type must be Gen α for some α"
+  let ty := .forallE `α α (.sort 0) .default
+  let mpred ← elabTerm t (some ty)
 
   let cgen ←
     try
-      solveGoalWithTactic
-        (← do
-          let ty := .forallE `α α (.sort 0) .default
-          let mpred ← elabTerm t (some ty)
-          return mkAppN (.const ``CorrectGen []) #[α, mpred])
-        (← `(tactic| cgenerator_search))
+      solveGoalWithTactic (mkAppN (.const ``CorrectGen []) #[α, mpred]) (← `(tactic| cgenerator_search))
     catch e =>
       throwError m!"Failed during generator synthesis.\n{e.toMessageData}"
+  if verbose then do
+    logInfo m!"Synthesized CorrectGen:\n{(← ppExpr cgen)}"
 
   let gen ← mkAppM ``Subtype.val #[cgen]
   let gen ← withReducible (reduce gen)
+  if verbose then do
+    logInfo m!"Reduced Gen:\n{(← ppExpr gen)}"
 
   let ogen ←
-    solveGoalWithTactic
-      (← mkAppM ``OptGen #[gen])
-      (← `(tactic| optimize_generator))
+    try
+      solveGoalWithTactic (← mkAppM ``OptGen #[gen]) (← `(tactic| optimize_generator))
+    catch e =>
+      throwError m!"Failed during optimization.\n{e.toMessageData}"
+  if verbose then do
+    logInfo m!"Optimized OptGen:\n{(← ppExpr ogen)}"
 
   let gen ← mkAppM ``Subtype.val #[ogen]
   let gen ← withReducible (reduce gen)
+  if verbose then do
+    logInfo m!"Reduced Gen:\n{(← ppExpr gen)}"
 
-  unless p.isSome do
-    let _ ←
-      try
-        solveGoalWithTactic
-          (← mkAppM ``Gen.total #[gen])
-          (← `(tactic| totality))
-      catch e =>
-        throwError m!"Failed during totality checking.\n\n{e.toMessageData}\n\n{gen}\nis not total.\n\nYou can use `generator_search {t} allow_partial to turn off this check."
+  if checkTotal then do
+    try
+      let _ ← solveGoalWithTactic (← mkAppM ``Gen.total #[gen]) (← `(tactic| totality))
+    catch e =>
+      logWarning m!"Failed during totality checking.\n\n{e.toMessageData}\n\n{gen}\nis not total.\n\nYou can use `generator_search {t} allow_partial to turn off this check."
+
+  let endTime ← IO.monoNanosNow
+
+  let elapsed := endTime - startTime
+  if verbose then do
+    logInfo m!"Synthesis for {← ppExpr mpred} took {printAsMillis elapsed}"
 
   closeMainGoal `generator_search gen
+
+elab "generator_search " t:term p:"allow_partial"? : tactic =>
+  generatorSearchElab t p.isNone false
+
+elab "generator_search? " t:term p:"allow_partial"? : tactic =>
+  generatorSearchElab t p.isNone true
