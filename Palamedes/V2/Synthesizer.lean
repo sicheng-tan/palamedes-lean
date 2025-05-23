@@ -13,4 +13,5 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by apply Gen.CorrectGen.convert (by simp_predicate) (Gen.CorrectGen.cpure _)),
   (by apply Gen.CorrectGen.convert (by simp_predicate) (Gen.CorrectGen.cpick _ _)),
   (by apply Gen.CorrectGen.convert (by simp_predicate) (Gen.CorrectGen.cbind _ _)),
+  (by apply Gen.CorrectGen.convert (by simp_predicate) _),
 ]
