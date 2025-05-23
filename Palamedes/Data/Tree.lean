@@ -34,8 +34,8 @@ def Tree.fold
   | .leaf => z
   | .node l x r => f (Tree.fold f z l) x (Tree.fold f z r)
 
-@[simp] theorem fold_leaf : Tree.fold f z .leaf = z := rfl
-@[simp] theorem fold_node {x} {l r : Tree α} {f : β → α → β → β} {z} :
+@[simp] theorem Tree.fold_leaf : Tree.fold f z .leaf = z := rfl
+@[simp] theorem Tree.fold_node {x} {l r : Tree α} {f : β → α → β → β} {z} :
     Tree.fold f z (.node l x r) = f (Tree.fold f z l) x (Tree.fold f z r) := rfl
 
 def Tree.accuM
@@ -45,13 +45,24 @@ def Tree.accuM
     (f : β → α → β → σ → m β)
     (z : σ → m β)
     (t : Tree α)
-    (s : σ) :
+    (i : σ) :
     m β :=
   match t with
-  | .leaf => z s
+  | .leaf => z i
   | .node l x r => do
-    let (sl, sr) := st x s
-    f (← Tree.accuM st f z l sl) x (← Tree.accuM st f z r sr) s
+    let (sl, sr) := st x i
+    f (← Tree.accuM st f z l sl) x (← Tree.accuM st f z r sr) i
+
+@[simp] theorem accuM_leaf
+  [Monad m] {α σ} {st : α → σ → σ × σ} {f : β → α → β → σ → m β} {z : σ → m β} {i : σ} :
+  Tree.accuM st f z (.leaf : Tree α) i = z i := rfl
+-- @[simp] theorem accuM_node
+--   [Monad m] {α σ} {st : α → σ → σ × σ} {f : β → α → β → σ → m β} {z : σ → m β} {i : σ} {x} {l r : Tree α} :
+--   Tree.accuM st f z (.node l x r) i = do
+--       let (sl, sr) := st x i
+--       let v₁ ← Tree.accuM st f z l sl
+--       let v₂ ← Tree.accuM st f z r sr
+--         f v₁ x v₂ i := by rfl
 
 /- Fold special cases -/
 
@@ -91,15 +102,15 @@ theorem Tree.fold_accu_Option_true
     case node l x r ihl ihr =>
         apply Iff.intro <;> intro hf
         . -- (->)
-          generalize hxl : fold f true l = xl
-          generalize hxr : fold f true r = xr
-          cases xl <;> cases xr <;>
+          generalize hvl : fold f true l = vl
+          generalize hvr : fold f true r = vr
+          cases vl <;> cases vr <;>
             simp_all [Tree.fold, Tree.accuM, guard]
         . -- (<-)
           rw [Option.bind_eq_some] at hf
-          replace ⟨ xl, hf ⟩ := hf
+          replace ⟨ vl, hf ⟩ := hf
           rw [Option.bind_eq_some] at hf
-          replace ⟨ h1, ⟨ x, h2 ⟩ ⟩ := hf
+          replace ⟨ h1, ⟨ v, h2 ⟩ ⟩ := hf
           simp_all [Tree.fold, Tree.accuM, guard]
 
 theorem Tree.fold_accu_Option_function
@@ -148,7 +159,7 @@ theorem Tree.fold_accu_Option_function
 /- Unfold -/
 
 def Tree.unfold (n : Nat) (f : β → Gen (TreeF α β)) (b : β) : Gen (Option (Tree α)) :=
-  match n with
+  match n with -- TODO: indexed
   | 0 => pure none
   | n + 1 => do
     match (← f b) with
