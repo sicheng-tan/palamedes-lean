@@ -4,6 +4,8 @@ import Palamedes.V2.CorrectGen
 import Palamedes.V2.Optimizer
 import Palamedes.V2.Total
 
+open Lean Tactic Elab Meta Tactic
+
 macro "simp_predicate" : tactic =>
   `(tactic|
     aesop
@@ -40,8 +42,23 @@ def solveGoalWithTactic (goalType : Expr) (tactic : TSyntax `tactic) : TacticM E
   let [] ← evalTacticAt tactic m | throwError "goals left unsolved"
   instantiateMVars (.mvar m)
 
-open Lean Tactic Elab Meta Tactic in
-def generatorSearchElab (t : Term) (checkTotal : Bool) (verbose : Bool) : TacticM Unit := do
+register_option palamedes.debug : Bool := {
+  defValue := false
+  group := "palamedes"
+  descr := "enable debug messages from palamedes"
+}
+
+register_option palamedes.timing : Bool := {
+  defValue := false
+  group := "palamedes"
+  descr := "enable timing messages from palamedes"
+}
+
+def generatorSearchElab (stx : Syntax) (t : Term) (checkTotal : Bool) (tryThis : Bool) : TacticM Unit := do
+  let opts ← getOptions
+  let verbose := palamedes.debug.get opts
+  let printTiming := palamedes.timing.get opts
+
   let startTime ← IO.monoNanosNow
 
   let g ← getMainGoal
@@ -54,6 +71,7 @@ def generatorSearchElab (t : Term) (checkTotal : Bool) (verbose : Bool) : Tactic
       solveGoalWithTactic (mkAppN (.const ``CorrectGen []) #[α, mpred]) (← `(tactic| cgenerator_search))
     catch e =>
       throwError m!"Failed during generator synthesis.\n{e.toMessageData}"
+
   if verbose then do
     logInfo m!"Synthesized CorrectGen:\n{(← ppExpr cgen)}"
 
@@ -84,13 +102,41 @@ def generatorSearchElab (t : Term) (checkTotal : Bool) (verbose : Bool) : Tactic
   let endTime ← IO.monoNanosNow
 
   let elapsed := endTime - startTime
+
   if verbose then do
+    TryThis.addSuggestion stx
+      <| String.intercalate "\n"
+      [s!"let cg : CorrectGen {← ppExpr mpred} := by cgenerator_search",
+        "  let og : OptGen cg.val := by optimize_generator",
+        "  let _ : Gen.total og.val := by totality",
+        "  exact og.val"]
+
+  if printTiming then do
     logInfo m!"Synthesis for {← ppExpr mpred} took {printAsMillis elapsed}"
+
+  if tryThis then
+    TryThis.addExactSuggestion stx gen
 
   closeMainGoal `generator_search gen
 
-elab "generator_search " t:term p:"allow_partial"? : tactic =>
-  generatorSearchElab t p.isNone false
+syntax (name := generatorSearch) "generator_search " term " allow_partial"? : tactic
 
-elab "generator_search? " t:term p:"allow_partial"? : tactic =>
-  generatorSearchElab t p.isNone true
+@[tactic generatorSearch]
+def expandGeneratorSearch : Tactic := fun stx =>
+  match stx with
+  | `(tactic| generator_search $t allow_partial) =>
+    generatorSearchElab stx t false false
+  | `(tactic| generator_search $t) =>
+    generatorSearchElab stx t true false
+  | _ => throwError "invalid syntax"
+
+syntax (name := generatorSearch?) "generator_search? " term " allow_partial"? : tactic
+
+@[tactic generatorSearch?]
+def expandGeneratorSearch? : Tactic := fun stx =>
+  match stx with
+  | `(tactic| generator_search? $t allow_partial) =>
+    generatorSearchElab stx t false true
+  | `(tactic| generator_search? $t) =>
+    generatorSearchElab stx t true true
+  | _ => throwError "invalid syntax"
