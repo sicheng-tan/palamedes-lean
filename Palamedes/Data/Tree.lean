@@ -70,16 +70,9 @@ theorem Tree.fold_accu_Option_basic
       () = some v := by
     induction t generalizing v <;> simp_all [Tree.fold, Tree.accuM]
     case node l x r ihl ihr =>
-      apply Iff.intro <;> intro h
-      . -- TODO there must be a way to automate this
-        -- have hl : Tree.accuM (fun x x => ((), ())) (fun l x r x_1 => some (f l x r)) (fun x => some z) l () = some v := by
-        --   rw [ihl]
-        --   sorry
-        have hvl : Tree.fold f z l = Tree.fold f z l := by rfl
-        simp [hvl] at ihl
-        sorry
-      .
-        sorry
+        replace ihl := @ihl (Tree.fold f z l)
+        replace ihr := @ihr (Tree.fold f z r)
+        simp_all [Tree.fold, Tree.accuM]
 
 theorem Tree.fold_accu_Option_true
     {α : Type}
@@ -94,8 +87,20 @@ theorem Tree.fold_accu_Option_true
       (fun _ => some ())
       t
       () = some () := by
-  induction t <;> simp_all [Tree.fold, Tree.accuM]
-  sorry
+    induction t <;> simp_all [Tree.fold, Tree.accuM]
+    case node l x r ihl ihr =>
+        apply Iff.intro <;> intro hf
+        . -- (->)
+          generalize hxl : fold f true l = xl
+          generalize hxr : fold f true r = xr
+          cases xl <;> cases xr <;>
+            simp_all [Tree.fold, Tree.accuM, guard]
+        . -- (<-)
+          rw [Option.bind_eq_some] at hf
+          replace ⟨ xl, hf ⟩ := hf
+          rw [Option.bind_eq_some] at hf
+          replace ⟨ h1, ⟨ x, h2 ⟩ ⟩ := hf
+          simp_all [Tree.fold, Tree.accuM, guard]
 
 theorem Tree.fold_accu_Option_function
     {α β γ : Type}
@@ -162,7 +167,7 @@ def Tree.unfold_support (P : β → TreeF α β → Prop) (b : β) (xs : Tree α
     Tree.unfold_support P bl l ∧
     Tree.unfold_support P br r
 
-theorem Tree.unfold_monotonic'
+theorem Tree.unfold_monotonic_aux
     {n : Nat}
     {f : β → Gen (TreeF α β)}
     {b : β} :
@@ -229,7 +234,7 @@ theorem Tree.unfold_monotonic
     | .inl h => subst h; simp_all
     | .inr h =>
       have := ih h hn
-      apply Tree.unfold_monotonic' this
+      apply Tree.unfold_monotonic_aux this
 
 theorem Tree.unfold_support_ok :
     support (.indexed (λ n => Tree.unfold n f b)) = Tree.unfold_support (λ b' => support (f b')) b := by
