@@ -115,7 +115,8 @@ def generatorSearchElab (stx : Syntax) (t : Term) (checkTotal : Bool) (tryThis :
     logInfo m!"Synthesis for {← ppExpr mpred} took {printAsMillis elapsed}"
 
   if tryThis then
-    TryThis.addExactSuggestion stx gen
+    withOptions ((pp.proofs.set · true) ∘ (pp.fieldNotation.generalized.set · false)) do
+      TryThis.addExactSuggestion stx gen
 
   closeMainGoal `generator_search gen
 
