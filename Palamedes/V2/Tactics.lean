@@ -57,7 +57,12 @@ register_option palamedes.timing : Bool := {
   descr := "enable timing messages from palamedes"
 }
 
-def generatorSearchElab (stx : Syntax) (t : Term) (checkTotal : Bool) (tryThis : Bool) : TacticM Unit := do
+def generatorSearchElab
+    (stx : Syntax)
+    (t : Term)
+    (checkTotal : Bool)
+    (tryThis : Bool) :
+    TacticM Unit := do
   let opts ← getOptions
   let verbose := palamedes.debug.get opts
   let printTiming := palamedes.timing.get opts
@@ -65,14 +70,17 @@ def generatorSearchElab (stx : Syntax) (t : Term) (checkTotal : Bool) (tryThis :
   let startTime ← IO.monoNanosNow
 
   let g ← getMainGoal
-  let .app (.const ``Gen []) α ← g.getType | throwError "goal type must be Gen α for some α"
+  let .app (.const ``Gen []) α ← g.getType
+    | throwError "goal type must be Gen α for some α"
   let ty := .forallE `α α (.sort 0) .default
   let mpred ← elabTerm t (some ty)
 
   -- Synthesize a correct generator by solving `CorrectGen P` and projecting the `.val`.
   let gen ← do
     try
-      let cgen ← solveGoalWithTactic (mkAppN (.const ``CorrectGen []) #[α, mpred]) (← `(tactic| cgenerator_search))
+      let cgen ← solveGoalWithTactic
+        (mkAppN (.const ``CorrectGen []) #[α, mpred])
+        (← `(tactic| cgenerator_search))
       withReducible (reduce (← mkAppM ``Subtype.val #[cgen]))
     catch e =>
       throwError m!"Failed during generator synthesis.\n{e.toMessageData}"
@@ -83,7 +91,9 @@ def generatorSearchElab (stx : Syntax) (t : Term) (checkTotal : Bool) (tryThis :
   let gen' ←
     try
       let gen' ← withReducible (reduce (← optimizeGen gen))
-      let _ ← solveGoalWithTactic (← mkEq (← mkAppM ``Gen.support #[gen]) (← mkAppM ``Gen.support #[gen'])) (← `(tactic| optimality))
+      let _ ← solveGoalWithTactic
+        (← mkEq (← mkAppM ``Gen.support #[gen]) (← mkAppM ``Gen.support #[gen']))
+        (← `(tactic| optimality))
       pure gen'
     catch e =>
       throwError m!"Failed during optimization.\n{e.toMessageData}"
@@ -93,9 +103,16 @@ def generatorSearchElab (stx : Syntax) (t : Term) (checkTotal : Bool) (tryThis :
   -- Optionally: Check that the generator is "total," i.e., that it does not backtrack internally.
   if checkTotal then do
     try
-      let _ ← solveGoalWithTactic (← mkAppM ``Gen.total #[gen']) (← `(tactic| totality))
+      let _ ← solveGoalWithTactic
+        (← mkAppM ``Gen.total #[gen'])
+        (← `(tactic| totality))
     catch e =>
-      logWarning m!"Failed during totality checking.\n\n{e.toMessageData}\n\n{gen'}\ncould not be proved total.\n\nYou can use `generator_search {t} allow_partial to turn off this check."
+      logWarning m!"Failed during totality checking.
+      {e.toMessageData}
+      {gen'}
+      could not be proved total.
+
+      You can use `generator_search {t} allow_partial to turn off this check."
 
   if printTiming then do
     let endTime ← IO.monoNanosNow
