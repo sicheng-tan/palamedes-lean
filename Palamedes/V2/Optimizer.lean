@@ -1,171 +1,66 @@
-import Palamedes.V2.CorrectGen
-import Palamedes.V2.RuleSets
-import Mathlib.Tactic.FailIfNoProgress
-import Mathlib.Tactic.CasesM
+import Palamedes.V2.Gen
 
-@[reducible]
-def OptGen (g : Gen α) := {g' : Gen α // g.support = g'.support}
+open Lean Elab Command Term Meta Gen
 
-namespace Gen
+def mkOptBind (x f : Expr) : MetaM (Option Expr) :=
+  match_expr x with
+  -- pure_bind : pure a >>= f ~~> f a
+  | pure _ _ _ a => return some (.app f a)
+  -- bind_bind : (x >>= f) >>= g ~~> x >>= (fun x -> f x >>= g)
+  | bind _ _ _ _ x' g => do
+    let .forallE _ argTy _ _ ← inferType g | return none
+    let f' ← withLocalDecl `a .default argTy fun a => do
+      mkLambdaFVars #[a] (← mkAppM ``bind #[.app g a, f])
+    mkAppM ``bind #[x', f']
+  -- assume_bind : assume b g >>= f ~~> assume b (fun h => g h >>= f)
+  | assume _ b g => do
+    let f' ← withLocalDecl `h .default (← mkEq b (.const ``true [])) fun h => do
+      mkLambdaFVars #[h] (← mkAppM ``bind #[.app g h, f])
+    mkAppM ``assume #[b, f']
+  | _ => do
+    lambdaBoundedTelescope f 1 fun args body => do
+      -- bind_assume : x >>= fun a => assume b g ~~> assume b (fun h => (x >>= fun a => g h))
+      --               (where a is not free in b)
+      let #[a] := args | return none
+      let_expr assume _ b g := body | return none
 
-namespace OptGen
+      -- NOTE: This check ensures that we're allowed to lift `b` out of the lambda that binds `a`,
+      -- but it doesn't always behave as expected. In particular, if `b` has metavariables that
+      -- might depend on `a`, this will fail. I wonder if we could detect if `b` MUST depend on `a`,
+      -- and otherwise just assert that it doesn't and try pulling it out, but that might not be
+      -- sound.
+      if b.containsFVar a.fvarId! then return none
 
-@[reducible]
-def opt_pure_self : OptGen (pure a) :=
-  Subtype.mk (pure a) (by rfl)
+      let f' ← withLocalDecl `h .default (← mkEq b (.const ``true [])) fun h => do
+        mkLambdaFVars #[h] (← mkAppM ``bind #[x, ← mkLambdaFVars #[a] (.app g h)])
+      return some (← mkAppM ``assume #[b, f'])
 
-@[reducible]
-def opt_bind_congr
-    (x' : OptGen x)
-    (f' : ∀ a, OptGen (f a)) :
-    OptGen (x >>= f) :=
-  Subtype.mk (x'.val >>= fun a => (f' a).val) <| by
-    simp [x'.property, (f' _).property]
+def mkOptPick (x y : Expr) : MetaM (Option Expr) :=
+  match_expr x with
+  -- assume_pick : pick (assume b f) y ~~> if h : b then pick (f h) y else y
+  | assume _ b f => do
+    let c ← mkEq b (.const ``true [])
+    let fPos ← withLocalDecl `h .default c fun h => do
+      mkLambdaFVars #[h] (← mkAppM ``pick #[.app f (.bvar 0), y])
+    let fNeg ← withLocalDecl `h .default (.app (.const ``Not []) c) fun h =>
+      mkLambdaFVars #[h] y
+    return (some (← mkAppM ``dite #[c, fPos, fNeg]))
+  | _ =>
+    match_expr y with
+    -- pick_assume : pick x (assume b f) ~~> if h : b then pick x (f h) else x
+    | assume _ b f => do
+      let c ← mkEq b (.const ``true [])
+      let fPos ← withLocalDecl `h .default c fun h => do
+        mkLambdaFVars #[h] (← mkAppM ``pick #[x, .app f (.bvar 0)])
+      let fNeg ← withLocalDecl `h .default (.app (.const ``Not []) c) fun h =>
+        mkLambdaFVars #[h] x
+      return (some (← mkAppM ``dite #[c, fPos, fNeg]))
+    | _ => return none
 
-@[reducible]
-def opt_pick_congr
-    (x' : OptGen x)
-    (y' : OptGen y) :
-    OptGen (pick x y) :=
-  Subtype.mk (pick x'.val y'.val) <| by
-    simp [x'.property, y'.property]
-
-@[reducible]
-def opt_indexed_congr
-    (f' : ∀ n, OptGen (f n)) :
-    OptGen (indexed f) :=
-  Subtype.mk (indexed (fun n => (f' n).val)) <| by
-    simp [(f' _).property]
-
-@[reducible]
-def opt_assume_congr
-    (f' : ∀ (h : b = true), OptGen (f h)) :
-    OptGen (assume b f) :=
-  Subtype.mk (assume b (fun h => (f' h).val)) <| by
-    simp [(f' _).property]
-
-@[reducible]
-def opt_map_congr
-    (x' : OptGen x) :
-    OptGen (f <$> x) :=
-  Subtype.mk (f <$> x'.val) <| by
-    simp [x'.property]
-
-@[reducible]
-def opt_pick_assume
-    {b : Bool}
-    {f : b = true → Gen α}
-    (x' : OptGen x)
-    (y' : ∀ h : b = true, OptGen (pick x (f h))) :
-    OptGen (pick x (assume b f)) :=
-  Subtype.mk (if h : b then (y' h).val else x'.val) <| by
-    split
-    . rename_i h
-      have := (y' h).property
-      aesop
-    . funext a
-      simp [x'.property]
-      intro h
-      contradiction
-
-@[reducible]
-def opt_assume_pick
-    {b : Bool}
-    {f : b = true → Gen α}
-    (x' : ∀ h : b = true, OptGen (pick (f h) y))
-    (y' : OptGen y) :
-    OptGen (pick (assume b f) y) :=
-  Subtype.mk (if h : b then (x' h).val else y'.val) <| by
-    split
-    . rename_i h
-      have := (x' h).property
-      aesop
-    . funext a
-      simp [y'.property]
-      intro h
-      contradiction
-
-@[reducible]
-def opt_assume_bind
-    {b : Bool}
-    {f : b = true → Gen α}
-    (g' : ∀ (h : b = true), OptGen (f h >>= g)) :
-    OptGen (assume b f >>= g) :=
-  Subtype.mk (assume b (fun h => (g' h).val)) <| by
-    by_cases h : b = true
-    . have := (g' h).property
-      aesop
-    . simp
-      funext a
-      simp
-      apply Iff.intro <;> (intro; casesm* _ ∧ _, ∃ _, _; contradiction)
-
-@[reducible]
-def opt_bind_assume
-    {f : α → b = true → Gen β}
-    (g' : ∀ h, OptGen (x >>= fun a => f a h)) :
-    OptGen (x >>= fun a => assume b (f a)) :=
-  Subtype.mk (assume b (fun h => (g' h).val)) <| by
-    by_cases h : b = true
-    . have := (g' h).property
-      aesop
-    . simp
-      funext b
-      simp
-      apply Iff.intro <;> (intro; casesm* _ ∧ _, ∃ _, _; contradiction)
-
-@[reducible]
-def opt_pure_bind
-    (f' : OptGen (f a)) :
-    OptGen (pure a >>= f) :=
-  Subtype.mk f'.val <| by
-    simp [f'.property]
-
-@[reducible]
-def opt_bind_bind
-    (g' : ∀ a, OptGen (f a >>= g)) :
-    OptGen ((x >>= f) >>= g) :=
-  Subtype.mk (x >>= (fun a => (g' a).val)) <| by
-    simp
-    funext a
-    simp
-    apply Iff.intro
-    . intro
-      casesm* _ ∧ _, ∃ _, _
-      rename_i a' _ _
-      exists a'
-      have := (g' a').property
-      rw [← this]
-      aesop
-    . intro
-      casesm* _ ∧ _, ∃ _, _
-      rename_i a' _ right
-      have := (g' a').property
-      simp_all
-      rw [← this] at right
-      casesm* _ ∧ _, ∃ _, _
-      aesop
-
-end OptGen
-
-end Gen
-
-add_aesop_rules safe (rule_sets := [optimization]) [
-  (by fail_if_no_progress intros),
-
-  (by apply Gen.OptGen.opt_pure_bind),
-  (by apply Gen.OptGen.opt_bind_bind),
-  (by apply Gen.OptGen.opt_pick_assume),
-  (by apply Gen.OptGen.opt_assume_pick),
-  (by apply Gen.OptGen.opt_bind_assume),
-  (by apply Gen.OptGen.opt_assume_bind),
-]
-
-add_aesop_rules unsafe (rule_sets := [optimization]) [
-  (by apply Gen.OptGen.opt_pure_self),
-  (by apply Gen.OptGen.opt_bind_congr),
-  (by apply Gen.OptGen.opt_pick_congr),
-  (by apply Gen.OptGen.opt_indexed_congr),
-  (by apply Gen.OptGen.opt_assume_congr),
-  (by apply Gen.OptGen.opt_map_congr),
-]
+def optimizeGen (e : Expr) : MetaM Expr := do
+  let post (e : Expr) : MetaM TransformStep := do
+    match_expr ← withReducible (reduce e) with
+    | bind _ _ _ _ x f => if let some e' ← mkOptBind x f then return .visit e' else return .continue
+    | pick _ x y => if let some e' ← mkOptPick x y then return .visit e' else return .continue
+    | _ => return .continue
+  transform (post := post) e

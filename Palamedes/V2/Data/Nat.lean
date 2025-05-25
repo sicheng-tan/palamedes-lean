@@ -152,20 +152,4 @@ def total_gt : total (gt lo) := by simp [gt]
 
 end Total
 
-namespace OptGen
-
-@[reducible, aesop unsafe (rule_sets := [optimization])]
-def opt_arbNat_self : OptGen arbNat :=
-  Subtype.mk arbNat (by rfl)
-
-@[reducible, aesop unsafe (rule_sets := [optimization])]
-def opt_gt_self : OptGen (gt lo) :=
-  Subtype.mk (gt lo) (by rfl)
-
-@[reducible, aesop unsafe (rule_sets := [optimization])]
-def opt_choose_self : OptGen (choose lo hi h) :=
-  Subtype.mk (choose lo hi h) (by rfl)
-
-end OptGen
-
 end Gen

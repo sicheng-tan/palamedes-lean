@@ -22,12 +22,6 @@ macro "totality" : tactic =>
     aesop
       (rule_sets := [totality]))
 
-macro "optimize_generator" : tactic =>
-  `(tactic|
-    aesop
-      (rule_sets := [-default, -builtin, optimization])
-      (config := {enableSimp := false}))
-
 -- Borrowed from Aesop
 def printAsMillis (n : Nat) : String :=
   let str := toString (n.toFloat / 1000000)
@@ -80,15 +74,14 @@ def generatorSearchElab (stx : Syntax) (t : Term) (checkTotal : Bool) (tryThis :
   if verbose then do
     logInfo m!"Reduced Gen:\n{(← ppExpr gen)}"
 
-  let ogen ←
+  let gen ←
     try
-      solveGoalWithTactic (← mkAppM ``OptGen #[gen]) (← `(tactic| optimize_generator))
+      optimizeGen gen
     catch e =>
       throwError m!"Failed during optimization.\n{e.toMessageData}"
   if verbose then do
-    logInfo m!"Optimized OptGen:\n{(← ppExpr ogen)}"
+    logInfo m!"Optimized OptGen:\n{(← ppExpr gen)}"
 
-  let gen ← mkAppM ``Subtype.val #[ogen]
   let gen ← withReducible (reduce gen)
   if verbose then do
     logInfo m!"Reduced Gen:\n{(← ppExpr gen)}"

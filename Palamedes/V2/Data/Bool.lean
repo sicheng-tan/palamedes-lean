@@ -24,12 +24,4 @@ def total_arb_Bool : total (arbBool : Gen Bool) := by
 
 end Total
 
-namespace OptGen
-
-@[reducible, aesop unsafe (rule_sets := [optimization])]
-def opt_arbBool_self : OptGen (arbBool : Gen Bool) :=
-  Subtype.mk (arbBool : Gen Bool) rfl
-
-end OptGen
-
 end Gen

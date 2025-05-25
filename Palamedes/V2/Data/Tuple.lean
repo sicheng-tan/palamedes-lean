@@ -44,12 +44,4 @@ def total_tuple
 
 end Total
 
-namespace OptGen
-
-@[reducible, aesop unsafe (rule_sets := [optimization])]
-def opt_tuple_self : OptGen (tuple x f) :=
-  Subtype.mk (tuple x f) rfl
-
-end OptGen
-
 end Gen
