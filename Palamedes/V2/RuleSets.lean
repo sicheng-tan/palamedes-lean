@@ -1,3 +1,3 @@
 import Aesop
 
-declare_aesop_rule_sets [synthesis, totality, simplification, optimization]
+declare_aesop_rule_sets [synthesis, totality, simplification]

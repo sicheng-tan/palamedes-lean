@@ -80,7 +80,7 @@ def generatorSearchElab (stx : Syntax) (t : Term) (checkTotal : Bool) (tryThis :
     catch e =>
       throwError m!"Failed during optimization.\n{e.toMessageData}"
   if verbose then do
-    logInfo m!"Optimized OptGen:\n{(← ppExpr gen)}"
+    logInfo m!"Optimized Gen:\n{(← ppExpr gen)}"
 
   let gen ← withReducible (reduce gen)
   if verbose then do
@@ -95,14 +95,6 @@ def generatorSearchElab (stx : Syntax) (t : Term) (checkTotal : Bool) (tryThis :
   let endTime ← IO.monoNanosNow
 
   let elapsed := endTime - startTime
-
-  if verbose then do
-    TryThis.addSuggestion stx
-      <| String.intercalate "\n"
-      [s!"let cg : CorrectGen {← ppExpr mpred} := by cgenerator_search",
-        "  let og : OptGen cg.val := by optimize_generator",
-        "  let _ : Gen.total og.val := by totality",
-        "  exact og.val"]
 
   if printTiming then do
     logInfo m!"Synthesis for {← ppExpr mpred} took {printAsMillis elapsed}"
