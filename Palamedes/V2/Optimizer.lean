@@ -2,7 +2,7 @@ import Palamedes.V2.Gen
 
 open Lean Elab Command Term Meta Gen
 
-def mkOptBind (x f : Expr) : MetaM (Option Expr) :=
+def optimizeBind? (x f : Expr) : MetaM (Option Expr) :=
   match_expr x with
   -- pure_bind : pure a >>= f ~~> f a
   | pure _ _ _ a => return some (.app f a)
@@ -35,7 +35,7 @@ def mkOptBind (x f : Expr) : MetaM (Option Expr) :=
         mkLambdaFVars #[h] (← mkAppM ``bind #[x, ← mkLambdaFVars #[a] (.app g h)])
       return some (← mkAppM ``assume #[b, f'])
 
-def mkOptPick (x y : Expr) : MetaM (Option Expr) :=
+def optimizePick? (x y : Expr) : MetaM (Option Expr) :=
   match_expr x with
   -- assume_pick : pick (assume b f) y ~~> if h : b then pick (f h) y else y
   | assume _ b f => do
@@ -60,7 +60,9 @@ def mkOptPick (x y : Expr) : MetaM (Option Expr) :=
 def optimizeGen (e : Expr) : MetaM Expr := do
   let post (e : Expr) : MetaM TransformStep := do
     match_expr ← withReducible (reduce e) with
-    | bind _ _ _ _ x f => if let some e' ← mkOptBind x f then return .visit e' else return .continue
-    | pick _ x y => if let some e' ← mkOptPick x y then return .visit e' else return .continue
+    | bind _ _ _ _ x f =>
+      if let some e' ← optimizeBind? x f then return .visit e' else return .continue
+    | pick _ x y =>
+      if let some e' ← optimizePick? x y then return .visit e' else return .continue
     | _ => return .continue
   transform (post := post) e
