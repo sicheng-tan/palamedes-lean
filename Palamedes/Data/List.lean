@@ -172,6 +172,58 @@ theorem List.fold_accu_Option_true
           replace ⟨ v, hf ⟩ := hf
           simp_all [List.fold, List.accuM, guard]
 
+theorem List.fold_accu_Option_function
+    {α β σ : Type}
+    {i : σ}
+    {v : β}
+    {xs : List α}
+    {z : (σ → β)}
+    {f : α → (σ → β) → (σ → β)}
+    {g : α → β → σ → Option β}
+    {st :  α → σ → σ}
+    (h : ∀ x acc s,
+      f x acc s = v ↔ (do g x (← acc (st x s)) s) = some v)
+    :
+    List.fold f z xs i = v ↔
+    List.accuM
+      st
+      g
+      (fun s => some (z s))
+      xs
+      i = some v := by
+    induction xs generalizing v i <;> simp_all [List.fold, List.accuM, Option.bind_eq_some]
+    case cons x xs' ih =>
+      apply Iff.intro <;> intro hg
+      . -- (->)
+        exists (List.fold f z xs' (st x i))
+        simp_all
+        sorry
+      . -- (<-)
+        replace ⟨v', ⟨hg', hg⟩⟩ := hg
+        sorry
+
+theorem List.fold_accu_Option_function_true
+    {α σ : Type}
+    {i : σ}
+    {xs : List α}
+    {f : α → (σ → Bool) → (σ → Bool)}
+    {g : α → σ → Bool}
+    {st :  α → σ → σ}
+    (h : ∀ x acc s,
+      f x acc s = true ↔ (do (return (g x s) && (← acc (st x s)))) = some true)
+    :
+    List.fold f (λ _ => true) xs i = true ↔
+    List.accuM
+      st
+      (fun x _ s => guard $ g x s)
+      (fun _ => some ())
+      xs
+      i = some () := by
+    induction xs generalizing i <;> simp_all [List.fold, List.accuM, Option.bind_eq_some, guard]
+    case cons x xs' ih =>
+      apply Iff.intro <;> intro hg <;> simp_all
+      replace ⟨⟨v, hv ⟩ , hg⟩ := hg <;> simp_all
+
 /- Conversion of recursive functions to fold -/
 
 theorem List.coerce_to_fold
