@@ -181,8 +181,8 @@ theorem List.fold_accu_Option_function
     {f : α → (σ → β) → (σ → β)}
     {g : α → β → σ → Option β}
     {st :  α → σ → σ}
-    (h : ∀ x acc s,
-      f x acc s = v ↔ (do g x (← acc (st x s)) s) = some v)
+    (h : ∀ x acc s w,
+      f x acc s = w ↔ (do g x (← acc (st x s)) s) = some w)
     :
     List.fold f z xs i = v ↔
     List.accuM
@@ -195,12 +195,14 @@ theorem List.fold_accu_Option_function
     case cons x xs' ih =>
       apply Iff.intro <;> intro hg
       . -- (->)
-        exists (List.fold f z xs' (st x i))
+        exists (foldr f z xs' (st x i))
         simp_all
-        sorry
+        rw [← ih]
       . -- (<-)
-        replace ⟨v', ⟨hg', hg⟩⟩ := hg
-        sorry
+        replace ⟨w, ⟨hgw, hg⟩⟩ := hg
+        rw [← ih] at hgw
+        rw [hgw]
+        apply hg
 
 theorem List.fold_accu_Option_function_true
     {α σ : Type}
