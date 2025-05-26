@@ -42,9 +42,9 @@ def List.accuM
 
 @[simp] theorem List.accuM_nil [Monad m] {α} {st : α → σ → σ}
   {f : α → β → σ → m β} {z : σ → m β} {i : σ} : List.accuM st f z .nil i = z i := rfl
--- @[simp] theorem List.accuM_cons  [Monad m] {α} {st : α → σ → σ}
---   {f : α → β → σ → m β} {z : σ → m β} {i : σ}  {z} {x} {xs : List α} :
---     List.accuM st f z (.cons x xs) i = do f x (← List.accuM st f z xs) i := rfl
+@[simp] theorem List.accuM_cons  [Monad m] {α} {st : α → σ → σ}
+  {f : α → β → σ → m β} {z : σ → m β} {i : σ}  {z} {x} {xs : List α} :
+    List.accuM st f z (.cons x xs) i = (do f x (← List.accuM st f z xs (st x i)) i) := rfl
 
 /- Unfold -/
 

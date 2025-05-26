@@ -72,13 +72,16 @@ def Stack.accuM
 
 /- (unclear if we need these) -/
 @[simp] theorem Stack.accuM_nil [Monad m] {st : (Atom ⊕ Atom) → σ → σ}
-  {f : (Atom ⊕ Atom) → β → σ → m β} {z : σ → m β} {i : σ} : Stack.accuM st f z .mty i = z i := rfl
--- @[simp] theorem Stack.accuM_cons  [Monad m] {st : (Atom ⊕ Atom) → σ → σ}
---   {f : (Atom ⊕ Atom) → β → σ → m β} {z : σ → m β} {i : σ} {z} {x} {s : Stack} :
---     Stack.accuM st f z (.cons x s) i = do f (Sum.inl x) (← Stack.accuM st f z s) i := rfl
--- @[simp] theorem Stack.accuM_ret_cons [Monad m] {st : (Atom ⊕ Atom) → σ → σ}
---   {f : (Atom ⊕ Atom) → β → σ → m β} {z : σ → m β} {i : σ} {z} {x} {s : Stack} :
---     Stack.accuM st f z (.ret_cons x s) i = do f (Sum.inr x) (← Stack.accuM st f z s) i := rfl
+  {f : (Atom ⊕ Atom) → β → σ → m β} {z : σ → m β} {i : σ} :
+  Stack.accuM st f z .mty i = z i := rfl
+@[simp] theorem Stack.accuM_cons  [Monad m] {st : (Atom ⊕ Atom) → σ → σ}
+  {f : (Atom ⊕ Atom) → β → σ → m β} {z : σ → m β} {i : σ} {z} {x} {s : Stack} :
+    Stack.accuM st f z (.cons x s) i
+    = (do f (Sum.inl x) (← Stack.accuM st f z s (st (Sum.inl x) i)) i) := rfl
+@[simp] theorem Stack.accuM_ret_cons [Monad m] {st : (Atom ⊕ Atom) → σ → σ}
+  {f : (Atom ⊕ Atom) → β → σ → m β} {z : σ → m β} {i : σ} {z} {pc} {s : Stack} :
+    Stack.accuM st f z (.ret_cons pc s) i
+    = (do f (Sum.inr pc) (← Stack.accuM st f z s (st (Sum.inr pc) i)) i) := rfl
 
 -- theorem Stack.accuM_mty
 -- theorem Stack.accuM_cons
