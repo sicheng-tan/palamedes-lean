@@ -113,45 +113,60 @@ theorem Tree.fold_accu_Option_true
           simp_all [Tree.fold, Tree.accuM, guard]
 
 theorem Tree.fold_accu_Option_function
-    {α β γ : Type}
+    {α β σ : Type}
     {i : σ}
-    {v : (σ → β)}
+    {v : β}
     {t : Tree α}
     {z : (σ → β)}
     {f : (σ → β) → α → (σ → β) → (σ → β)}
     {g : β → α → β → σ → Option β}
-    {stL stR :  α → σ → σ}
-    (h : ∀ accL x accR s v,
-      f accL x accR s = v ↔ (do g (← accL (stL x s)) x (← accR (stR x s)) s) = some v)
+    {stl str :  α → σ → σ}
+    (h : ∀ accL x accR s w,
+      f accL x accR s = w ↔ (do g (← accL (stl x s)) x (← accR (str x s)) s) = some w)
     :
-    Tree.fold f z t = v ↔
+    Tree.fold f z t i = v ↔
     Tree.accuM
-      (fun x s => (stL x s, stR x s))
+      (fun x s => (stl x s, str x s))
       g
       (fun s => some (z s))
       t
-      i = some (v i) := by sorry
+      i = some v := by
+    induction t generalizing v i <;> simp_all [Tree.fold, Tree.accuM, Option.bind_eq_some]
+    case node l x r ihl ihr =>
+      apply Iff.intro <;> intro hg
+      . -- (->)
+        exists (Tree.fold f z l (stl x i))
+        rw [← ihl] <;> simp_all
+        exists (Tree.fold f z r (str x i))
+        rw [← ihr] <;> simp_all
+      . -- (<-)
+        replace ⟨ vl, hl, vR, hr, hg ⟩ := hg
+        rw [← ihl] at hl
+        rw [← ihr] at hr
+        rw [hl, hr]
+        apply hg
 
--- theorem Tree.fold_accu_Option_function_true
---     {α β σ : Type}
---     {i : σ}
---     {v : (σ → β)}
---     {t : Tree α}
---     {z : (σ → β)}
---     {f : (σ → β) → α → (σ → β) → (σ → β)}
---     -- (h : something about f and a g we make up)
---       --   (f' = (λ bl x br => λ s => do
---       -- let (sl, sr) := st x s
---       -- f (← bl sl) x (← br sr) s))
---       -- f b as gweqg = g asdihfqg;ie
---     :
---     Tree.fold f z t = v ↔
---     Tree.accuM
---       (fun x s => ((), ())) -- changes
---       (fun l x r s => some (f l x r)) -- use s??????
---       (fun s => some z) -- use s :(((((
---       t
---       i = some v := by sorry
+theorem Tree.fold_accu_Option_function_true
+    {α σ : Type}
+    {i : σ}
+    {t : Tree α}
+    {f : (σ → Bool) → α → (σ → Bool) → (σ → Bool)}
+    {g : α → σ → Bool}
+    {stL stR :  α → σ → σ}
+    (h : ∀ accL x accR s,
+      f accL x accR s = true ↔ (do (return (g x s) && (← accL (stL x s)) && (← accR (stR x s)))) = some true)
+    :
+    Tree.fold f (λ _ => true) t i = true ↔
+    Tree.accuM
+      (fun x s => (stL x s, stR x s))
+      (fun _ x _ s => guard $ g x s)
+      (fun _ => some ())
+      t
+      i = some () := by
+    induction t generalizing i <;> simp_all [Tree.fold, Tree.accuM, Option.bind_eq_some, guard]
+    case node l x r ihl ihr =>
+      apply Iff.intro <;> intro hg <;> simp_all
+      replace ⟨⟨ vl, hl ⟩, ⟨ vr, hr ⟩ , hg⟩ := hg <;> simp_all
 
 /- Unfold -/
 
