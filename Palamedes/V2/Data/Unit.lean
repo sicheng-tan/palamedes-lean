@@ -24,12 +24,4 @@ def total_arb_Unit : total (arbUnit : Gen Unit) := by
 
 end Total
 
-namespace OptGen
-
-@[reducible, aesop unsafe (rule_sets := [optimization])]
-def opt_arbUnit_self : OptGen (arbUnit : Gen Unit) :=
-  Subtype.mk (arbUnit : Gen Unit) rfl
-
-end OptGen
-
 end Gen

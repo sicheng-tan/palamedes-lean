@@ -22,11 +22,12 @@ macro "totality" : tactic =>
     aesop
       (rule_sets := [totality]))
 
-macro "optimize_generator" : tactic =>
+-- TODO: This is probably not good enough. If the optimizer fails to prove goals we care about, we
+-- probably want to revisit this.
+macro "optimality" : tactic =>
   `(tactic|
     aesop
-      (rule_sets := [-default, -builtin, optimization])
-      (config := {enableSimp := false}))
+      (add safe (by omega)))
 
 -- Borrowed from Aesop
 def printAsMillis (n : Nat) : String :=
@@ -38,9 +39,11 @@ def printAsMillis (n : Nat) : String :=
 
 open Lean Tactic Elab Meta Tactic in
 def solveGoalWithTactic (goalType : Expr) (tactic : TSyntax `tactic) : TacticM Expr := do
-  let .mvar m ← mkFreshExprMVar goalType | throwError "impossible"
-  let [] ← evalTacticAt tactic m | throwError "goals left unsolved"
-  instantiateMVars (.mvar m)
+  let m ← mkFreshExprMVar goalType
+  let unsolved ← evalTacticAt tactic m.mvarId!
+  if unsolved.length > 0 then do
+    throwError "goals left unsolved: {unsolved}"
+  instantiateMVars m
 
 register_option palamedes.debug : Bool := {
   defValue := false
@@ -54,7 +57,12 @@ register_option palamedes.timing : Bool := {
   descr := "enable timing messages from palamedes"
 }
 
-def generatorSearchElab (stx : Syntax) (t : Term) (checkTotal : Bool) (tryThis : Bool) : TacticM Unit := do
+def generatorSearchElab
+    (stx : Syntax)
+    (t : Term)
+    (checkTotal : Bool)
+    (tryThis : Bool) :
+    TacticM Unit := do
   let opts ← getOptions
   let verbose := palamedes.debug.get opts
   let printTiming := palamedes.timing.get opts
@@ -62,62 +70,60 @@ def generatorSearchElab (stx : Syntax) (t : Term) (checkTotal : Bool) (tryThis :
   let startTime ← IO.monoNanosNow
 
   let g ← getMainGoal
-  let .app (.const ``Gen []) α ← g.getType | throwError "goal type must be Gen α for some α"
+  let .app (.const ``Gen []) α ← g.getType
+    | throwError "goal type must be Gen α for some α"
   let ty := .forallE `α α (.sort 0) .default
   let mpred ← elabTerm t (some ty)
 
-  let cgen ←
+  -- Synthesize a correct generator by solving `CorrectGen P` and projecting the `.val`.
+  let gen ← do
     try
-      solveGoalWithTactic (mkAppN (.const ``CorrectGen []) #[α, mpred]) (← `(tactic| cgenerator_search))
+      let cgen ← solveGoalWithTactic
+        (mkAppN (.const ``CorrectGen []) #[α, mpred])
+        (← `(tactic| cgenerator_search))
+      withReducible (reduce (← mkAppM ``Subtype.val #[cgen]))
     catch e =>
       throwError m!"Failed during generator synthesis.\n{e.toMessageData}"
-
   if verbose then do
-    logInfo m!"Synthesized CorrectGen:\n{(← ppExpr cgen)}"
+    logInfo m!"Synthesized generator:\n{(← ppExpr gen)}"
 
-  let gen ← mkAppM ``Subtype.val #[cgen]
-  let gen ← withReducible (reduce gen)
-  if verbose then do
-    logInfo m!"Reduced Gen:\n{(← ppExpr gen)}"
-
-  let ogen ←
+  -- Optimize the generator and prove that the optimized version is correct.
+  let gen' ←
     try
-      solveGoalWithTactic (← mkAppM ``OptGen #[gen]) (← `(tactic| optimize_generator))
+      let gen' ← withReducible (reduce (← optimizeGen gen))
+      let _ ← solveGoalWithTactic
+        (← mkEq (← mkAppM ``Gen.support #[gen]) (← mkAppM ``Gen.support #[gen']))
+        (← `(tactic| optimality))
+      pure gen'
     catch e =>
       throwError m!"Failed during optimization.\n{e.toMessageData}"
   if verbose then do
-    logInfo m!"Optimized OptGen:\n{(← ppExpr ogen)}"
+    logInfo m!"Optimized generator:\n{(← ppExpr gen')}"
 
-  let gen ← mkAppM ``Subtype.val #[ogen]
-  let gen ← withReducible (reduce gen)
-  if verbose then do
-    logInfo m!"Reduced Gen:\n{(← ppExpr gen)}"
-
+  -- Optionally: Check that the generator is "total," i.e., that it does not backtrack internally.
   if checkTotal then do
     try
-      let _ ← solveGoalWithTactic (← mkAppM ``Gen.total #[gen]) (← `(tactic| totality))
+      let _ ← solveGoalWithTactic
+        (← mkAppM ``Gen.total #[gen'])
+        (← `(tactic| totality))
     catch e =>
-      logWarning m!"Failed during totality checking.\n\n{e.toMessageData}\n\n{gen}\nis not total.\n\nYou can use `generator_search {t} allow_partial to turn off this check."
+      logWarning m!"Failed during totality checking.
+      {e.toMessageData}
+      {gen'}
+      could not be proved total.
 
-  let endTime ← IO.monoNanosNow
-
-  let elapsed := endTime - startTime
-
-  if verbose then do
-    TryThis.addSuggestion stx
-      <| String.intercalate "\n"
-      [s!"let cg : CorrectGen {← ppExpr mpred} := by cgenerator_search",
-        "  let og : OptGen cg.val := by optimize_generator",
-        "  let _ : Gen.total og.val := by totality",
-        "  exact og.val"]
+      You can use `generator_search {t} allow_partial to turn off this check."
 
   if printTiming then do
+    let endTime ← IO.monoNanosNow
+    let elapsed := endTime - startTime
     logInfo m!"Synthesis for {← ppExpr mpred} took {printAsMillis elapsed}"
 
   if tryThis then
-    TryThis.addExactSuggestion stx gen
+    withOptions ((pp.proofs.set · true) ∘ (pp.fieldNotation.generalized.set · false)) do
+      TryThis.addExactSuggestion stx gen'
 
-  closeMainGoal `generator_search gen
+  closeMainGoal `generator_search gen'
 
 syntax (name := generatorSearch) "generator_search " term " allow_partial"? : tactic
 
