@@ -153,43 +153,49 @@ abbrev synth_accuM
     {z : σ → Option β}
     {s : σ}
     {b : β}
-    (g : (b : β) → (s : σ) → CGen (ListF.rec (z s = some b) (λ a b' => f a b' s = some b))) :
+    (g : (b : β) → (s : σ) →
+      CGen (ListF.rec (z s = some b) (λ a b' => f a b' s = some b))) :
     CGen (λ v => List.accuM st f z v s = some b) :=
   Subtype.mk
     (List.unfold (λ (b, s) => do
       match (← (g b s).val) with
       | .nil => pure .nil
       | .cons x b' => pure (.cons x (b', st x s))) (b, s)) <| by
-    rw [List.unfold_support_ok]
-    simp_all
-    intro xs
-    rw [← List.fold_accuM] -- TODO
-    on_goal 2 => exact Eq.refl _
-    induction xs generalizing s b with
-    | nil =>
-      have := (g b s).property .nil
+      rw [List.unfold_support_ok]
       simp_all [bind, optBind_bind]
-      aesop
-    | cons x xs ih =>
-      simp_all
-      clear ih
-      aesop (config := {warnOnNonterminal := false})
-      . have := (g b s).property
-        simp_all [bind, optBind_bind]
-        aesop
-      . have := (g b s).property
-        simp_all
-        generalize ho : List.foldr (fun x b s => do f x (← b (st x s)) s) z xs (st x s) = o at *
-        match o with
-        | .none => simp_all
-        | .some b' =>
-          simp_all
-          exists b'
-          exists st x s
-          apply And.intro
-          . simp_all [bind, optBind_bind]
-            exists .cons x b'
-          . rw [ho]
+      have hg := (g b s).property
+      ---
+      intro xs
+      induction xs generalizing s b <;> simp_all
+      case nil =>
+        apply Iff.intro
+        . --(->)
+          intro ⟨ v, b', hv ⟩
+          cases v <;> simp_all
+        . --(<-)
+          intro h
+          exists ListF.nil
+      case cons x tl ih =>
+        apply Iff.intro
+        . --(->)
+          intro ⟨ b' , s', ⟨ xs', ⟨ hf , hxs's ⟩ ⟩ , hs' ⟩
+          cases xs' <;> simp_all
+          case cons x' xs'' =>
+            have ⟨ hx, hb', hs ⟩ := hxs's; clear hxs's
+            subst hx; subst hb'; subst hs
+            replace ih := @ih (st x s) b'
+            have hg' := (g b' (st x s)).property
+            simp_all
+        . --(<-)
+          intro h
+          generalize hb' : (List.accuM st f z tl (st x s)) = ob
+          cases ob <;> simp_all
+          case mpr.some b' =>
+            exists b', (st x s)
+            replace ih := @ ih (st x s) b'
+            have hg' := (g b' (st x s)).property
+            simp_all
+            exists (ListF.cons x b')
 
 abbrev synth_accuTreeM
     {α β σ : Type}
