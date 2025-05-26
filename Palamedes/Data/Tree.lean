@@ -56,12 +56,12 @@ def Tree.accuM
 @[simp] theorem Tree.accuM_leaf
   [Monad m] {α σ} {st : α → σ → σ × σ} {f : β → α → β → σ → m β} {z : σ → m β} {i : σ} :
   Tree.accuM st f z (.leaf : Tree α) i = z i := rfl
---@[simp] theorem Tree.accuM_node
---   [Monad m] {α σ} {st : α → σ → σ × σ} {f : β → α → β → σ → m β} {z : σ → m β} {i : σ} {x} {l r : Tree α} :
---   Tree.accuM st f z (.node l x r) i =
---    do
---     let (sl, sr) := st x i
---     f (← Tree.accuM st f z l sl) x (← Tree.accuM st f z r sr) i := by sorry
+@[simp] theorem Tree.accuM_node
+  [Monad m] {α σ} {st : α → σ → σ × σ} {f : β → α → β → σ → m β} {z : σ → m β} {i : σ} {x} {l r : Tree α} :
+  Tree.accuM st f z (.node l x r) i =
+   (do
+    let (sl, sr) := st x i
+    f (← Tree.accuM st f z l sl) x (← Tree.accuM st f z r sr) i) := by rfl
 
 /- Fold special cases -/
 
@@ -119,20 +119,18 @@ theorem Tree.fold_accu_Option_function
     {t : Tree α}
     {z : (σ → β)}
     {f : (σ → β) → α → (σ → β) → (σ → β)}
-    -- (h : something about f and a g we make up)
-      --   (f' = (λ bl x br => λ s => do
-      -- let (sl, sr) := st x s
-      -- f (← bl sl) x (← br sr) s))
-      -- f accl x accr = g ?
+    {g : β → α → β → σ → Option β}
+    {stL stR :  α → σ → σ}
+    (h : ∀ accL x accR s v,
+      f accL x accR s = v ↔ (do g (← accL (stL x s)) x (← accR (stR x s)) s) = some v)
     :
     Tree.fold f z t = v ↔
     Tree.accuM
-      (fun x s => (i, i)) -- changes
-      (fun l x r s => some (f l x r)) -- use s??????
-      (fun s => some z) -- use s :(((((
+      (fun x s => (stL x s, stR x s))
+      g
+      (fun s => some (z s))
       t
-      i = some v := by sorry
-
+      i = some (v i) := by sorry
 
 -- theorem Tree.fold_accu_Option_function_true
 --     {α β σ : Type}
@@ -239,12 +237,24 @@ theorem Tree.unfold_monotonic
     cases hlt
     simp_all
   | succ m' ih =>
-    have : n = m' + 1 ∨ n ≤ m' := by cases hlt <;> simp_all
-    match this with
-    | .inl h => subst h; simp_all
-    | .inr h =>
-      have := ih h hn
-      apply Tree.unfold_monotonic_aux this
+
+
+    -- unfold List.unfold_aux
+    -- simp
+    -- intro l hl hv
+    -- exists l
+    -- apply And.intro hl
+    -- cases l <;> simp_all [Functor.map, Option.map]
+    -- aesop
+
+
+    sorry
+    -- have : n = m' + 1 ∨ n ≤ m' := by cases hlt <;> simp_all
+    -- match this with
+    -- | .inl h => subst h; simp_all
+    -- | .inr h =>
+    --   have := ih h hn
+    --   apply Tree.unfold_monotonic_aux this
 
 def Tree.unfold (f : β → Gen (TreeF α β)) (v : β) : Gen (Tree α) :=
   .indexed (λ n => Tree.unfold_aux n f v)
