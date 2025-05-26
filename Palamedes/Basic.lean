@@ -102,9 +102,10 @@ def evenLength : List α → Bool
 --     CGen (λ (v : List α) => List.length v = k) := by
 --   palamedes
 
-def genEvenLengthTwos :
-    CGen (λ (v : List Nat) => List.foldrM (λ x b => do guard (x == 2); pure (not b)) true v = Option.some true) := by
-  palamedes
+-- TODO
+-- def genEvenLengthTwos :
+--     CGen (λ (v : List Nat) => List.foldrM (λ x b => do guard (x == 2); pure (not b)) true v = Option.some true) := by
+--   palamedes
 
 -- TODO
 -- def genLengthKTwos (k : Nat) :

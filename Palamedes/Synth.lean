@@ -163,7 +163,7 @@ abbrev synth_accuM
     rw [List.unfold_support_ok]
     simp_all
     intro xs
-    rw [←List.fold_accuM]
+    rw [← List.fold_accuM] -- TODO
     on_goal 2 => exact Eq.refl _
     induction xs generalizing s b with
     | nil =>
@@ -201,12 +201,12 @@ abbrev synth_accuTreeM
     (g : (b : β) → (s : σ) → CGen (TreeF.rec (z s = some b) (λ bl a br => f bl a br s = some b))) :
     CGen (λ v => Tree.accuM st f z v s = some b) :=
   Subtype.mk
-    (.indexed (λ n => Tree.unfold n (λ (b, s) => do
+    (Tree.unfold (λ (b, s) => do
       return match (← (g b s).val) with
         | .leaf => .leaf
         | .node bl x br =>
           let (sl, sr) := st x s
-          (.node (bl, sl) x (br, sr))) (b, s)))
+          (.node (bl, sl) x (br, sr))) (b, s))
   (by
     rw [Tree.unfold_support_ok]
     simp_all
@@ -321,10 +321,9 @@ add_aesop_rules unsafe (rule_sets := [palamedes]) [
 add_aesop_rules 5% (rule_sets := [palamedes]) [
   cases Nat,
   cases Bool,
-  (by conv => arg 1; intro v; lhs; apply coerce_to_foldr (by aesop) (by aesop)),
-  (by conv => arg 1; intro v; apply (coerce_to_foldrM (by aesop) (by aesop))),
-  (by conv => congr; intro v; apply coerce_to_accuM (by aesop) (by aesop)),
-  (by conv => arg 1; intro v; apply Tree.coerce_to_accuM (by aesop) (by aesop)),
+  (by conv => arg 1; intro v; lhs; apply List.coerce_to_fold (by aesop) (by aesop)),
+  (by conv => arg 1; intro v; lhs; apply Tree.coerce_to_fold (by aesop) (by aesop))
+  -- TODO should fold_accu lemmas be here
 ]
 
 macro "simp_in_proof" : tactic =>

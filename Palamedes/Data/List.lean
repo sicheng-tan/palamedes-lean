@@ -43,7 +43,7 @@ def List.accuM
 @[simp] theorem List.accuM_nil [Monad m] {α} {st : α → σ → σ}
   {f : α → β → σ → m β} {z : σ → m β} {i : σ} : List.accuM st f z .nil i = z i := rfl
 @[simp] theorem List.accuM_cons  [Monad m] {α} {st : α → σ → σ}
-  {f : α → β → σ → m β} {z : σ → m β} {i : σ}  {z} {x} {xs : List α} :
+  {f : α → β → σ → m β} {z : σ → m β} {i : σ} {x: α} {xs : List α} :
     List.accuM st f z (.cons x xs) i = (do f x (← List.accuM st f z xs (st x i)) i) := rfl
 
 /- Unfold -/
@@ -409,6 +409,9 @@ theorem coerce_to_foldM
     | none => simp_all
     | some v => simp_all [guard]
 
+-/
+
+-- TODO: remove (and replace its use in Synth)
 theorem List.fold_accuM
     [Monad m]
     {α β σ : Type}
@@ -421,5 +424,3 @@ theorem List.fold_accuM
     f' = (λ x b => λ s => do f x (← b (st x s)) s) →
     List.fold f' z xs s = List.accuM st f z xs s := by
   induction xs generalizing s <;> simp_all [List.accuM]
-
--/
