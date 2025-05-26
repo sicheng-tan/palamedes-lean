@@ -19,9 +19,6 @@ def isNETree (t : Tree α) : Bool :=
 def genNETree [Arbitrary α] : CGen (λ (v : Tree α) => isNETree v) := by
   unfold isNETree
   conv => arg 1; intro v; lhs; lhs; apply Tree.coerce_to_fold (by exact rfl) (by intros l x r; simp only [size]; generalize size l = sl; generalize size r = sr; exact rfl)
-  conv => arg 1; intro v; lhs; lhs; apply fold_accuM
-  -- TODO: I think this will work once we add a function to turn `Tree.fold` into `Tree.accuM`
-  --sorry
-  simp [Id.run]
+  -- conv => arg 1; intro v; lhs; lhs; apply Tree.fold_accu_Option_true
   -- palamedes
   sorry

@@ -14,6 +14,7 @@ def isBST : Tree Nat → (Nat × Nat) → Bool := λ t ⟨lo, hi⟩ =>
     isBST r ⟨x + 1, hi⟩
 
 -- TODO
--- def genBST (lo hi : Nat) : CGen (λ v => isBST v ⟨lo, hi⟩) := by
---   conv => arg 1; intro v; lhs; apply Tree.coerce_to_fold (by aesop) (by aesop)
---   palamedes
+def genBST (lo hi : Nat) : CGen (λ v => isBST v ⟨lo, hi⟩) := by
+  -- conv => arg 1; intro v; lhs; apply Tree.coerce_to_fold (by aesop) (by aesop)
+  -- palamedes
+  sorry

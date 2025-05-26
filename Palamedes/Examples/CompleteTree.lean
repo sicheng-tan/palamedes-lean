@@ -16,4 +16,5 @@ def isCompleteTree : Tree α → Nat → Bool := λ t n =>
     isCompleteTree r (n - 1)
 
 def genCompleteTree (n : Nat) [Arbitrary α] : CGen (λ (v : Tree α) => isCompleteTree v n) := by
-  palamedes
+  -- palamedes
+  sorry
