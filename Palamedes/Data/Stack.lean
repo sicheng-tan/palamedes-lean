@@ -205,7 +205,7 @@ theorem Stack.fold_accu_Option_function_true
 
 /- Unfold -/
 
-def Stack.unfold (n : Nat) (f : α → Gen (StackF α)) (x : α)
+def Stack.unfold_aux (n : Nat) (f : α → Gen (StackF α)) (x : α)
   : Gen (Option Stack) :=
   match n with
   | 0 => pure none
@@ -213,21 +213,179 @@ def Stack.unfold (n : Nat) (f : α → Gen (StackF α)) (x : α)
     match (← f x) with
     | .mty => pure (some .mty)
     | .cons x vs => do
-      let s ← Stack.unfold n' f vs
+      let s ← Stack.unfold_aux n' f vs
       pure (do pure (.cons x (← s)))
     | .ret_cons pc vs => do
-      let s ← Stack.unfold n' f vs
+      let s ← Stack.unfold_aux n' f vs
       pure (do pure (.ret_cons pc (← s)))
--- def Stack.unfold_support
--- theorem Stack.unfold_monotonic
--- theorem Stack.unfold_support_ok
+
+theorem Stack.unfold_aux_monotonic :
+    some v ∈ 〚Stack.unfold_aux n f b〛 →
+    some v ∈ 〚Stack.unfold_aux (n + 1) f b〛 := by
+  induction n generalizing v f b
+  case zero =>
+    simp [Stack.unfold_aux]
+  case succ n' ih =>
+    unfold Stack.unfold_aux
+    simp [bind, optBind_bind]
+    intro s hs hv
+    exists s
+    apply And.intro hs
+    cases s <;> simp_all [Functor.map, bind, optBind_bind, Option.map]
+    all_goals
+      replace ⟨ v', hv ⟩ := hv <;>
+      exists v' <;>
+      cases v' <;> simp_all
+
+def Stack.unfold (f : α → Gen (StackF α)) (x : α) : Gen Stack :=
+  .indexed (λ n => Stack.unfold_aux n f x)
+
+@[simp]
+def Stack.unfold_support (P : α → StackF α → Prop) (v : α) (s : Stack) : Prop :=
+  match s with
+  | .mty => P v .mty
+  | .cons x s' => ∃ v', P v (.cons x v') ∧ Stack.unfold_support P v' s'
+  | .ret_cons pc s' => ∃ v', P v (.ret_cons pc v') ∧ Stack.unfold_support P v' s'
+
+attribute [local simp]
+  Bind.bind
+  Stack.unfold
+  Stack.unfold_aux
+  Functor.map
+  optBind_bind
+in
+theorem Stack.unfold_support_ok :
+    support (Stack.unfold f b) = Stack.unfold_support (λ b' => support (f b')) b := by
+  funext s
+  simp_all
+  induction s generalizing b with
+  | mty =>
+    apply Iff.intro
+    . intro ⟨n, h⟩
+      cases n <;> simp_all
+      case succ n' =>
+        have ⟨v', hv'1, hv'2⟩ := h
+        cases v' <;> simp_all
+        all_goals
+          have ⟨v'', hv''⟩ := hv'2
+          cases v'' <;> simp_all
+    . aesop (add unsafe (by exists 1))
+  | cons x s' ih =>
+    apply Iff.intro
+    . intro ⟨n, h⟩
+      cases n <;> simp_all; case succ n =>
+      have ⟨v', hv'1, hv'2⟩ := h
+      cases v' <;> simp_all
+      case cons _ b'' =>
+        have ⟨v'', hv''⟩ := hv'2
+        cases v'' <;> simp_all
+        obtain ⟨hv'', rfl, rfl⟩ := hv''
+        exists b''
+        apply And.intro hv'1
+        apply (@ih b'').mp
+        exists n
+      case ret_cons _ b'' =>
+        have ⟨v'', hv''⟩ := hv'2
+        cases v'' <;> simp_all
+    . intro ⟨b', hx, hs⟩
+      have ⟨n, h⟩ := ih.mpr hs
+      exists n + 1
+      simp_all
+      exists StackF.cons x b'
+      simp_all
+      exists (some s')
+  | ret_cons pc s' ih =>
+    apply Iff.intro
+    . intro ⟨n, h⟩
+      cases n <;> simp_all; case succ n =>
+      have ⟨v', hv'1, hv'2⟩ := h
+      cases v' <;> simp_all
+      case cons _ b'' =>
+        have ⟨v'', hv''⟩ := hv'2
+        cases v'' <;> simp_all
+      case ret_cons _ b'' =>
+        have ⟨v'', hv''⟩ := hv'2
+        cases v'' <;> simp_all
+        obtain ⟨hv'', rfl, rfl⟩ := hv''
+        exists b''
+        apply And.intro hv'1
+        apply (@ih b'').mp
+        exists n
+    .
+      intro ⟨b', hx, hs⟩
+      have ⟨n, h⟩ := ih.mpr hs
+      exists (n + 1)
+      simp_all
+      exists (StackF.ret_cons pc b')
+      simp_all
+      exists (some s')
 
 /- Conversion of recursive functions to fold -/
--- theorem Stack.coerce_to_fold
+
+theorem Stack.coerce_to_fold
+    {s : Stack}
+    {f : Stack → α}
+    {z : α}
+    {g : (Atom ⊕ Atom) → α → α}
+    (hm : f .mty = z)
+    (hc : ∀ x s', f (.cons x s') = g (Sum.inl x) (f s'))
+    (hr : ∀ pc s', f (.ret_cons pc s') = g (Sum.inr pc) (f s')) :
+    f s = s.fold g z := by
+  induction s <;> simp_all
 
 /- Merging two accumulators-/
--- theorem Stack.merge_accuM
 
+theorem Stack.merge_accuM
+    {s : Stack}
+    {st₁ : (Atom ⊕ Atom) → σ₁ → σ₁}
+    {st₂ : (Atom ⊕ Atom) → σ₂ → σ₂}
+    {f₁ : (Atom ⊕ Atom) → α₁ → σ₁ → Option α₁}
+    {f₂ : (Atom ⊕ Atom) → α₂ → σ₂ → Option α₂}
+    {s₁ : σ₁} {s₂ : σ₂}
+    {z₁ : σ₁ → Option α₁} {z₂ : σ₂ → Option α₂}
+    {v₁ : α₁} {v₂ : α₂}
+    :
+    (s.accuM st₁ f₁ z₁ s₁ = some v₁ ∧ s.accuM st₂ f₂ z₂ s₂ = some v₂)
+    ↔
+    (s.accuM
+      (λ x (s₁, s₂) => (st₁ x s₁, st₂ x s₂))
+      (λ x (v₁, v₂) (s₁, s₂) => do (← f₁ x v₁ s₁, ← f₂ x v₂ s₂))
+      (λ (s₁, s₂) => do (← z₁ s₁, ← z₂ s₂))
+      (s₁, s₂) = some (v₁, v₂)) := by
+    induction s generalizing st₁ st₂ f₁ f₂ s₁ s₂ z₁ z₂ v₁ v₂
+    case mty => simp_all [Stack.accuM, Option.bind_eq_some]
+    case cons y s' ih =>
+      simp_all [Stack.accuM, Option.bind_eq_some]
+      apply Iff.intro
+      . -- (->)
+        intro ⟨ ⟨ v₁', ⟨ hv1h, hv1tl ⟩ ⟩ , ⟨ v₂', ⟨ hv2h, hv2tl ⟩ ⟩ ⟩
+        exists v₁', v₂'
+        replace ih := @ih st₁ st₂ f₁ f₂ (st₁ (Sum.inl y) s₁) (st₂ (Sum.inl y) s₂) z₁ z₂ v₁' v₂'
+        simp_all [Stack.accuM, Option.bind_eq_some]
+      . -- (<-)
+        intro ⟨ v₁', v₂', h, h1, h2 ⟩
+        replace ih := @ih st₁ st₂ f₁ f₂ (st₁ (Sum.inl y) s₁) (st₂ (Sum.inl y) s₂) z₁ z₂ v₁' v₂'
+        apply And.intro
+        . exists v₁'
+          simp_all [Stack.accuM, Option.bind_eq_some]
+        . exists v₂'
+          simp_all [Stack.accuM, Option.bind_eq_some]
+    case ret_cons pc s' ih =>
+      simp_all [Stack.accuM, Option.bind_eq_some]
+      apply Iff.intro
+      . -- (->)
+        intro ⟨ ⟨ v₁', ⟨ hv1h, hv1tl ⟩ ⟩ , ⟨ v₂', ⟨ hv2h, hv2tl ⟩ ⟩ ⟩
+        exists v₁', v₂'
+        replace ih := @ih st₁ st₂ f₁ f₂ (st₁ (Sum.inr pc) s₁) (st₂ (Sum.inr pc) s₂) z₁ z₂ v₁' v₂'
+        simp_all [Stack.accuM, Option.bind_eq_some]
+      . -- (<-)
+        intro ⟨ v₁', v₂', h, h1, h2 ⟩
+        replace ih := @ih st₁ st₂ f₁ f₂ (st₁ (Sum.inr pc) s₁) (st₂ (Sum.inr pc) s₂) z₁ z₂ v₁' v₂'
+        apply And.intro
+        . exists v₁'
+          simp_all [Stack.accuM, Option.bind_eq_some]
+        . exists v₂'
+          simp_all [Stack.accuM, Option.bind_eq_some]
 
 /- Pretty printing -/
 def Label.toString : Label → String
