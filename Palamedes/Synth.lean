@@ -164,7 +164,6 @@ abbrev synth_accuM
       rw [List.unfold_support_ok]
       simp_all [bind, optBind_bind]
       have hg := (g b s).property
-      ---
       intro xs
       induction xs generalizing s b <;> simp_all
       case nil =>
