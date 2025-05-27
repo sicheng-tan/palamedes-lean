@@ -205,7 +205,7 @@ theorem Stack.fold_accu_Option_function_true
 
 /- Unfold -/
 
-def Stack.unfold_aux (n : Nat) (f : α → Gen (StackF α)) (x : α)
+private def Stack.unfold_aux (n : Nat) (f : α → Gen (StackF α)) (x : α)
   : Gen (Option Stack) :=
   match n with
   | 0 => pure none
