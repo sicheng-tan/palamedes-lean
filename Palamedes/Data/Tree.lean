@@ -181,6 +181,39 @@ private def Tree.unfold_aux (n : Nat) (f : β → Gen (TreeF α β)) (b : β) : 
       let r ← Tree.unfold_aux n f br
       pure (do pure (.node (← l) x (← r)))
 
+attribute [local simp]
+  bind
+  optBind_bind
+in
+theorem Tree.unfold_aux_monotonic :
+    some v ∈ 〚Tree.unfold_aux n f b〛 →
+    some v ∈ 〚Tree.unfold_aux (n + m) f b〛 := by
+  induction n generalizing v f b
+  case zero =>
+    simp [Tree.unfold_aux]
+  case succ n' ih =>
+    unfold Tree.unfold_aux
+    simp
+    intro t ht h
+    cases t <;> simp_all +arith
+    case leaf =>
+      exists TreeF.leaf
+    case node l x r =>
+      replace ⟨ ovl, hl, ovr, hr, h ⟩ := h
+      cases ovl <;> simp_all
+      case some vl =>
+        cases ovr <;> simp_all
+        case some vr =>
+        exists (TreeF.node l x r)
+        simp_all
+        exists vl
+        simp_all [ih]
+        exists vr
+        simp_all [ih]
+
+def Tree.unfold (f : β → Gen (TreeF α β)) (v : β) : Gen (Tree α) :=
+  .indexed (λ n => Tree.unfold_aux n f v)
+
 @[simp]
 def Tree.unfold_support (P : β → TreeF α β → Prop) (b : β) (xs : Tree α) : Prop :=
   match xs with
@@ -190,164 +223,63 @@ def Tree.unfold_support (P : β → TreeF α β → Prop) (b : β) (xs : Tree α
     Tree.unfold_support P bl l ∧
     Tree.unfold_support P br r
 
-theorem Tree.unfold_monotonic_aux
-    {n : Nat}
-    {f : β → Gen (TreeF α β)}
-    {b : β} :
-    .some v ∈ 〚Tree.unfold_aux n f b〛→
-    .some v ∈ 〚Tree.unfold_aux (n + 1) f b〛:= by
-  intro hn
-  induction v generalizing n b with
-  | leaf =>
-    match n with
-    | 0 => simp_all [Tree.unfold_aux]
-    | .succ _ =>
-      simp_all [Tree.unfold_aux, bind, optBind_bind]
-      have ⟨v', hv'1, hv'2⟩ := hn
-      exists v'
-      match v' with
-      | .leaf => simp_all
-      | .node _ _ _ =>
-        simp_all [bind, optBind_bind]
-        have ⟨a, ⟨_, ⟨b, _, _⟩⟩⟩ := hv'2
-        match a, b with
-        | .some _, .some _ => simp_all
-  | node l x r ihl ihr =>
-    match n with
-    | 0 => simp_all [Tree.unfold_aux]
-    | .succ n' =>
-      simp_all [Tree.unfold_aux, bind, optBind_bind]
-      have ⟨v', hv'1, hv'2⟩ := hn
-      exists v'
-      match v' with
-      | .node bl y br =>
-        simp_all [Tree.unfold_aux, bind, optBind_bind]
-        have ⟨ll, hll, rr, hrr, h⟩ := hv'2
-        clear hv'2
-        match ll, rr with
-        | .none, _ => simp_all
-        | _, .none => simp_all
-        | .some ll, some rr =>
-          simp_all [Tree.unfold_aux, bind, optBind_bind]
-          cases h
-          replace ihl := ihl hll
-          replace ihr := ihr hrr
-          clear hll
-          clear hrr
-          exists (some l)
-          apply And.intro
-          . aesop
-          . aesop
-
-theorem Tree.unfold_monotonic
-    {n m : Nat}
-    {f : β → Gen (TreeF α β)}
-    {b : β} :
-    n ≤ m →
-    .some v ∈ 〚Tree.unfold_aux n f b〛→
-    .some v ∈ 〚Tree.unfold_aux m f b〛:= by
-  intro hlt hn
-  induction m generalizing n with
-  | zero =>
-    cases hlt
-    simp_all
-  | succ m' ih =>
-
-
-    -- unfold List.unfold_aux
-    -- simp
-    -- intro l hl hv
-    -- exists l
-    -- apply And.intro hl
-    -- cases l <;> simp_all [Functor.map, Option.map]
-    -- aesop
-
-
-    sorry
-    -- have : n = m' + 1 ∨ n ≤ m' := by cases hlt <;> simp_all
-    -- match this with
-    -- | .inl h => subst h; simp_all
-    -- | .inr h =>
-    --   have := ih h hn
-    --   apply Tree.unfold_monotonic_aux this
-
-def Tree.unfold (f : β → Gen (TreeF α β)) (v : β) : Gen (Tree α) :=
-  .indexed (λ n => Tree.unfold_aux n f v)
-
+attribute [local simp]
+  Bind.bind
+  Tree.unfold
+  Tree.unfold_aux
+  Functor.map
+  optBind_bind
+in
 theorem Tree.unfold_support_ok :
-    support (Tree.unfold f v) = Tree.unfold_support (λ v' => support (f v')) v := by
-  funext t
-  induction t generalizing v with
+    support (Tree.unfold f b) = Tree.unfold_support (λ b' => support (f b')) b := by
+  funext s
+  simp_all
+  induction s generalizing b with
   | leaf =>
-    simp_all
     apply Iff.intro
     . intro ⟨n, h⟩
-      match n with
-      | 0 => simp_all [Tree.unfold_aux]
-      | n + 1 =>
-        simp_all [Tree.unfold_aux, bind, optBind_bind]
-        have ⟨v', hv'1, hv'2⟩ := h
-        match v' with
-        | .leaf => simp_all
-        | .node _ _ _ =>
-          simp_all [bind, optBind_bind]
-          have ⟨l'', hl'', r'', hr''⟩ := hv'2
-          match l'', r'' with
-          | .none, _ => simp_all
-          | _, .none => simp_all
-          | .some .leaf, .some (.node _ _ _) => simp_all [Option.bind]
-          | .some (.node _ _ _), .some .leaf => simp_all [Option.bind]
-          | .some (.node _ _ _), .some (.node _ _ _) => simp_all
-    . intro h
+      cases n <;> simp_all
+      case succ n' =>
+        replace ⟨v', hv', h⟩ := h
+        cases v' <;> simp_all
+        case node l x r =>
+          replace ⟨ovl, hl, ovr, hr, h⟩ := h
+          cases ovl <;> simp_all
+          cases ovr <;> simp_all
+    . intros h
       exists 1
-      simp [Tree.unfold_aux, bind, optBind_bind]
-      exists .leaf
-  | node l x r ih_l ih_r =>
-    simp_all
+      simp
+      exists TreeF.leaf
+  | node l x r ihl ihr =>
     apply Iff.intro
     . intro ⟨n, h⟩
-      match n with
-      | 0 => simp_all [Tree.unfold_aux]
-      | n + 1 =>
-        simp_all [Tree.unfold_aux, bind, optBind_bind]
-        have ⟨v', hv'1, hv'2⟩ := h
-        match v' with
-        | .leaf => simp_all
-        | .node bl'' x br'' =>
-          simp_all [bind, optBind_bind]
-          have ⟨l'', hl'', r'', hr'', hv''⟩ := hv'2
-          match l'', r'' with
-          | .none, _ => simp_all
-          | _, .none => simp_all
-          | .some l, .some r =>
-            simp_all
-            obtain ⟨rfl, rfl, rfl⟩ := hv''
-            exists bl''
-            exists br''
-            apply And.intro hv'1
-            apply And.intro
-            . apply (@ih_l bl'').mp
-              exists n
-            . apply (@ih_r br'').mp
-              exists n
+      cases n <;> simp_all; case succ n =>
+      replace ⟨v', hv', h⟩ := h
+      cases v' <;> simp_all
+      case node bl x br =>
+        replace ⟨ovl, hvl, ovr, hvr, h⟩ := h
+        cases ovl <;> simp_all
+        case some vl =>
+          cases ovr <;> simp_all
+          case some vr =>
+            exists bl, br
+            apply And.intro hv'
+            rw [← @ihl bl, ← @ihr br]
+            apply And.intro <;> exists n
     . intro ⟨bl, br, hx, hl, hr⟩
-      have ⟨nl, hl⟩ := ih_l.mpr hl
-      have ⟨nr, hr⟩ := ih_r.mpr hr
-      exists nl + nr + 1
-      simp_all [Tree.unfold_aux, bind, optBind_bind]
-      exists .node bl x br
-      simp_all [bind, optBind_bind]
-      exists some l
-      apply And.intro
-      . apply @Tree.unfold_monotonic _ _ _ nl (nl + nr)
-        . simp
-        . assumption
-      . exists some r
-        apply And.intro
-        . apply @Tree.unfold_monotonic _ _ _ nr (nl + nr)
-          . simp
-          . assumption
-        . simp
+      rw [← @ihl bl] at hl
+      replace ⟨nl, hl⟩ := hl
+      rw [← @ihr br] at hr
+      replace ⟨nr, hr⟩ := hr
+      exists (nl + nr + 1)
+      simp_all
+      exists TreeF.node bl x br
+      simp_all
+      exists (some l)
+      simp_all [Tree.unfold_aux_monotonic]
+      exists (some r)
+      rw [Nat.add_comm]
+      simp_all [Tree.unfold_aux_monotonic]
 
 /- Conversion of recursive functions to fold -/
 
