@@ -269,12 +269,15 @@ theorem Stack.unfold_support_ok :
         all_goals
           have ⟨v'', hv''⟩ := hv'2
           cases v'' <;> simp_all
-    . aesop (add unsafe (by exists 1))
+    . intros h
+      exists 1
+      simp
+      exists StackF.mty
   | cons x s' ih =>
     apply Iff.intro
     . intro ⟨n, h⟩
       cases n <;> simp_all; case succ n =>
-      have ⟨v', hv'1, hv'2⟩ := h
+      have ⟨v', hv'1, hv'2⟩ := h; clear h
       cases v' <;> simp_all
       case cons _ b'' =>
         have ⟨v'', hv''⟩ := hv'2
@@ -298,17 +301,17 @@ theorem Stack.unfold_support_ok :
     apply Iff.intro
     . intro ⟨n, h⟩
       cases n <;> simp_all; case succ n =>
-      have ⟨v', hv'1, hv'2⟩ := h
+      replace ⟨v', hv', h⟩ := h
       cases v' <;> simp_all
       case cons _ b'' =>
-        have ⟨v'', hv''⟩ := hv'2
+        have ⟨v'', hv''⟩ := h
         cases v'' <;> simp_all
       case ret_cons _ b'' =>
-        have ⟨v'', hv''⟩ := hv'2
+        have ⟨v'', hv''⟩ := h
         cases v'' <;> simp_all
         obtain ⟨hv'', rfl, rfl⟩ := hv''
         exists b''
-        apply And.intro hv'1
+        apply And.intro hv'
         apply (@ih b'').mp
         exists n
     .
