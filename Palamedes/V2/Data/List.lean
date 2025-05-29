@@ -329,7 +329,10 @@ def List.cunfold
     {z : σ → Option β}
     {s : σ}
     {b : β}
-    (g : (b : β) → (s : σ) → CorrectGen (fun (t : ListF α β) => (z s = some b ∧ t = .nil) ∨ (∃ a b', f a b' s = some b ∧ t = .cons a b'))) :
+    (g : (b : β) → (s : σ) → CorrectGen
+      (fun (t : ListF α β) =>
+        (z s = some b ∧ t = .nil) ∨
+        (∃ a b', f a b' s = some b ∧ t = .cons a b'))) :
     CorrectGen (λ v => List.accuM st f z v s = some b) :=
   Subtype.mk
     (List.unfold (λ (b, s) => do
