@@ -11,6 +11,12 @@ import Mathlib.Tactic.FailIfNoProgress
 
 open Gen CorrectGen
 
+macro "simp_list_predicate" : tactic =>
+  `(tactic|
+    first
+      | rw [← List.fold_accu_Option_true]; aesop
+      | rw [← List.fold_accu_Option_basic]; aesop)
+
 macro "simp_predicate" : tactic =>
   `(tactic|
     first
@@ -18,7 +24,7 @@ macro "simp_predicate" : tactic =>
         simp [guard]
         first
           | exact Eq.comm
-          | rw [← List.fold_accu_Option_true]; intros; rfl
+          | simp_list_predicate
           | apply exists_congr; intro; rw [true_and]
           | rfl
       | rfl)
@@ -28,7 +34,6 @@ macro "gapply " t:term : tactic =>
 
 add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by fail_if_no_progress intros),
-  (by gapply (cpure _)),
   (by gapply (cpure _)),
   (by gapply (cpick _ _)),
   (by gapply (cbind _ _)),
