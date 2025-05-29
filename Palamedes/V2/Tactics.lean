@@ -36,6 +36,16 @@ macro "optimality" : tactic =>
       (add unsafe congrFun)
       (add unsafe congrArg))
 
+elab "optimize_gen " t:term : tactic =>
+  withMainContext do
+    let g ← getMainGoal
+    let m ← mkFreshExprMVar (some (.sort 0))
+    let gen ← elabTerm t (some (.app (.const ``Gen []) m))
+    let gen' ← withReducible (reduce gen)
+    let gen'' ← optimizeGen gen'
+    let gen''' ← withReducible (reduce gen'')
+    g.assign gen'''
+
 -- Borrowed from Aesop
 def printAsMillis (n : Nat) : String :=
   let str := toString (n.toFloat / 1000000)
@@ -81,6 +91,18 @@ def generatorSearchElab
     | throwError "goal type must be Gen α for some α"
   let ty := .forallE `α α (.sort 0) .default
   let mpred ← elabTerm t (some ty)
+
+  if verbose then do
+    TryThis.addSuggestion stx
+      s!"let cg : CorrectGen {← ppExpr mpred} := by
+    cgenerator_search
+  let g : Gen (List Nat) := by
+    optimize_gen cg.val
+  let _ : support cg.val = support cg := by
+    optimality
+  let _ : Gen.total g := by
+    totality
+  exact g"
 
   -- Synthesize a correct generator by solving `CorrectGen P` and projecting the `.val`.
   let gen ← do
