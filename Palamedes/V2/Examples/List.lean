@@ -1,9 +1,4 @@
-import Palamedes.V2.Data.List
-import Palamedes.V2.Data.Nat
-import Palamedes.V2.Data.Unit
 import Palamedes.V2.Synthesizer
-import Palamedes.V2.Tactics
-import Palamedes.V2.RuleSets
 
 open Gen CorrectGen
 
