@@ -4,27 +4,50 @@ import Palamedes.V2.RuleSets
 import Palamedes.V2.Total
 import Palamedes.V2.Tactics
 import Palamedes.V2.Data.List
+import Palamedes.V2.Data.Unit
+import Palamedes.V2.Data.Bool
+import Palamedes.V2.Data.Nat
 import Mathlib.Tactic.FailIfNoProgress
+
+open Gen CorrectGen
+
+macro "simp_predicate" : tactic =>
+  `(tactic|
+    first
+      | funext
+        simp [guard]
+        first
+          | exact Eq.comm
+          | rw [← List.fold_accu_Option_true]; intros; rfl
+          | apply exists_congr; intro; rw [true_and]
+          | rfl
+      | rfl)
+
+macro "gapply " t:term : tactic =>
+  `(tactic| apply convert (by simp_predicate) $t)
 
 add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by fail_if_no_progress intros),
-  (by apply Gen.CorrectGen.cpure),
-  (by apply Gen.CorrectGen.cpick),
-  (by apply Gen.CorrectGen.cbind),
-  (by apply Gen.CorrectGen.convert (by simp_predicate) (Gen.CorrectGen.cpure _)),
-  (by apply Gen.CorrectGen.convert (by simp_predicate) (Gen.CorrectGen.cpick _ _)),
-  -- FIXME: Make this more general
-  (by apply convert (by funext a; congr; funext b; rw [true_and]) (Gen.CorrectGen.cbind _ _)),
-  (by apply Gen.CorrectGen.convert (by simp_predicate) (Gen.CorrectGen.cbind _ _)),
-  (by apply Gen.CorrectGen.convert (by simp_predicate) (Gen.CorrectGen.List.cunfold _)),
+  (by gapply (cpure _)),
+  (by gapply (cpure _)),
+  (by gapply (cpick _ _)),
+  (by gapply (cbind _ _)),
+  (by gapply (List.cunfold _)),
+  (by gapply carbUnit),
+  (by gapply carbBool),
+  (by gapply carbNat),
+  (by gapply cgt),
+  (by gapply cbetween_partial),
+  (by gapply (cbetween (by first | aesop | omega))),
 ]
 
 add_aesop_rules unsafe (rule_sets := [totality]) [
-  Gen.Total.total_pick,
-  Gen.Total.total_bind,
-  Gen.Total.total_assume,
-  Gen.Total.total_indexed,
-  Gen.Total.total_internalizeProofs,
-  Gen.Total.total_map,
-  Gen.Total.total_pure,
+  Total.total_pick,
+  Total.total_bind,
+  Total.total_assume,
+  Total.total_indexed,
+  Total.total_internalizeProofs,
+  Total.total_map,
+  Total.total_pure,
+  Total.List.total_unfold,
 ]

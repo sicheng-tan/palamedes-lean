@@ -7,15 +7,6 @@ import Palamedes.V2.Data.List
 
 open Lean Tactic Elab Meta Tactic
 
-macro "simp_predicate" : tactic =>
-  `(tactic|
-    (funext
-     simp [guard]
-     first
-      | exact Eq.comm
-      | (rw [← List.fold_accu_Option_true]; intros; rfl)
-      | rfl))
-
 macro "cgenerator_search" : tactic =>
   `(tactic|
     aesop
@@ -39,7 +30,7 @@ macro "optimality" : tactic =>
 elab "optimize_gen " t:term : tactic =>
   withMainContext do
     let g ← getMainGoal
-    let m ← mkFreshExprMVar (some (.sort 0))
+    let m ← mkFreshExprMVar none
     let gen ← elabTerm t (some (.app (.const ``Gen []) m))
     let gen' ← withReducible (reduce gen)
     let gen'' ← optimizeGen gen'
@@ -94,9 +85,9 @@ def generatorSearchElab
 
   if verbose then do
     TryThis.addSuggestion stx
-      s!"let cg : CorrectGen {← ppExpr mpred} := by
+      s!"let cg : CorrectGen ({← ppExpr mpred}) := by
     cgenerator_search
-  let g : Gen (List Nat) := by
+  let g : Gen ({← ppExpr α}) := by
     optimize_gen cg.val
   let _ : support cg.val = support cg := by
     optimality

@@ -1,8 +1,6 @@
 import Palamedes.V2.Gen
 import Palamedes.V2.CorrectGen
 import Palamedes.V2.Total
-import Palamedes.V2.RuleSets
-import Palamedes.V2.Optimizer
 
 namespace Gen
 
@@ -84,7 +82,7 @@ end Gen
 
 namespace CorrectGen
 
-@[reducible, aesop unsafe (rule_sets := [synthesis])]
+@[reducible]
 def carbNat : @CorrectGen Nat (λ _ => True) :=
   Subtype.mk arbNat <| by
     funext v
@@ -99,11 +97,7 @@ def cbetween
     funext v
     simp
 
-add_aesop_rules unsafe (rule_sets := [synthesis]) [
-  (by apply Gen.CorrectGen.cbetween (by first | aesop | omega))
-]
-
-@[reducible, aesop unsafe (rule_sets := [synthesis])]
+@[reducible]
 def cbetween_partial
     {lo hi : Nat} :
     CorrectGen (λ v => lo ≤ v ∧ v ≤ hi) :=
@@ -112,7 +106,7 @@ def cbetween_partial
     simp
     exact Nat.le_trans
 
-@[reducible, aesop unsafe (rule_sets := [synthesis])]
+@[reducible]
 def cgt
     {lo : Nat} :
     CorrectGen (λ v => lo < v) :=

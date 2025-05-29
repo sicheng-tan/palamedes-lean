@@ -1,10 +1,7 @@
 import Palamedes.V2.Gen
 import Palamedes.V2.CorrectGen
 import Palamedes.V2.Total
-import Palamedes.V2.RuleSets
-import Palamedes.V2.Optimizer
 import Mathlib.Tactic.CasesM
-import Palamedes.V2.RuleSets
 
 section BaseFunctor
 
@@ -12,7 +9,6 @@ inductive ListF (α β : Type) where
   | nil : ListF α β
   | cons : (a : α) → (b : β) → ListF α β
 
-@[aesop simp (rule_sets := [simplification])]
 theorem ListF_or
     {α β : Type}
     {P : Prop}
@@ -167,7 +163,6 @@ end Unfold
 
 section FoldConversions
 
-@[aesop simp (rule_sets := [simplification])]
 theorem List.fold_accu_Option_basic
     {α β : Type}
     {v : β}
@@ -186,7 +181,6 @@ theorem List.fold_accu_Option_basic
     replace ih := @ih (List.fold f z xs')
     simp_all [List.fold, List.accuM]
 
-@[aesop simp (rule_sets := [simplification])]
 theorem List.fold_accu_Option_true
     {α : Type}
     {xs : List α}
@@ -210,7 +204,6 @@ theorem List.fold_accu_Option_true
       replace ⟨ v, hf ⟩ := hf
       simp_all [List.fold, List.accuM, guard]
 
-@[aesop simp (rule_sets := [simplification])]
 theorem List.fold_accu_Option_function
     {α β σ : Type}
     {i : σ}
@@ -239,7 +232,6 @@ theorem List.fold_accu_Option_function
       rw [hgw]
       apply hg
 
-@[aesop simp (rule_sets := [simplification])]
 theorem List.fold_accu_Option_function_true
     {α σ : Type}
     {i : σ}
@@ -363,7 +355,3 @@ def List.total_unfold
 end Total
 
 end Gen
-
-add_aesop_rules unsafe (rule_sets := [totality]) [
-  (by apply Gen.Total.List.total_unfold)
-]
