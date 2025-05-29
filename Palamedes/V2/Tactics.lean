@@ -3,13 +3,18 @@ import Palamedes.V2.Gen
 import Palamedes.V2.CorrectGen
 import Palamedes.V2.Optimizer
 import Palamedes.V2.Total
+import Palamedes.V2.Data.List
 
 open Lean Tactic Elab Meta Tactic
 
 macro "simp_predicate" : tactic =>
   `(tactic|
-    aesop
-      (rule_sets := [simplification]))
+    (funext
+     simp [guard]
+     first
+      | exact Eq.comm
+      | (rw [← List.fold_accu_Option_true]; intros; rfl)
+      | rfl))
 
 macro "cgenerator_search" : tactic =>
   `(tactic|
@@ -27,7 +32,9 @@ macro "totality" : tactic =>
 macro "optimality" : tactic =>
   `(tactic|
     aesop
-      (add safe (by omega)))
+      (add safe (by omega))
+      (add unsafe congrFun)
+      (add unsafe congrArg))
 
 -- Borrowed from Aesop
 def printAsMillis (n : Nat) : String :=
@@ -90,7 +97,8 @@ def generatorSearchElab
   -- Optimize the generator and prove that the optimized version is correct.
   let gen' ←
     try
-      let gen' ← withReducible (reduce (← optimizeGen gen))
+      let gen' ← optimizeGen gen
+      let gen' ← withReducible (reduce gen')
       let _ ← solveGoalWithTactic
         (← mkEq (← mkAppM ``Gen.support #[gen]) (← mkAppM ``Gen.support #[gen']))
         (← `(tactic| optimality))
