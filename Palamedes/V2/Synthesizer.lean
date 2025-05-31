@@ -34,6 +34,7 @@ macro "gapply " t:term : tactic =>
 
 add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by fail_if_no_progress intros),
+  (by assumption),
   (by gapply (cpure _)),
   (by gapply (cpick _ _)),
   (by gapply (cbind _ _)),
