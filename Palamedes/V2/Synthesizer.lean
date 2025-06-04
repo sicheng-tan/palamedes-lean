@@ -47,6 +47,11 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by gapply (cbetween (by first | aesop | omega))),
 ]
 
+add_aesop_rules 5% (rule_sets := [synthesis]) [
+  (by apply caseBool (by assumption)),
+  (by apply caseNat (by assumption))
+]
+
 add_aesop_rules unsafe (rule_sets := [totality]) [
   Total.total_pick,
   Total.total_bind,
@@ -56,4 +61,6 @@ add_aesop_rules unsafe (rule_sets := [totality]) [
   Total.total_map,
   Total.total_pure,
   Total.List.total_unfold,
+  Total.total_Bool_rec,
+  Total.total_Nat_rec
 ]

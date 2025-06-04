@@ -88,6 +88,34 @@ def carbNat : @CorrectGen Nat (λ _ => True) :=
     funext v
     simp
 
+-- def caseNat
+--     (n : Nat)
+--     (gz : (n = Nat.zero) → @CorrectGen α P)
+--     (gs : (n' : Nat) → (n = Nat.succ n') → @CorrectGen α P) :
+--     @CorrectGen α P :=
+--     Subtype.mk (Decidable.rec (_) (_) (Nat.rec (gz _).val (λ n' x => (gs n' _).val) n)) <| by
+--     cases n
+--     . sorry
+--       --simp [(gz _).property]
+--     . sorry
+
+--       --simp [(gs _ _).property]
+
+@[reducible]
+def caseNat
+    (n : Nat)
+    (gz : (n = Nat.zero) → @CorrectGen α P)
+    (gs : (n' : Nat) → (n = Nat.succ n') → @CorrectGen α P) :
+    @CorrectGen α P :=
+    Subtype.mk (
+      match n with
+      | Nat.zero => (gz (Eq.refl Nat.zero)).val
+      | Nat.succ n' => (gs n' (Eq.refl (Nat.succ n'))).val
+    ) <| by
+    cases n
+    . simp [(gz _).property]
+    . simp [(gs _ _).property]
+
 @[reducible]
 def cbetween
     {lo hi : Nat}
@@ -123,6 +151,13 @@ def total_arbNat : total arbNat := by
   apply total_indexed
   intro n
   induction n <;> simp [arbNat.go, *]
+
+@[simp]
+def total_Nat_rec (hz : total gz) (hs : ∀ n' gn', total (gs n' gn')) :
+  total (Nat.rec gz gs n) := by
+  cases n
+  case zero => exact hz
+  case succ n' => simp_all only
 
 @[simp]
 def total_choose : total (choose lo hi h) := by
