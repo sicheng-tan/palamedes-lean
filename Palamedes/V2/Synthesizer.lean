@@ -23,7 +23,7 @@ macro "simp_predicate" : tactic =>
   `(tactic|
     first
       | funext
-        simp [guard]
+        simp [guard, *]
         first
           | exact Eq.comm
           | simp_list_predicate
