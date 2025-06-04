@@ -85,7 +85,8 @@ def generatorSearchElab
 
   if verbose then do
     TryThis.addSuggestion stx
-      s!"let cg : CorrectGen ({← ppExpr mpred}) := by
+      s!"-- generator_search ({← ppExpr mpred})
+  let cg : CorrectGen ({← ppExpr mpred}) := by
     cgenerator_search
   let g : Gen ({← ppExpr α}) := by
     optimize_gen cg.val
