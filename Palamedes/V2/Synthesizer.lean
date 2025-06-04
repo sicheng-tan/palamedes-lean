@@ -14,8 +14,10 @@ open Gen CorrectGen
 macro "simp_list_predicate" : tactic =>
   `(tactic|
     first
-      | rw [← List.fold_accu_Option_true]; aesop
-      | rw [← List.fold_accu_Option_basic]; aesop)
+      | rw [← List.fold_accu_Option_true]; (try aesop); done
+      | rw [← List.fold_accu_Option_function]; (try aesop); done
+      | rw [← List.fold_accu_Option_function_true]; (try aesop); done
+      | rw [← List.fold_accu_Option_basic]; (try aesop); done)
 
 macro "simp_predicate" : tactic =>
   `(tactic|
