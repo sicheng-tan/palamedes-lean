@@ -90,7 +90,7 @@ def generatorSearchElab
     cgenerator_search
   let g : Gen ({← ppExpr α}) := by
     optimize_gen cg.val
-  let _ : support cg.val = support cg := by
+  let _ : support cg.val = support g := by
     optimality
   let _ : Gen.total g := by
     totality
