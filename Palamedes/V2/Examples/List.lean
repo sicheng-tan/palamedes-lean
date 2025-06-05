@@ -3,60 +3,17 @@ import Palamedes.V2.Synthesizer
 open Gen CorrectGen
 
 
--- def genAllTwosFold : Gen (List Nat) := by
---   generator_search fun xs =>
---     List.fold (fun x b => x == 2 && b) true xs = true
+def genAllTwosFold : Gen (List Nat) := by
+  generator_search fun xs => List.fold (fun x b => x == 2 && b) true xs = true
 
--- def genTrueFold : Gen (List Nat) := by
---   generator_search (fun (xs : List Nat) => List.fold (fun x b => b) true xs = true)
+def genTrueFold : Gen (List Nat) := by
+  generator_search (fun (xs : List Nat) => List.fold (fun x b => b) true xs = true)
 
--- def genEvenLenFold : Gen (List Nat) := by
---   generator_search (fun (xs : List Nat) => List.fold (fun x b => !b) true xs = true)
-  -- let cg : CorrectGen (fun (xs : List Nat) => List.fold (fun x b => !b) true xs = true) := by
-  --   gapply (List.cunfold _)
-  --   intros
-  --   apply caseBool (by assumption)
-  --   . cgenerator_search
-  --   . cgenerator_search
-  -- let g : Gen (List Nat) := by
-  --   optimize_gen cg.val
-  -- let _ : support cg.val = support cg := by
-  --   optimality
-  -- let _ : Gen.total g := by
-  --   totality
-  -- exact g
+def genEvenLenFold : Gen (List Nat) := by
+  generator_search (fun (xs : List Nat) => List.fold (fun x b => !b) true xs = true)
 
--- def genLengthKFold {k : Nat} : Gen (List Nat) := by
---   -- generator_search (fun xs => List.fold (fun x b => b + 1) 0 xs = k)
---   let cg : CorrectGen (fun (xs : List Nat) => List.fold (fun x b => b + 1) 0 xs = k) := by
---     cgenerator_search
---     -- gapply (List.cunfold _)
---     -- intro n; intro ()
---     -- apply caseNat n
---     -- . cgenerator_search
---     -- . intros h
---     --   simp [h]
---     --   gapply (cbind _ _)
---     --   cgenerator_search
---     --   cgenerator_search
---     --   sorry
---     -- -- cases n
---     -- -- . cgenerator_search
---     -- -- case succ n' =>
---     -- --   simp
---     -- --   cgenerator_search
---   let g : Gen (List Nat) := by
---     optimize_gen cg.val
---   let _ : support cg.val = support cg := by
---     optimality
---   let _ : Gen.total g := by
---     totality
---     -- apply Total.List.total_unfold
---     -- intros
---     -- simp
---     sorry
---     -- totality
---   exact g
+def genLengthKFold {k : Nat} : Gen (List Nat) := by
+  generator_search (fun xs => List.fold (fun x b => b + 1) 0 xs = k)
 
 -- -- TODO
 -- def genEvenLenTwosFold : Gen (List Nat) := by

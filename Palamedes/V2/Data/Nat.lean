@@ -78,6 +78,27 @@ theorem support_choose :
         . right
           rw [ih _] <;> omega
 
+@[simp]
+def support_Nat_rec
+    {gz : (n = 0) → Gen α}
+    {gs : (n' : Nat) → (n = n' + 1) → Gen α} :
+    support (Nat.rec
+            (motive := fun x => (n = x) → Gen α)
+            (fun h => gz h)
+            (fun a _ b => gs a b)
+            n
+            rfl) =
+    (fun a =>
+      (∃ h : n = 0, a ∈ 〚gz h〛) ∨
+      (∃ (n' : Nat) (h : n = n' + 1), a ∈ 〚gs n' h〛)) := by
+  funext
+  simp
+  apply Iff.intro
+  . intro h
+    cases n <;> aesop
+  . intro h
+    cases h <;> aesop
+
 end Gen
 
 namespace CorrectGen
@@ -88,33 +109,22 @@ def carbNat : @CorrectGen Nat (λ _ => True) :=
     funext v
     simp
 
--- def caseNat
---     (n : Nat)
---     (gz : (n = Nat.zero) → @CorrectGen α P)
---     (gs : (n' : Nat) → (n = Nat.succ n') → @CorrectGen α P) :
---     @CorrectGen α P :=
---     Subtype.mk (Decidable.rec (_) (_) (Nat.rec (gz _).val (λ n' x => (gs n' _).val) n)) <| by
---     cases n
---     . sorry
---       --simp [(gz _).property]
---     . sorry
-
---       --simp [(gs _ _).property]
-
 @[reducible]
 def caseNat
     (n : Nat)
-    (gz : (n = Nat.zero) → @CorrectGen α P)
-    (gs : (n' : Nat) → (n = Nat.succ n') → @CorrectGen α P) :
+    (gz : (n = 0) → @CorrectGen α P)
+    (gs : (n' : Nat) → (n = n' + 1) → @CorrectGen α P) :
     @CorrectGen α P :=
-    Subtype.mk (
-      match n with
-      | Nat.zero => (gz (Eq.refl Nat.zero)).val
-      | Nat.succ n' => (gs n' (Eq.refl (Nat.succ n'))).val
-    ) <| by
-    cases n
-    . simp [(gz _).property]
-    . simp [(gs _ _).property]
+    Subtype.mk
+      (Nat.rec
+        (motive := fun x => (n = x) → Gen α)
+        (fun h => (gz h).val)
+        (fun a _ b => (gs a b).val)
+        n
+        rfl) <| by
+    match n with
+    | 0 => exact (gz _).property
+    | n' + 1 => exact (gs _ _).property
 
 @[reducible]
 def cbetween
@@ -153,10 +163,20 @@ def total_arbNat : total arbNat := by
   induction n <;> simp [arbNat.go, *]
 
 @[simp]
-def total_Nat_rec (hz : total gz) (hs : ∀ n' gn', total (gs n' gn')) :
-  total (Nat.rec gz gs n) := by
+def total_Nat_rec
+    {gz : (n = 0) → Gen α}
+    {gs : (n' : Nat) → (n = n' + 1) → Gen α}
+    (hz : ∀ h, total (gz h))
+    (hs : ∀ n' gn', total (gs n' gn')) :
+    total (Nat.rec
+          (motive := fun x => (n = x) → Gen α)
+          (fun h => gz h)
+          (fun a _ b => gs a b)
+          n
+          rfl)
+  := by
   cases n
-  case zero => exact hz
+  case zero => exact hz rfl
   case succ n' => simp_all only
 
 @[simp]
