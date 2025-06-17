@@ -14,49 +14,49 @@ open Gen CorrectGen
 -- def genLengthKFold {k : Nat} : Gen (List Nat) := by
 --   generator_search (fun xs => List.fold (fun x b => b + 1) 0 xs = k)
 
-def genEvenLenTwosFold : Gen (List Nat) := by
-  -- generator_search (fun xs => List.fold (fun x b => x == 2 && b) true xs = true ∧ List.fold (fun x b => !b) true xs = true)
-  let cg : CorrectGen (fun (xs : List Nat) => List.fold (fun x b => x == 2 && b) true xs = true ∧ List.fold (fun x b => !b) true xs = true) := by
-    apply convert (by
-      funext
-      simp [guard, *]
-      rw [List.fold_accu_Option_true] <;> try (aesop; done)
-      rw [List.fold_accu_Option_basic] <;> try (aesop; done)
-      rw [List.merge_accuM]
-    ) (List.cunfold _)
-    intros b s
-    replace ⟨ (), b ⟩ := b
-    apply caseBool (by assumption) <;> intro h
-    . gapply (cpick _ _)
-      . cgenerator_search
-      . gapply (cbind _ _) --?
-        . cgenerator_search
-        . intro x
-          replace ⟨ x, _ ⟩ := x
-          gapply (cbind _ _)
-          . cgenerator_search
-          . intro y
-            replace ⟨ (), _ ⟩ := y
-            generalize hbx : (x == 2) = bx
-            apply (caseBool (by assumption)) <;> intro h
-            . rw [h, Nat.beq_eq_true_eq] at hbx
-              cgenerator_search
-            . rw [h] at hbx
-              simp_all only [beq_eq_false_iff_ne, ne_eq, ite_false, Option.bind, Eq.symm, Option.some_ne_none]
-              -- cgenerator_search
-              --simp only [bind, failure, Option.bind]
-              sorry
-    . simp_all
-      gapply (cbind _ _)
-      . cgenerator_search
-      . intro y
-        replace ⟨ y, _ ⟩ := y
-        simp_all
-        generalize hb : (y == 2) = b
-        apply (caseBool (by assumption)) <;> intro h <;> simp_all
-        . cgenerator_search
-        . sorry
-  all_goals sorry
+-- def genEvenLenTwosFold : Gen (List Nat) := by
+--   -- generator_search (fun xs => List.fold (fun x b => x == 2 && b) true xs = true ∧ List.fold (fun x b => !b) true xs = true)
+--   let cg : CorrectGen (fun (xs : List Nat) => List.fold (fun x b => x == 2 && b) true xs = true ∧ List.fold (fun x b => !b) true xs = true) := by
+--     apply convert (by
+--       funext
+--       simp [guard, *]
+--       rw [List.fold_accu_Option_true] <;> try (aesop; done)
+--       rw [List.fold_accu_Option_basic] <;> try (aesop; done)
+--       rw [List.merge_accuM]
+--     ) (List.cunfold _)
+--     intros b s
+--     replace ⟨ (), b ⟩ := b
+--     apply caseBool (by assumption) <;> intro h
+--     . gapply (cpick _ _)
+--       . cgenerator_search
+--       . gapply (cbind _ _) --?
+--         . cgenerator_search
+--         . intro x
+--           replace ⟨ x, _ ⟩ := x
+--           gapply (cbind _ _)
+--           . cgenerator_search
+--           . intro y
+--             replace ⟨ (), _ ⟩ := y
+--             generalize hbx : (x == 2) = bx
+--             apply (caseBool (by assumption)) <;> intro h
+--             . rw [h, Nat.beq_eq_true_eq] at hbx
+--               cgenerator_search
+--             . rw [h] at hbx
+--               simp_all only [beq_eq_false_iff_ne, ne_eq, ite_false, Option.bind, Eq.symm, Option.some_ne_none]
+--               -- cgenerator_search
+--               --simp only [bind, failure, Option.bind]
+--               sorry
+--     . simp_all
+--       gapply (cbind _ _)
+--       . cgenerator_search
+--       . intro y
+--         replace ⟨ y, _ ⟩ := y
+--         simp_all
+--         generalize hb : (y == 2) = b
+--         apply (caseBool (by assumption)) <;> intro h <;> simp_all
+--         . cgenerator_search
+--         . sorry
+--   all_goals sorry
 
 
   -- let g : Gen (List Nat) := by
@@ -74,72 +74,15 @@ def genEvenLenTwosFold : Gen (List Nat) := by
 --   sorry
 
 
--- -- TODO int
--- def genIncreasingByOneFold : Gen (List Nat) := by
---   -- generator_search (fun xs => List.fold (fun x b prev => x == prev + 1 && b x) (fun x => true) xs 0 = true)
---   let cg : CorrectGen (fun xs => List.fold (fun x b prev => x == prev + 1 && b x) (fun x => true) xs 0 = true) := by
---     apply convert (by
---       funext v
---       simp [guard, *]
---       rw [← List.fold_accu_Option_function_true]
---       intros x acc s
---       apply Iff.intro <;> intro h
---       . -- (->)
---         rw [Bool.and_eq_true] at h
---         replace ⟨ h, hacc ⟩ := h
---         simp
---         apply And.intro
---         . apply h
---         . apply hacc
---       . -- (<-)
---         aesop
---       ) (List.cunfold _)
---     cgenerator_search
---   let g : Gen (List Nat) := by
---     optimize_gen cg.val
---   let _ : support cg.val = support g := by
---     optimality
---   let _ : Gen.total g := by
---     totality
---   exact g
-
--- def genBetween (lo hi : Nat): Gen Nat := by
---     generator_search (fun n => lo ≤ n ∧ n ≤ hi) allow_partial
-
--- -- -- @[aesop simp (rule_sets := [palamedes])]
--- -- def sortedBetween (hi : Nat) : List Nat → Nat → Bool := λ xs =>
--- --   match xs with
--- --   | [] => λ _ => true
--- --   | x :: xs => λ lo => lo ≤ x && x ≤ hi && (sortedBetween hi xs) x
-
 -- set_option palamedes.debug true
 
-def genSortedBetween (lo hi : Nat) : Gen (List Nat) := by
-  generator_search
-    (fun (xs : List Nat) => List.fold (fun x b s => s ≤ x && x ≤ hi && b x) (fun x => true) xs lo = true)
-    allow_partial
-  -- let cg : CorrectGen (fun (xs : List Nat) =>
-  --     List.fold
-  --     (fun x b s => s ≤ x && x ≤ hi && b x)
-  --     (fun x => true)
-  --     xs
-  --     lo
-  --     = true) := by
-  --   apply convert (by
-  --     funext
-  --     simp [guard, *]
-  --     rw [← List.fold_accu_Option_function_true]
-  --     simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]
-  --     aesop
-  --     ) (List.cunfold _)
-  --   cgenerator_search
-  -- let g : Gen (List Nat) := by
-  --   optimize_gen cg.val
-  -- let _ : support cg.val = support g := by
-  --   optimality
-  -- exact g
+def genIncreasingByOneFold : Gen (List Nat) := by
+  generator_search (fun xs => List.fold (fun x b prev => x == prev + 1 && b x) (fun x => true) xs 0 = true)
 
-
+-- def genSortedBetween (lo hi : Nat) : Gen (List Nat) := by
+--   generator_search
+--     (fun (xs : List Nat) => List.fold (fun x b s => s ≤ x && x ≤ hi && b x) (fun x => true) xs lo = true)
+--     allow_partial
 
     -- apply convert (by
     --   first
