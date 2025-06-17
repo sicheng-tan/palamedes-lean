@@ -56,6 +56,8 @@ def genEvenLenTwosFold : Gen (List Nat) := by
         apply (caseBool (by assumption)) <;> intro h <;> simp_all
         . cgenerator_search
         . sorry
+  all_goals sorry
+
 
   -- let g : Gen (List Nat) := by
   --   optimize_gen cg.val
@@ -113,34 +115,29 @@ def genEvenLenTwosFold : Gen (List Nat) := by
 -- set_option palamedes.debug true
 
 def genSortedBetween (lo hi : Nat) : Gen (List Nat) := by
-  -- generator_search (fun (xs : List Nat) => List.fold (fun x b s => s ≤ x && x ≤ hi && b x) (fun x => true) xs lo = true)
-  let cg : CorrectGen (fun (xs : List Nat) =>
-      List.fold
-      (fun x b s => s ≤ x && x ≤ hi && b x)
-      (fun x => true)
-      xs
-      lo
-      = true) := by
-    apply convert (by
-      funext
-      simp [guard, *]
-      rw [← List.fold_accu_Option_function_true]
-      intros x acc s
-      simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]
-      rfl
-      ) (List.cunfold _)
-    intros b s
-    gapply (cpick _ _)
-    . cgenerator_search
-    . apply (cbind _ _)
-      . gapply cbetween_partial
-      . intro x
-        cgenerator_search
-  let g : Gen (List Nat) := by
-    optimize_gen cg.val
-  let _ : support cg.val = support g := by
-    optimality
-  exact g
+  generator_search
+    (fun (xs : List Nat) => List.fold (fun x b s => s ≤ x && x ≤ hi && b x) (fun x => true) xs lo = true)
+    allow_partial
+  -- let cg : CorrectGen (fun (xs : List Nat) =>
+  --     List.fold
+  --     (fun x b s => s ≤ x && x ≤ hi && b x)
+  --     (fun x => true)
+  --     xs
+  --     lo
+  --     = true) := by
+  --   apply convert (by
+  --     funext
+  --     simp [guard, *]
+  --     rw [← List.fold_accu_Option_function_true]
+  --     simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]
+  --     aesop
+  --     ) (List.cunfold _)
+  --   cgenerator_search
+  -- let g : Gen (List Nat) := by
+  --   optimize_gen cg.val
+  -- let _ : support cg.val = support g := by
+  --   optimality
+  -- exact g
 
 
 

@@ -16,7 +16,8 @@ macro "simp_list_predicate" : tactic =>
     first
       | rw [← List.fold_accu_Option_true]; (try aesop); done
       | rw [← List.fold_accu_Option_function]; (try aesop); done
-      | rw [← List.fold_accu_Option_function_true]; (try aesop); done
+      | rw [← List.fold_accu_Option_function_true];
+        (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
       | rw [← List.fold_accu_Option_basic]; (try aesop); done)
 
 macro "simp_predicate" : tactic =>
@@ -40,6 +41,7 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by gapply (cpure _)),
   (by gapply (cpick _ _)),
   (by gapply (cbind _ _)),
+  (by apply (cbind _ _)), -- TODO
   (by gapply (List.cunfold _)),
   (by gapply carbUnit),
   (by gapply carbBool),
