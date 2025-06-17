@@ -34,6 +34,27 @@ theorem support_arbNat :
     simp +arith [hn']
 
 @[simp]
+def support_Nat_rec
+    {gz : (n = 0) → Gen α}
+    {gs : (n' : Nat) → (n = n' + 1) → Gen α} :
+    support (Nat.rec
+            (motive := fun x => (n = x) → Gen α)
+            (fun h => gz h)
+            (fun a _ b => gs a b)
+            n
+            rfl) =
+    (fun a =>
+      (∃ h : n = 0, a ∈ 〚gz h〛) ∨
+      (∃ (n' : Nat) (h : n = n' + 1), a ∈ 〚gs n' h〛)) := by
+  funext
+  simp
+  apply Iff.intro
+  . intro h
+    cases n <;> aesop
+  . intro h
+    cases h <;> aesop
+
+@[simp]
 theorem support_gt :
     support (gt lo) = fun a => lo < a := by
   simp [gt]
@@ -77,27 +98,6 @@ theorem support_choose :
         . left; assumption
         . right
           rw [ih _] <;> omega
-
-@[simp]
-def support_Nat_rec
-    {gz : (n = 0) → Gen α}
-    {gs : (n' : Nat) → (n = n' + 1) → Gen α} :
-    support (Nat.rec
-            (motive := fun x => (n = x) → Gen α)
-            (fun h => gz h)
-            (fun a _ b => gs a b)
-            n
-            rfl) =
-    (fun a =>
-      (∃ h : n = 0, a ∈ 〚gz h〛) ∨
-      (∃ (n' : Nat) (h : n = n' + 1), a ∈ 〚gs n' h〛)) := by
-  funext
-  simp
-  apply Iff.intro
-  . intro h
-    cases n <;> aesop
-  . intro h
-    cases h <;> aesop
 
 end Gen
 
