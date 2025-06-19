@@ -4,8 +4,8 @@ import Palamedes.V2.RuleSets
 import Palamedes.V2.Total
 import Palamedes.V2.Tactics
 import Palamedes.V2.Data.List
+import Palamedes.V2.Data.Tree
 import Palamedes.V2.Data.Unit
-import Palamedes.V2.Data.Bool
 import Palamedes.V2.Data.Nat
 import Mathlib.Tactic.FailIfNoProgress
 
@@ -19,6 +19,15 @@ macro "simp_list_predicate" : tactic =>
       | rw [← List.fold_accu_Option_function_true];
         (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
       | rw [← List.fold_accu_Option_basic]; (try aesop); done)
+
+macro "simp_tree_predicate" : tactic =>
+  `(tactic|
+    first
+      | rw [← Tree.fold_accu_Option_true]; (try aesop); done
+      | rw [← Tree.fold_accu_Option_function]; (try aesop); done
+      | rw [← Tree.fold_accu_Option_function_true];
+        (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
+      | rw [← Tree.fold_accu_Option_basic]; (try aesop); done)
 
 macro "simp_predicate" : tactic =>
   `(tactic|
