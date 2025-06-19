@@ -1,4 +1,4 @@
-import Palamedes.V2.Gen
+import Palamedes.Gen
 
 open Lean Elab Command Term Meta Gen
 

@@ -1,60 +1,91 @@
-import Palamedes.RawGen
-
 /-
-Smart constructors to remove unnecessary `assume`s.
+Copyright (c) 2025 Harrison Goldstein. All rights reserved.
+Released under MIT license as described in the file LICENSE.
+Authors: Harrison Goldstein, Hila Peleg, Cassia Torczon,
+  Leonidas Lampropoulos, Benjamin C. Pierce
 -/
 
-/--
-Smart constructor for bind.
--/
-def optBind : Gen α → (α → Gen β) → Gen β
-  | .ret v, f => f v
-  | .bind x g, f => .bind x (λ y => optBind (g y) f)
-  | .assume b g, f => .assume b (λ h => optBind (g h) f)
-  | x, f => .bind x f
+import Aesop
 
-/--
-Monad instance for generators.
+/-!
+# Intermediate Language for Generators
+
+This module introduces an intermediate langauge for generators. They are loosely based on [free
+generators][goldsteinParsingRandomness2022], although not exactly the same. The most important
+aspect of the `Gen` type is that it is an inductive structure --- i.e., data --- not a function.
+This means that it can be _interpreted_ in multiple ways, which we demonstrate later.
 -/
+
+namespace Raw
+
+inductive Gen : Type → Type 1 where
+  | ret : α → Gen α
+  | bind : Gen α → (α → Gen β) → Gen β
+  | pick : Gen α → Gen α → Gen α
+  | indexed : (Nat → Gen (Option α)) → Gen α
+  | assume : (b : Bool) → (b → Gen α) → Gen α
+
+end Raw
+
+def Gen (α : Type) := Raw.Gen α
+
+namespace Gen
+
+instance : Pure Gen where
+  pure a := Raw.Gen.ret a
+
+instance : Bind Gen where
+  bind x f := Raw.Gen.bind x f
+
 instance : Monad Gen where
-  pure := .ret
-  bind := optBind
 
-/--
-Number of provable assumptions in a generator, for proving termination.
--/
+def pick (x y : Gen α) : Gen α := Raw.Gen.pick x y
+
+def assume (b : Bool) (f : b → Gen α) : Gen α := Raw.Gen.assume b f
+
+def indexed (f : Nat → Gen (Option α)) : Gen α := Raw.Gen.indexed f
+
+def support : Gen α → α → Prop
+  | .ret a => (. = a)
+  | .pick x y => fun a => support x a ∨ support y a
+  | .indexed f => fun a => ∃ n, support (f n) (some a)
+  | .bind x f => fun b => ∃ a, support x a ∧ support (f a) b
+  | .assume b f => fun a => ∃ h : b, support (f h) a
+
+namespace Support
+
 @[simp]
-def genMeasure : Gen α → Nat
-  | .assume b f => if h : b then 1 + genMeasure (f h) else 0
-  | _ => 0
+theorem support_pure :
+    support (pure a) = (· = a) := by
+  simp [support]
 
-/--
-Smart constructor for pick.
--/
-def optPick : Gen α → Gen α → Gen α
-  | .assume b f, y => if h : b then optPick (f h) y else y
-  | x, .assume b g => if h : b then optPick x (g h) else x
-  | x, y => .pick x y
-  termination_by x y => genMeasure x + genMeasure y
-  decreasing_by
-    . by_cases b
-      . simp_all [ite]
-      . contradiction
-    . by_cases b
-      . simp_all [ite]
-      . contradiction
+@[simp]
+theorem support_bind :
+    support (x >>= f) = fun b => ∃ a, support x a ∧ support (f a) b := by
+  simp [support]
 
-def pick (x y : Gen α) : Gen α := optPick x y
+@[simp]
+theorem support_pick :
+    support (pick x y) = fun a => support x a ∨ support y a := by
+  simp [support, pick]
 
-/--
-Optimizes to remove potentially failing assumptions, when possible.
-In some cases (e.g., a pick with a top-level assumption in each generator), it
-will only remove the topmost assumption in the first generator, leaving the
-assumption in the second.
--/
-def optimize : Gen α → Gen α
-  | .ret v => .ret v
-  | .bind x f => optBind (optimize x) (λ a => optimize (f a))
-  | .pick x y => optPick (optimize x) (optimize y)
-  | .indexed f => .indexed (λ n => optimize (f n))
-  | .assume b g => .assume b (λ h => optimize (g h))
+@[simp]
+theorem support_assume :
+    support (assume b f) = fun a => ∃ h : b, support (f h) a := by
+  simp [support, assume]
+
+@[simp]
+theorem support_indexed :
+    support (indexed f) = fun a => ∃ n, support (f n) (some a) := by
+  simp [support, indexed]
+
+@[simp]
+theorem support_map :
+    support (f <$> x) = fun b => ∃ a, support x a ∧ b = f a := by
+  simp [Functor.map]
+
+end Support
+
+end Gen
+
+notation v " ∈ " "〚" g "〛" => Gen.support g v

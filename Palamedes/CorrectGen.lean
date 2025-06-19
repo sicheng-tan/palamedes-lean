@@ -1,4 +1,4 @@
-import Palamedes.V2.Gen
+import Palamedes.Gen
 
 @[reducible]
 def CorrectGen (P : α → Prop) := {g : Gen α // g.support = P}

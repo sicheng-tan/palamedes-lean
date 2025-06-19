@@ -1,4 +1,4 @@
-import Palamedes.V2.Synthesizer
+import Palamedes.Synthesizer
 
 open Gen CorrectGen
 

@@ -1,9 +1,9 @@
 import Aesop
-import Palamedes.V2.Gen
-import Palamedes.V2.CorrectGen
-import Palamedes.V2.Optimizer
-import Palamedes.V2.Total
-import Palamedes.V2.Data.List
+import Palamedes.Gen
+import Palamedes.CorrectGen
+import Palamedes.Optimizer
+import Palamedes.Total
+import Palamedes.Data.List
 
 open Lean Tactic Elab Meta Tactic
 

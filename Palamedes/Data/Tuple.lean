@@ -1,7 +1,7 @@
-import Palamedes.V2.Total
-import Palamedes.V2.CorrectGen
-import Palamedes.V2.Optimizer
-import Palamedes.V2.RuleSets
+import Palamedes.Total
+import Palamedes.CorrectGen
+import Palamedes.Optimizer
+import Palamedes.RuleSets
 
 namespace Gen
 

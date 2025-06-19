@@ -1,5 +1,5 @@
 import Lean
-import Palamedes.V2.Optimizer
+import Palamedes.Optimizer
 
 open Lean Elab Command Term Meta Gen
 

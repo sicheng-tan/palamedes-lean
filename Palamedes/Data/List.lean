@@ -1,6 +1,9 @@
-import Palamedes.Support
+import Palamedes.Gen
+import Palamedes.CorrectGen
+import Palamedes.Total
+import Mathlib.Tactic.CasesM
 
-/- Base functor -/
+section BaseFunctor
 
 inductive ListF (α β : Type) where
   | nil : ListF α β
@@ -16,15 +19,23 @@ theorem ListF_or
   | .nil => simp
   | .cons x b => aesop
 
-/- Recursion schemes -/
+end BaseFunctor
+
+section RecursionSchemes
+
+
+def List.fold {α β: Type} (f : α → β → β) (z : β) (xs : List α) :=
+  List.foldr f z xs
 
 @[simp]
-def List.fold {α β: Type} (f : α → β → β) (z : β) (xs : List α)
-  := List.foldr f z xs
+theorem List.fold_nil : List.fold f z .nil = z := rfl
 
-@[simp] theorem List.fold_nil : List.fold f z .nil = z := rfl
-@[simp] theorem List.fold_cons {x} {xs : List α} {f : α → β → β} {z} :
-    List.fold f z (.cons x xs) = f x (List.fold f z xs) := rfl
+@[simp]
+theorem List.fold_cons
+    {xs : List α}
+    {f : α → β → β} :
+    List.fold f z (.cons x xs) = f x (List.fold f z xs) :=
+  rfl
 
 def List.accuM
     [Monad m]
@@ -40,13 +51,33 @@ def List.accuM
   | x :: xs => do f x (← List.accuM st f z xs (st x s)) s
 
 
-@[simp] theorem List.accuM_nil [Monad m] {α} {st : α → σ → σ}
-  {f : α → β → σ → m β} {z : σ → m β} {i : σ} : List.accuM st f z .nil i = z i := rfl
-@[simp] theorem List.accuM_cons  [Monad m] {α} {st : α → σ → σ}
-  {f : α → β → σ → m β} {z : σ → m β} {i : σ} {x: α} {xs : List α} :
-    List.accuM st f z (.cons x xs) i = (do f x (← List.accuM st f z xs (st x i)) i) := rfl
+@[simp]
+theorem List.accuM_nil
+    [Monad m]
+    {st : α → σ → σ}
+    {f : α → β → σ → m β}
+    {z : σ → m β}
+    {i : σ} :
+    List.accuM st f z .nil i = z i :=
+  rfl
 
-/- Unfold -/
+@[simp]
+theorem List.accuM_cons
+    [Monad m]
+    {st : α → σ → σ}
+    {f : α → β → σ → m β}
+    {z : σ → m β}
+    {i : σ}
+    {x: α}
+    {xs : List α} :
+    List.accuM st f z (.cons x xs) i = (do f x (← List.accuM st f z xs (st x i)) i) :=
+  rfl
+
+end RecursionSchemes
+
+section Unfold
+
+open Gen
 
 private def List.unfold_aux (n : Nat) (f : β → Gen (ListF α β)) (b : β) : Gen (Option (List α)) :=
   match n with
@@ -54,12 +85,10 @@ private def List.unfold_aux (n : Nat) (f : β → Gen (ListF α β)) (b : β) : 
   | n + 1 => do
     match (← f b) with
     | .nil => pure (some [])
-    | .cons x b' => .map (x :: .) <$> List.unfold_aux n f b'
+    | .cons x b' => do
+      let xs ← List.unfold_aux n f b'
+      pure (do x :: (← xs))
 
-attribute [local simp]
-  bind
-  optBind_bind
-in
 theorem List.unfold_aux_monotonic :
     some v ∈ 〚List.unfold_aux n f b〛 →
     some v ∈ 〚List.unfold_aux (n + 1) f b〛 := by
@@ -72,43 +101,46 @@ theorem List.unfold_aux_monotonic :
     intro l hl hv
     exists l
     apply And.intro hl
-    cases l <;> simp_all [Functor.map, Option.map]
-    aesop
+    cases l <;> simp_all
+    have ⟨w, ⟨hl, hr⟩⟩ := hv
+    exists w
+    cases w <;> simp_all
 
+@[irreducible]
 def List.unfold (f : β → Gen (ListF α β)) (b : β) : Gen (List α) :=
-  .indexed (λ n => List.unfold_aux n f b)
+  indexed (λ n => List.unfold_aux n f b)
 
+-- TODO: I wish I had a better naming convention for this.
 @[simp]
 def List.unfold_support (P : β → ListF α β → Prop) (b : β) (xs : List α) : Prop :=
   match xs with
   | [] => P b .nil
   | x :: xs => ∃ b', P b (.cons x b') ∧ List.unfold_support P b' xs
 
-attribute [local simp]
-  Bind.bind
-  List.unfold
-  List.unfold_aux
-  Functor.map
-  optBind_bind
-in
-theorem List.unfold_support_ok :
+@[simp]
+theorem List.support_unfold :
     support (List.unfold f b) = List.unfold_support (λ b' => support (f b')) b := by
+  unfold List.unfold
   funext xs
   simp_all
   induction xs generalizing b with
   | nil =>
     apply Iff.intro
     . intro ⟨n, h⟩
-      cases n <;> simp_all
+      cases n <;> simp_all [List.unfold_aux]
       have ⟨v', hv'1, hv'2⟩ := h
-      cases v' <;> simp_all
+      cases v' <;> simp_all [List.unfold_aux]
       have ⟨v'', hv''⟩ := hv'2
       cases v'' <;> simp_all
-    . aesop (add unsafe (by exists 1))
+    . simp
+      intro h
+      exists 1
+      simp [List.unfold_aux]
+      exists ListF.nil
   | cons x xs ih =>
     apply Iff.intro
     . intro ⟨n, h⟩
-      cases n <;> simp_all; case succ n =>
+      cases n <;> simp_all [List.unfold_aux]; case succ n =>
       have ⟨v', hv'1, hv'2⟩ := h
       cases v' <;> simp_all
       case cons _ b'' =>
@@ -127,7 +159,9 @@ theorem List.unfold_support_ok :
       simp_all
       exists some xs
 
-/- Fold special cases -/
+end Unfold
+
+section FoldConversions
 
 theorem List.fold_accu_Option_basic
     {α β : Type}
@@ -142,10 +176,10 @@ theorem List.fold_accu_Option_basic
       (fun _ => some z)
       xs
       () = some v := by
-    induction xs generalizing v <;> simp_all [List.fold, List.accuM]
-    case cons x xs' ih =>
-      replace ih := @ih (List.fold f z xs')
-      simp_all [List.fold, List.accuM]
+  induction xs generalizing v <;> simp_all [List.fold, List.accuM]
+  case cons x xs' ih =>
+    replace ih := @ih (List.fold f z xs')
+    simp_all [List.fold, List.accuM]
 
 theorem List.fold_accu_Option_true
     {α : Type}
@@ -160,17 +194,15 @@ theorem List.fold_accu_Option_true
       (fun _ => some ())
       xs
       () = some () := by
-    induction xs <;> simp_all [List.fold, List.accuM]
-    case cons x xs' ih =>
-        apply Iff.intro <;> intro hf
-        . -- (->)
-          generalize hv : fold f true xs' = v
-          cases v <;>
-            simp_all [List.fold, List.accuM, guard]
-        . -- (<-)
-          rw [Option.bind_eq_some] at hf
-          replace ⟨ v, hf ⟩ := hf
-          simp_all [List.fold, List.accuM, guard]
+  induction xs <;> simp_all [List.fold, List.accuM]
+  case cons x xs' ih =>
+    apply Iff.intro <;> intro hf
+    . generalize hv : fold f true xs' = v
+      cases v <;>
+        simp_all [List.fold, List.accuM, guard]
+    . rw [Option.bind_eq_some] at hf
+      replace ⟨ v, hf ⟩ := hf
+      simp_all [List.fold, List.accuM, guard]
 
 theorem List.fold_accu_Option_function
     {α β σ : Type}
@@ -181,9 +213,7 @@ theorem List.fold_accu_Option_function
     {f : α → (σ → β) → (σ → β)}
     {g : α → β → σ → Option β}
     {st :  α → σ → σ}
-    (h : ∀ x acc s w,
-      f x acc s = w ↔ (do g x (← acc (st x s)) s) = some w)
-    :
+    (h : ∀ x acc s w, f x acc s = w ↔ (do g x (← acc (st x s)) s) = some w) :
     List.fold f z xs i = v ↔
     List.accuM
       st
@@ -191,18 +221,16 @@ theorem List.fold_accu_Option_function
       (fun s => some (z s))
       xs
       i = some v := by
-    induction xs generalizing v i <;> simp_all [List.fold, List.accuM, Option.bind_eq_some]
-    case cons x xs' ih =>
-      apply Iff.intro <;> intro hg
-      . -- (->)
-        exists (foldr f z xs' (st x i))
-        simp_all
-        rw [← ih]
-      . -- (<-)
-        replace ⟨w, ⟨hgw, hg⟩⟩ := hg
-        rw [← ih] at hgw
-        rw [hgw]
-        apply hg
+  induction xs generalizing v i <;> simp_all [List.fold, List.accuM, Option.bind_eq_some]
+  case cons x xs' ih =>
+    apply Iff.intro <;> intro hg
+    . exists (foldr f z xs' (st x i))
+      simp_all
+      rw [← ih]
+    . replace ⟨w, ⟨hgw, hg⟩⟩ := hg
+      rw [← ih] at hgw
+      rw [hgw]
+      apply hg
 
 theorem List.fold_accu_Option_function_true
     {α σ : Type}
@@ -226,7 +254,9 @@ theorem List.fold_accu_Option_function_true
       apply Iff.intro <;> intro hg <;> simp_all
       replace ⟨⟨v, hv ⟩ , hg⟩ := hg <;> simp_all
 
-/- Conversion of recursive functions to fold -/
+end FoldConversions
+
+section FoldCoercion
 
 theorem List.coerce_to_fold
     {xs : List α}
@@ -238,7 +268,10 @@ theorem List.coerce_to_fold
     f xs = xs.fold g z := by
   induction xs <;> simp_all
 
-/- Merging two accumulators -/
+end FoldCoercion
+
+section FoldMerging
+
 theorem List.merge_accuM
     {xs : List α}
     {st₁ : α → σ₁ → σ₁}
@@ -247,8 +280,7 @@ theorem List.merge_accuM
     {f₂ : α → β₂ → σ₂ → Option β₂}
     {s₁ : σ₁} {s₂ : σ₂}
     {z₁ : σ₁ → Option β₁} {z₂ : σ₂ → Option β₂}
-    {b₁ : β₁} {b₂ : β₂}
-    :
+    {b₁ : β₁} {b₂ : β₂} :
     (xs.accuM st₁ f₁ z₁ s₁ = some b₁ ∧ xs.accuM st₂ f₂ z₂ s₂ = some b₂)
     ↔
     (xs.accuM
@@ -256,171 +288,89 @@ theorem List.merge_accuM
       (λ x (b₁, b₂) (s₁, s₂) => do (← f₁ x b₁ s₁, ← f₂ x b₂ s₂))
       (λ (s₁, s₂) => do (← z₁ s₁, ← z₂ s₂))
       (s₁, s₂) = some (b₁, b₂)) := by
-    induction xs generalizing st₁ st₂ f₁ f₂ s₁ s₂ z₁ z₂ b₁ b₂
-    case nil => simp_all [List.accuM, Option.bind_eq_some]
-    case cons y ys ih =>
+  induction xs generalizing st₁ st₂ f₁ f₂ s₁ s₂ z₁ z₂ b₁ b₂
+  case nil => simp_all [List.accuM, Option.bind_eq_some]
+  case cons y ys ih =>
+    simp_all [List.accuM, Option.bind_eq_some]
+    apply Iff.intro
+    . -- (->)
+      intro ⟨ ⟨ v₁, ⟨ hv1h, hv1tl ⟩ ⟩ , ⟨ v₂, ⟨ hv2h, hv2tl ⟩ ⟩ ⟩
+      exists v₁, v₂
+      replace ih := @ih st₁ st₂ f₁ f₂ (st₁ y s₁) (st₂ y s₂) z₁ z₂ v₁ v₂
       simp_all [List.accuM, Option.bind_eq_some]
-      apply Iff.intro
-      . -- (->)
-        intro ⟨ ⟨ v₁, ⟨ hv1h, hv1tl ⟩ ⟩ , ⟨ v₂, ⟨ hv2h, hv2tl ⟩ ⟩ ⟩
-        exists v₁, v₂
-        replace ih := @ih st₁ st₂ f₁ f₂ (st₁ y s₁) (st₂ y s₂) z₁ z₂ v₁ v₂
+    . -- (<-)
+      intro ⟨ v₁, v₂, h, h1, h2 ⟩
+      replace ih := @ih st₁ st₂ f₁ f₂ (st₁ y s₁) (st₂ y s₂) z₁ z₂ v₁ v₂
+      apply And.intro
+      . exists v₁
         simp_all [List.accuM, Option.bind_eq_some]
-      . -- (<-)
-        intro ⟨ v₁, v₂, h, h1, h2 ⟩
-        replace ih := @ih st₁ st₂ f₁ f₂ (st₁ y s₁) (st₂ y s₂) z₁ z₂ v₁ v₂
+      . exists v₂
+        simp_all [List.accuM, Option.bind_eq_some]
+
+end FoldMerging
+
+namespace Gen
+
+namespace CorrectGen
+
+@[reducible]
+def List.cunfold
+    {α β σ : Type}
+    {st : α → σ → σ}
+    {f : α → β → σ → Option β}
+    {z : σ → Option β}
+    {s : σ}
+    {b : β}
+    (g : (b : β) → (s : σ) → CorrectGen
+      (fun (t : ListF α β) =>
+        (z s = some b ∧ t = .nil) ∨
+        (∃ a b', f a b' s = some b ∧ t = .cons a b'))) :
+    CorrectGen (λ v => List.accuM st f z v s = some b) :=
+  Subtype.mk
+    (List.unfold (λ (b, s) => do
+      match (← (g b s).val) with
+      | .nil => pure .nil
+      | .cons x b' => pure (.cons x (b', st x s))) (b, s)) <| by
+    rw [List.support_unfold]
+    funext xs
+    induction xs generalizing b s <;> simp_all
+    case nil =>
+      apply Iff.intro <;> intro h
+      . replace ⟨ ys, ⟨ hys, h ⟩ ⟩ := h
+        cases ys <;> simp_all [(g b s).property]
+      . exists ListF.nil
+        simp_all [(g b s).property]
+    case cons x xs ih =>
+      apply Iff.intro <;> intro h
+      . replace ⟨ b', ⟨ s', ⟨ ⟨ ys, ⟨ hys, h ⟩ ⟩ , h' ⟩ ⟩ ⟩ := h
+        cases ys <;> simp_all [(g b s).property]
+      . rw [Option.bind_eq_some] at h
+        replace ⟨ b', ⟨ hxs, h ⟩ ⟩ := h
+        exists b', st x s
         apply And.intro
-        . exists v₁
-          simp_all [List.accuM, Option.bind_eq_some]
-        . exists v₂
-          simp_all [List.accuM, Option.bind_eq_some]
+        . exists ListF.cons x b'
+          simp_all [(g b s).property]
+        . assumption
 
-/-
-TODO: we can probably remove these
+end CorrectGen
 
-theorem coerce_to_accuM
-    {xs : List α}
-    {f : List α → σ → Bool}
-    {p : α → σ → Bool}
-    {t : α → σ → σ}
-    (h₁ : ∀ s, f [] s = true)
-    (h₂ : ∀ x xs s, f (x :: xs) s = (p x s && f xs (t x s))) :
-    (f xs s = true) = (xs.accuM t (λ x () s => guard (p x s)) (λ _ => some ()) s = some ()) := by
-  induction xs generalizing s with
-  | nil => simp [List.accuM, h₁]
-  | cons x xs ih =>
-    simp [List.accuM, h₂]
-    apply Iff.intro
-    . aesop
-    . intro h
-      simp_all [Option.bind, guard]
-      aesop
+namespace Total
 
-def List.accu
-    {α β σ : Type}
-    (st : α → σ → σ)
-    (f : α → β → σ → β)
-    (z : σ → β)
-    (xs : List α)
-    (s : σ) :
-    β :=
-  match xs with
-  | [] => z s
-  | x :: xs => f x (List.accu st f z xs (st x s)) s
+@[simp]
+def List.total_unfold
+    (h : ∀ b, total (g b)) :
+    total (List.unfold g b) := by
+  simp [List.unfold]
+  apply total_indexed
+  intro n
+  induction n generalizing b with
+  | zero => simp [List.unfold_aux]
+  | succ n' ih =>
+    simp [List.unfold_aux]
+    apply total_bind <;> try apply h
+    intro t h
+    cases t <;> simp [ih]
 
-theorem fold_accu
-    {α β σ : Type}
-    {st : α → σ → σ}
-    {s : σ}
-    {xs : List α}
-    {z : σ → β}
-    {f : α → β → σ → β}
-    {f' : α → (σ → β) → σ → β} :
-    f' = (λ x b => λ s => f x (b (st x s)) s) →
-    List.fold f' z xs s = List.accu st f z xs s := by
-  induction xs generalizing s <;> simp_all [List.accu]
+end Total
 
-
-theorem fold_foldM
-    {α β : Type}
-    {f : α → β → β}
-    {z b : β}
-    {xs : List α} :
-    List.fold f z xs = b ↔ List.foldM (λ x b => Option.some (f x b)) z xs = Option.some b := by
-  induction xs generalizing b with
-  | nil => simp_all
-  | cons x xs ih =>
-    simp_all only [List.fold_cons, List.foldM_cons, Option.bind_eq_bind]
-    apply Iff.intro
-    · intro a
-      subst a
-      generalize List.foldM (fun x b => some (f x b)) z xs = o at *
-      match o with
-      | .none => simp_all
-      | .some v =>
-        simp_all
-        rw [ih.mp]
-        simp
-    · intro a
-      generalize List.foldM (fun x b => some (f x b)) z xs = o at *
-      match o with
-      | .none => simp_all
-      | .some v =>
-        simp_all
-        rw [(@ih v).mpr]
-        simp_all
-        rfl
-
-theorem merge_foldM
-    {α β₁ β₂: Type}
-    {f₁ : α → β₁ → Option β₁}
-    {f₂ : α → β₂ → Option β₂}
-    {z₁ b₁ : β₁}
-    {z₂ b₂ : β₂}
-    {xs : List α} :
-    (List.foldM f₁ z₁ xs = some b₁ ∧ List.foldM f₂ z₂ xs = some b₂) ↔
-    List.foldM (λ x b => do (← f₁ x b.fst, ← f₂ x b.snd)) (z₁, z₂) xs = some (b₁, b₂) := by
-  induction xs generalizing b₁ b₂ with
-  | nil => simp_all
-  | cons x xs ih =>
-    simp_all
-    apply Iff.intro
-    . intro h
-      generalize List.foldM f₁ z₁ xs = mx₁ at *
-      generalize List.foldM f₂ z₂ xs = mx₂ at *
-      match mx₁, mx₂ with
-      | .none, _ => simp_all
-      | _, .none => simp_all
-      | .some x₁, .some x₂ =>
-        rw [(@ih x₁ x₂).mp (by simp_all)]
-        simp_all
-    . intro h
-      generalize List.foldM
-        (fun x b =>
-          (f₁ x b.fst).bind fun __do_lift => (f₂ x b.snd).bind fun __do_lift_1 => some (__do_lift, __do_lift_1))
-        (z₁, z₂) xs = o at *
-      match o with
-      | .none => simp_all
-      | .some (b₁, b₂) =>
-        simp_all
-        have ⟨h₁, h₂⟩ := (@ih b₁ b₂).mpr (by simp_all)
-        rw [h₁]
-        rw [h₂]
-        simp_all
-        generalize f₁ x b₁ = o₁ at *
-        generalize f₂ x b₂ = o₂ at *
-        match o₁, o₂ with
-        | .none, _ => simp_all
-        | _, .none => simp_all
-        | .some x₁, .some x₂ => simp_all
-
-theorem coerce_to_foldM
-    {xs : List α}
-    {f : List α → Bool}
-    {p : α → Bool}
-    (h1 : f [] = true)
-    (h2 : ∀ x xs, f (x :: xs) = (p x && f xs)) :
-    (f xs = true) = (xs.foldM (λ x () => guard (p x)) () = some ()) := by
-  induction xs with
-  | nil => simp [h1]
-  | cons x xs ih =>
-    simp [h2, List.foldM_cons]
-    match hfoldM : List.foldM (fun x x_1 => guard (p x)) () xs with
-    | none => simp_all
-    | some v => simp_all [guard]
-
--/
-
--- TODO: remove (and replace its use in Synth)
-theorem List.fold_accuM
-    [Monad m]
-    {α β σ : Type}
-    {st : α → σ → σ}
-    {s : σ}
-    {xs : List α}
-    {z : σ → m β}
-    {f : α → β → σ → m β}
-    {f' : α → (σ → m β) → σ → m β} :
-    f' = (λ x b => λ s => do f x (← b (st x s)) s) →
-    List.fold f' z xs s = List.accuM st f z xs s := by
-  induction xs generalizing s <;> simp_all [List.accuM]
+end Gen

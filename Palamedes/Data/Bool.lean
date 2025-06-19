@@ -1,6 +1,6 @@
-import Palamedes.V2.Gen
-import Palamedes.V2.CorrectGen
-import Palamedes.V2.Total
+import Palamedes.Gen
+import Palamedes.CorrectGen
+import Palamedes.Total
 
 namespace Gen
 

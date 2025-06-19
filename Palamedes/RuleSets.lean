@@ -1,7 +1,3 @@
 import Aesop
 
-/-
-Hint database declaration for use with aesop.
--/
-
-declare_aesop_rule_sets [palamedes, palamedes', palamedes_total, palamedes_optimize]
+declare_aesop_rule_sets [synthesis, totality, simplification]

@@ -1,12 +1,13 @@
-import Palamedes.V2.Gen
-import Palamedes.V2.CorrectGen
-import Palamedes.V2.RuleSets
-import Palamedes.V2.Total
-import Palamedes.V2.Tactics
-import Palamedes.V2.Data.List
-import Palamedes.V2.Data.Tree
-import Palamedes.V2.Data.Unit
-import Palamedes.V2.Data.Nat
+import Palamedes.Gen
+import Palamedes.CorrectGen
+import Palamedes.RuleSets
+import Palamedes.Total
+import Palamedes.Tactics
+import Palamedes.Data.List
+import Palamedes.Data.Tree
+import Palamedes.Data.Unit
+import Palamedes.Data.Nat
+import Palamedes.Data.Bool
 import Mathlib.Tactic.FailIfNoProgress
 
 open Gen CorrectGen
