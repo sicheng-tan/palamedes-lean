@@ -14,15 +14,14 @@ def genAllTwosFold : Gen (List Nat) := by
 def genEvenLenFold : Gen (List Nat) := by
   generator_search (fun xs => List.fold (fun x b => !b) true xs = true)
 
+-- def genSortedBetweenFold (lo hi : Nat) : Gen (List Nat) := by
+--   generator_search (fun xs => List.fold (fun x b s => decide (s ≤ x) && decide (x ≤ hi) && b x) (fun x => true) xs lo = true)
+
 def genIncreasingByOneFold : Gen (List Nat) := by
   generator_search (fun xs => List.fold (fun x b prev => x == prev + 1 && b x) (fun x => true) xs 0 = true)
 
--- def genSortedBetweenFold (lo hi : Nat) : Gen (List Nat) := by
---   generator_search
---     (fun (xs : List Nat) => List.fold (fun x b s => s ≤ x && x ≤ hi && b x) (fun x => true) xs lo = true)
---     allow_partial
+set_option palamedes.debug true
 
--- set_option palamedes.debug true
 -- set_option pp.proofs true
 
 -- def genEvenLenTwosFold : Gen (List Nat) := by
