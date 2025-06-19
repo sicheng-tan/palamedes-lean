@@ -314,7 +314,7 @@ namespace Gen
 namespace CorrectGen
 
 @[reducible]
-def List.cunfold
+def List.s_unfold
     {α β σ : Type}
     {st : α → σ → σ}
     {f : α → β → σ → Option β}

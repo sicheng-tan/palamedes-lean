@@ -71,14 +71,14 @@ def internalizeProofs
 notation "↓" x => internalizeProofs x
 
 @[reducible]
-def cpure
+def s_pure
     (a' : α) :
     CorrectGen (fun a => a = a') :=
   Subtype.mk (pure a') <| by
     simp
 
 @[reducible]
-def cbind
+def s_bind
     {P : α → Prop}
     {Q : α → β → Prop}
     (x : CorrectGen P)
@@ -97,7 +97,7 @@ def cbind
       simp_all [injProof_correct, (f ⟨a, hP⟩).property]
 
 @[reducible]
-def cpick
+def s_pick
     {P Q : α → Prop}
     (x : CorrectGen P)
     (y : CorrectGen Q) :

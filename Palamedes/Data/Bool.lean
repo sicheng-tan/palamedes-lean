@@ -9,7 +9,7 @@ def arbBool : Gen Bool := pick (pure true) (pure false)
 namespace CorrectGen
 
 @[reducible]
-def carbBool : @CorrectGen Bool (fun _ => True) :=
+def s_arbBool : @CorrectGen Bool (fun _ => True) :=
   Subtype.mk arbBool (by simp [arbBool])
 
 @[reducible]

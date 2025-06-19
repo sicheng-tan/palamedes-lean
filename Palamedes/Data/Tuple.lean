@@ -16,7 +16,7 @@ def tuple
 namespace CorrectGen
 
 @[reducible, aesop unsafe (rule_sets := [synthesis])]
-def ctuple
+def s_tuple
     {P : α → Prop}
     {Q : α → β → Prop}
     {R : α × β → Prop}

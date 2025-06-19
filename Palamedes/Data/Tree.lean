@@ -376,7 +376,7 @@ namespace Gen
 namespace CorrectGen
 
 @[reducible]
-def Tree.cunfold
+def Tree.s_unfold
     {α β σ : Type}
     {st : α → σ → σ × σ}
     {f : β → α → β → σ → Option β}

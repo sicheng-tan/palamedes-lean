@@ -48,17 +48,17 @@ macro "gapply " t:term : tactic =>
 add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by fail_if_no_progress intros),
   (by assumption),
-  (by gapply (cpure _)),
-  (by gapply (cpick _ _)),
-  (by gapply (cbind _ _)),
-  (by apply (cbind _ _)), -- TODO
-  (by gapply (List.cunfold _)),
-  (by gapply carbUnit),
-  (by gapply carbBool),
-  (by gapply carbNat),
-  (by gapply cgt),
-  (by gapply cbetween_partial),
-  (by gapply (cbetween (by first | aesop | omega))),
+  (by gapply (s_pure _)),
+  (by gapply (s_pick _ _)),
+  (by gapply (s_bind _ _)),
+  (by apply (s_bind _ _)), -- TODO
+  (by gapply (List.s_unfold _)),
+  (by gapply s_arbUnit),
+  (by gapply s_arbBool),
+  (by gapply s_arbNat),
+  (by gapply s_gt),
+  (by gapply s_between_partial),
+  (by gapply (s_between (by first | aesop | omega))),
 ]
 
 add_aesop_rules 5% (rule_sets := [synthesis]) [
