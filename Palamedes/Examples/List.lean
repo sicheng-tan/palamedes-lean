@@ -30,7 +30,7 @@ set_option palamedes.debug true
 --     apply convert (by
 --       funext
 --       simp [guard, *]
---       rw [List.fold_accu_Option_true] <;> try (aesop; done)
+--       rw [List.fold_accu_Option_true (by aesop)] -- NOTE: You can do this
 --       rw [List.fold_accu_Option_basic] <;> try (aesop; done)
 --       rw [List.merge_accuM]
 --     ) (List.cunfold _)
