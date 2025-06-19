@@ -2,20 +2,28 @@ import Palamedes.Synthesizer
 
 open Gen CorrectGen
 
--- def genTrueFold : Gen (List Nat) := by
---   generator_search (fun (xs : List Nat) => List.fold (fun x b => b) true xs = true)
+def genTrueFold : Gen (List Nat) := by
+  generator_search (fun (xs : List Nat) => List.fold (fun x b => b) true xs = true)
 
--- def genLengthKFold {k : Nat} : Gen (List Nat) := by
---   generator_search (fun xs => List.fold (fun x b => b + 1) 0 xs = k)
+def genLengthKFold {k : Nat} : Gen (List Nat) := by
+  generator_search (fun xs => List.fold (fun x b => b + 1) 0 xs = k)
 
--- def genAllTwosFold : Gen (List Nat) := by
---   generator_search (fun xs => List.fold (fun x b => x == 2 && b) true xs = true)
+def genAllTwosFold : Gen (List Nat) := by
+  generator_search (fun xs => List.fold (fun x b => x == 2 && b) true xs = true)
 
--- def genEvenLenFold : Gen (List Nat) := by
---   generator_search (fun xs => List.fold (fun x b => !b) true xs = true)
+def genEvenLenFold : Gen (List Nat) := by
+  generator_search (fun xs => List.fold (fun x b => !b) true xs = true)
 
-set_option palamedes.debug true
-set_option pp.proofs true
+def genIncreasingByOneFold : Gen (List Nat) := by
+  generator_search (fun xs => List.fold (fun x b prev => x == prev + 1 && b x) (fun x => true) xs 0 = true)
+
+-- def genSortedBetweenFold (lo hi : Nat) : Gen (List Nat) := by
+--   generator_search
+--     (fun (xs : List Nat) => List.fold (fun x b s => s ≤ x && x ≤ hi && b x) (fun x => true) xs lo = true)
+--     allow_partial
+
+-- set_option palamedes.debug true
+-- set_option pp.proofs true
 
 -- def genEvenLenTwosFold : Gen (List Nat) := by
 --   -- generator_search (fun xs => List.fold (fun x b => x == 2 && b) true xs = true ∧ List.fold (fun x b => !b) true xs = true)
@@ -29,7 +37,7 @@ set_option pp.proofs true
 --     ) (List.cunfold _)
 --     intros b s
 --     replace ⟨ (), b ⟩ := b
---     -- simp only [Option.bind_eq_bind, Option.some_bind, Option.some.injEq,
+    -- simp only [Option.bind_eq_bind, Option.some_bind, Option.some.injEq,
 --     --   Prod.mk.injEq, Option.bind_eq_some, Option.guard_eq_some, true_and]
 --     apply caseBool (by assumption) <;> intro h <;> rw [h]
 --     . gapply (cpick _ _)
@@ -102,26 +110,3 @@ set_option pp.proofs true
 --   let _ : Gen.total g := by
 --     totality
 --   exact g
-
--- def genIncreasingByOneFold : Gen (List Nat) := by
---   generator_search (fun xs => List.fold (fun x b prev => x == prev + 1 && b x) (fun x => true) xs 0 = true)
-
--- def genSortedBetween (lo hi : Nat) : Gen (List Nat) := by
---   generator_search
---     (fun (xs : List Nat) => List.fold (fun x b s => s ≤ x && x ≤ hi && b x) (fun x => true) xs lo = true)
---     allow_partial
-
-    -- apply convert (by
-    --   first
-    --   | funext
-    --     simp [guard, *]
-    --     first
-    --       | exact Eq.comm
-    --       | (first
-    --         | rw [← List.fold_accu_Option_true]; (try aesop); done
-    --         | rw [← List.fold_accu_Option_function]; (try aesop); done
-    --         | rw [← List.fold_accu_Option_function_true]; (try aesop); done
-    --         | rw [← List.fold_accu_Option_basic]; (try aesop); done)
-    --       | apply exists_congr; intro; rw [true_and]
-    --       | rfl
-    --   | rfl) (List.cunfold _)
