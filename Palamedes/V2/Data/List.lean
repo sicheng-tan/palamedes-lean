@@ -331,7 +331,26 @@ def List.cunfold
       match (← (g b s).val) with
       | .nil => pure .nil
       | .cons x b' => pure (.cons x (b', st x s))) (b, s)) <| by
-  sorry
+    rw [List.support_unfold]
+    funext xs
+    induction xs generalizing b s <;> simp_all
+    case nil =>
+      apply Iff.intro <;> intro h
+      . replace ⟨ ys, ⟨ hys, h ⟩ ⟩ := h
+        cases ys <;> simp_all [(g b s).property]
+      . exists ListF.nil
+        simp_all [(g b s).property]
+    case cons x xs ih =>
+      apply Iff.intro <;> intro h
+      . replace ⟨ b', ⟨ s', ⟨ ⟨ ys, ⟨ hys, h ⟩ ⟩ , h' ⟩ ⟩ ⟩ := h
+        cases ys <;> simp_all [(g b s).property]
+      . rw [Option.bind_eq_some] at h
+        replace ⟨ b', ⟨ hxs, h ⟩ ⟩ := h
+        exists b', st x s
+        apply And.intro
+        . exists ListF.cons x b'
+          simp_all [(g b s).property]
+        . assumption
 
 end CorrectGen
 
