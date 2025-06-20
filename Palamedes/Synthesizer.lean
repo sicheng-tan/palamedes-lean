@@ -27,7 +27,7 @@ macro "simp_tree_predicate" : tactic =>
       | rw [← Tree.fold_accu_Option_true]; (try aesop); done
       | rw [← Tree.fold_accu_Option_function]; (try aesop); done
       | rw [← Tree.fold_accu_Option_function_true];
-        (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
+        (try intros; simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
       | rw [← Tree.fold_accu_Option_basic]; (try aesop); done)
 
 macro "simp_predicate" : tactic =>
@@ -38,6 +38,7 @@ macro "simp_predicate" : tactic =>
         first
           | exact Eq.comm
           | simp_list_predicate
+          | simp_tree_predicate
           | apply exists_congr; intro; rw [true_and]
           | rfl
       | rfl)
@@ -53,6 +54,7 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by gapply (s_bind _ _)),
   (by apply (s_bind _ _)), -- TODO
   (by gapply (List.s_unfold _)),
+  (by gapply (Tree.s_unfold _)),
   (by gapply s_arbUnit),
   (by gapply s_arbBool),
   (by gapply s_arbNat),
@@ -75,6 +77,7 @@ add_aesop_rules unsafe (rule_sets := [totality]) [
   Total.total_map,
   Total.total_pure,
   Total.List.total_unfold,
+  Total.Tree.total_unfold,
   Total.total_Bool_rec,
   Total.total_Nat_rec
 ]
