@@ -82,19 +82,15 @@ def s_bind
     {P : α → Prop}
     {Q : α → β → Prop}
     (x : CorrectGen P)
-    (f : (a : {a : α // P a}) → CorrectGen (Q a)) :
+    (f : (a : α) → CorrectGen (Q a)) :
     CorrectGen (λ b => ∃ a, P a ∧ Q a b) :=
-  Subtype.mk ((↓x).val >>= λ a => (f a).val) <| by
+  Subtype.mk (x.val >>= λ a => (f a).val) <| by
     funext b
     simp
-    apply Iff.intro
-    . intro ⟨a, ⟨⟨ha, ha'⟩, ⟨hP, hb⟩⟩⟩
-      exists a
-      simp_all only [and_self, (f ⟨a, hP⟩).property]
-    . intro ⟨a, ⟨hP, hQ⟩⟩
-      exists a
-      have : a ∈ 〚x.val〛:= by simp [x.property, hP]
-      simp_all [injProof_correct, (f ⟨a, hP⟩).property]
+    apply Iff.intro <;>
+      (intro ⟨a, ha⟩;
+       exists a
+       simp_all [x.property, (f a).property])
 
 @[reducible]
 def s_pick
