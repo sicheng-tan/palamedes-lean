@@ -23,12 +23,13 @@ macro "simp_list_predicate" : tactic =>
 
 macro "simp_tree_predicate" : tactic =>
   `(tactic|
-    first
+    (try (conv => rhs; lhs; apply congrFun; apply (Tree.coerce_to_fold (by aesop) (by intros; simp_all; rflm)));
+     first
       | rw [← Tree.fold_accu_Option_true]; (try aesop); done
       | rw [← Tree.fold_accu_Option_function]; (try aesop); done
       | rw [← Tree.fold_accu_Option_function_true];
         (try intros; simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
-      | rw [← Tree.fold_accu_Option_basic]; (try aesop); done)
+      | rw [← Tree.fold_accu_Option_basic]; (try aesop); done))
 
 macro "simp_predicate" : tactic =>
   `(tactic|

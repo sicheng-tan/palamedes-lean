@@ -21,6 +21,25 @@ def isBST : Tree Nat → (Nat × Nat) → Bool := λ t ⟨lo, hi⟩ =>
 --       true)
 
 def genBST (lo hi : Nat) : Gen (Tree Nat) := by
+  generator_search (fun t => isBST t (lo, hi))
+  -- let cg : CorrectGen (fun t => isBST t (lo, hi)) := by
+  --   apply convert (by
+  --     funext
+  --     simp [guard, *]
+  --     conv => rhs; lhs; apply congrFun; apply (Tree.coerce_to_fold (by aesop) (by intros; simp_all; rflm))
+  --     rw [← Tree.fold_accu_Option_function_true] <;> try (intros; simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop) )
+  --     (Tree.s_unfold _)
+  --   cgenerator_search
+  -- let g : Gen (Tree Nat) := by
+  --   optimize_gen cg.val
+  -- let _ : support cg.val = support g := by
+  --   optimality
+  -- let _ : total g := by
+  --   totality
+  -- exact g
+
+/-
+def genBST (lo hi : Nat) : Gen (Tree Nat) := by
   let cg : CorrectGen (fun t => isBST t (lo, hi)) := by
     apply convert (by
       funext
@@ -41,7 +60,7 @@ def genBST (lo hi : Nat) : Gen (Tree Nat) := by
     optimality
   let _ : total g := by
     totality
-  exact g
+  exact g-/
 
 /-
 TODO:
