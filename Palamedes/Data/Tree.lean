@@ -393,7 +393,32 @@ def Tree.s_unfold
       match (← (g b s).val) with
       | .leaf => pure .leaf
       | .node bl x br => pure (.node (bl, (st x s).1) x (br, (st x s).2))) (b, s)) <| by
-  sorry
+    rw [Tree.support_unfold]
+    funext t
+    induction t generalizing b s <;> simp_all
+    case leaf =>
+      apply Iff.intro <;> intro h
+      . replace ⟨ t', ⟨ ht', h ⟩ ⟩ := h
+        cases t' <;> simp_all [(g b s).property]
+      . exists TreeF.leaf
+        simp_all [(g b s).property]
+    case node l x r ihl ihr =>
+      apply Iff.intro <;> intro h
+      . replace ⟨ bl, sl, br, sr, ⟨ ⟨ t', ⟨ ht' , h ⟩  ⟩, ⟨ hl, hr ⟩ ⟩ ⟩ := h
+        cases t' <;> simp_all [(g b s).property]
+        case mp.node bl' x' br' =>
+          replace ⟨ x'', l'', r'', ht', hx, hr, hl ⟩ := ht'
+          simp_all
+      . rw [Option.bind_eq_some] at h
+        replace ⟨ bl, ⟨ hl, h ⟩ ⟩ := h
+        rw [Option.bind_eq_some] at h
+        replace ⟨ br, ⟨ hr, h ⟩ ⟩ := h
+        exists bl, (st x s).fst, br, (st x s).snd
+        apply And.intro
+        . exists TreeF.node bl x br
+          simp_all [(g b s).property]
+          exists x, bl, br
+        . simp_all [(g b s).property]
 
 end CorrectGen
 
