@@ -17,6 +17,39 @@ def optimizeBind? (x f : Expr) : MetaM (Option Expr) :=
     let f' ← withLocalDecl `h .default (← mkEq b (.const ``true [])) fun h => do
       mkLambdaFVars #[h] (← mkAppM ``bind #[.app g h, f])
     mkAppM ``assume #[b, f']
+
+  -- NOTE: These three rules are not strictly necessary, and could cause problems. If something goes
+  -- wrong in optimization, try commenting these out.
+  | pick _ x y => do
+    if x.getUsedConstants.contains ``pick || y.getUsedConstants.contains ``pick then
+      -- If `x` or `y` has a pick inside it, don't do this; we don't want exponential blowup
+      -- TODO: This is kind of a hack. I'd love to come up with a more robust heuristic here at some
+      -- point.
+      return none
+    mkAppM ``pick #[← mkAppM ``bind #[x, f], ← mkAppM ``bind #[y, f]]
+  | dite _ P _ trueCase falseCase => do
+    if trueCase.getUsedConstants.contains ``dite ||
+       falseCase.getUsedConstants.contains ``dite ||
+       trueCase.getUsedConstants.contains ``ite ||
+       falseCase.getUsedConstants.contains ``ite
+       then
+      -- Same as above; rule out both `ite` and `dite`.
+      return none
+    let trueCase' ← withLocalDecl `h .default P fun h => do
+      mkLambdaFVars #[h] (← mkAppM ``bind #[.app trueCase h, f])
+    let falseCase' ← withLocalDecl `h .default (.app (.const ``Not []) P) fun h => do
+      mkLambdaFVars #[h] (← mkAppM ``bind #[.app falseCase h, f])
+    mkAppM ``dite #[P, trueCase', falseCase']
+  | ite _ P _ trueCase falseCase => do
+    if trueCase.getUsedConstants.contains ``dite ||
+       falseCase.getUsedConstants.contains ``dite ||
+       trueCase.getUsedConstants.contains ``ite ||
+       falseCase.getUsedConstants.contains ``ite
+       then
+      -- Same as above; rule out both `ite` and `dite`.
+      return none
+    mkAppM ``ite #[P, ← mkAppM ``bind #[trueCase, f], ← mkAppM ``bind #[falseCase, f]]
+
   | _ => do
     lambdaBoundedTelescope f 1 fun args body => do
       -- bind_assume : x >>= fun a => assume b g ~~> assume b (fun h => (x >>= fun a => g h))
