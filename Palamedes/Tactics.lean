@@ -7,6 +7,9 @@ import Palamedes.Data.List
 
 open Lean Tactic Elab Meta Tactic
 
+initialize
+  registerTraceClass `palamedes.synthesis
+
 macro "cgenerator_search" : tactic =>
   `(tactic|
     aesop
@@ -37,14 +40,6 @@ elab "optimize_gen " t:term : tactic =>
     let gen''' ← withReducible (reduce gen'')
     g.assign gen'''
 
--- Borrowed from Aesop
-def printAsMillis (n : Nat) : String :=
-  let str := toString (n.toFloat / 1000000)
-  match str.split λ c => c == '.' with
-  | [beforePoint] => beforePoint ++ "ms"
-  | [beforePoint, afterPoint] => beforePoint ++ "." ++ afterPoint.take 1 ++ "ms"
-  | _ => unreachable!
-
 open Lean Tactic Elab Meta Tactic in
 def solveGoalWithTactic (goalType : Expr) (tactic : TSyntax `tactic) : TacticM Expr := do
   let m ← mkFreshExprMVar goalType
@@ -59,12 +54,6 @@ register_option palamedes.debug : Bool := {
   descr := "enable debug messages from palamedes"
 }
 
-register_option palamedes.timing : Bool := {
-  defValue := false
-  group := "palamedes"
-  descr := "enable timing messages from palamedes"
-}
-
 def generatorSearchElab
     (stx : Syntax)
     (t : Term)
@@ -73,9 +62,6 @@ def generatorSearchElab
     TacticM Unit := do
   let opts ← getOptions
   let verbose := palamedes.debug.get opts
-  let printTiming := palamedes.timing.get opts
-
-  let startTime ← IO.monoNanosNow
 
   let g ← getMainGoal
   let .app (.const ``Gen []) α ← g.getType
@@ -95,6 +81,18 @@ def generatorSearchElab
   let _ : Gen.total g := by
     totality
   exact g"
+
+  let prettyPred ←
+    try
+      lambdaBoundedTelescope mpred 1 fun fvs body =>
+        let a := fvs[0]!
+        let subst := FVarSubst.empty
+        let tgt := Expr.fvar (FVarId.mk `TARGET)
+        return (subst.insert a.fvarId! tgt).apply body
+    catch _ =>
+      pure mpred
+
+  withTraceNode `palamedes.trace (fun _ => pure m!"⟪{prettyPred}⟫") do
 
   -- Synthesize a correct generator by solving `CorrectGen P` and projecting the `.val`.
   let gen ← do
@@ -135,11 +133,6 @@ def generatorSearchElab
       could not be proved total.
 
       You can use `generator_search {t} allow_partial to turn off this check."
-
-  if printTiming then do
-    let endTime ← IO.monoNanosNow
-    let elapsed := endTime - startTime
-    logInfo m!"Synthesis for {← ppExpr mpred} took {printAsMillis elapsed}"
 
   if tryThis then
     withOptions ((pp.proofs.set · true) ∘ (pp.fieldNotation.generalized.set · false)) do
