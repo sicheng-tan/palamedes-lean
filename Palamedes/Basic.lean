@@ -18,3 +18,7 @@ import Palamedes.Examples.Tree.CompleteTree
 import Palamedes.Examples.Tree.GoodTree
 import Palamedes.Examples.Tree.NETree
 import Palamedes.Examples.Tree.RBT
+
+import Palamedes.Examples.Stack.GoodStack
+
+import Palamedes.Examples.STLC.WellTyped
