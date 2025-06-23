@@ -61,16 +61,3 @@ def genBST (lo hi : Nat) : Gen (Tree Nat) := by
   let _ : total g := by
     totality
   exact g-/
-
-/-
-TODO:
-AVL
-CompleteTree
-GoodStack
-GoodTree
-NETree
-RBT
-STLC
-
-
--/
