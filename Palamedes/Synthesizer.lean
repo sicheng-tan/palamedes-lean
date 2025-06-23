@@ -35,6 +35,36 @@ macro "simp_tree_predicate" : tactic =>
         (try intros; simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
       | rw [← Tree.fold_accu_Option_basic]; (try aesop); done))
 
+macro "simp_stack_predicate" : tactic =>
+  `(tactic|
+    (try (conv => rhs; lhs; apply congrFun; apply (Stack.coerce_to_fold (by aesop) (by intros; simp_all; rflm)));
+     first
+      | rw [← Stack.fold_accu_Option_true]; (try aesop); done
+      | rw [← Stack.fold_accu_Option_function]; (try aesop); done
+      | rw [← Stack.fold_accu_Option_function_true];
+        (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
+      | rw [← Stack.fold_accu_Option_basic]; (try aesop); done))
+
+macro "simp_ty_predicate" : tactic =>
+  `(tactic|
+    (try (conv => rhs; lhs; apply congrFun; apply (Ty.coerce_to_fold (by aesop) (by intros; simp_all; rflm)));
+     first
+      | rw [← Ty.fold_accu_Option_true]; (try aesop); done
+      | rw [← Ty.fold_accu_Option_function]; (try aesop); done
+      | rw [← Ty.fold_accu_Option_function_true];
+        (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
+      | rw [← Ty.fold_accu_Option_basic]; (try aesop); done))
+
+macro "simp_term_predicate" : tactic =>
+  `(tactic|
+    (try (conv => rhs; lhs; apply congrFun; apply (Term.coerce_to_fold (by aesop) (by intros; simp_all; rflm)));
+     first
+      | rw [← Term.fold_accu_Option_true]; (try aesop); done
+      | rw [← Term.fold_accu_Option_function]; (try aesop); done
+      | rw [← Term.fold_accu_Option_function_true];
+        (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
+      | rw [← Term.fold_accu_Option_basic]; (try aesop); done))
+
 macro "simp_predicate" : tactic =>
   `(tactic|
     first
@@ -44,6 +74,9 @@ macro "simp_predicate" : tactic =>
           | exact Eq.comm
           | simp_list_predicate
           | simp_tree_predicate
+          | simp_stack_predicate
+          | simp_ty_predicate
+          | simp_term_predicate
           | apply exists_congr; intro; rw [true_and]
           | rfl
       | rfl)
@@ -60,6 +93,9 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by apply (s_bind _ _)), -- TODO
   (by gapply (List.s_unfold _)),
   (by gapply (Tree.s_unfold _)),
+  (by gapply (Stack.s_unfold _)),
+  (by gapply (Ty.s_unfold _)),
+  (by gapply (Term.s_unfold _)),
   (by gapply s_arbUnit),
   (by gapply s_arbBool),
   (by gapply s_arbNat),
@@ -83,6 +119,9 @@ add_aesop_rules unsafe (rule_sets := [totality]) [
   Total.total_pure,
   Total.List.total_unfold,
   Total.Tree.total_unfold,
+  Total.Stack.total_unfold,
+  Total.Ty.total_unfold,
+  Total.Term.total_unfold,
   Total.total_Bool_rec,
   Total.total_Nat_rec
 ]
