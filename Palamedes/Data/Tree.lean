@@ -1,7 +1,6 @@
 import Palamedes.Gen
 import Palamedes.CorrectGen
 import Palamedes.Total
-import Mathlib.Tactic.CasesM
 
 section TypeDef
 
