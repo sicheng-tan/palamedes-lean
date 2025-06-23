@@ -4,6 +4,9 @@ import Palamedes.RuleSets
 import Palamedes.Total
 import Palamedes.Tactics
 import Palamedes.Data.List
+import Palamedes.Data.Stack
+import Palamedes.Data.STLC.Term
+import Palamedes.Data.STLC.Ty
 import Palamedes.Data.Tree
 import Palamedes.Data.Unit
 import Palamedes.Data.Nat
