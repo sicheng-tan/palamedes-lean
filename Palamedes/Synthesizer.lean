@@ -14,12 +14,13 @@ open Gen CorrectGen
 
 macro "simp_list_predicate" : tactic =>
   `(tactic|
-    first
+    (try (conv => rhs; lhs; apply congrFun; apply (List.coerce_to_fold (by aesop) (by intros; simp_all; rflm)));
+     first
       | rw [← List.fold_accu_Option_true]; (try aesop); done
       | rw [← List.fold_accu_Option_function]; (try aesop); done
       | rw [← List.fold_accu_Option_function_true];
         (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
-      | rw [← List.fold_accu_Option_basic]; (try aesop); done)
+      | rw [← List.fold_accu_Option_basic]; (try aesop); done))
 
 macro "simp_tree_predicate" : tactic =>
   `(tactic|
