@@ -442,4 +442,15 @@ instance : ToString Ty where
 
 end PrettyPrint
 
+namespace Gen
+
+@[irreducible]
+def arbTy : Gen Ty := Ty.unfold
+  (fun _ => pick
+    (pure TyF.unit)
+    (pure (TyF.arrow PUnit.unit PUnit.unit)))
+  PUnit.unit
+
+namespace Gen
+
 end Gen
