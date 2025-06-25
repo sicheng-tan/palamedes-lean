@@ -34,15 +34,16 @@ def s_elements_partial {xs : List α} : CorrectGen (fun (a : α) => ∃ (i : Nat
         apply Iff.intro
         . intro h
           match h with
-          | .inl h => sorry
-          | .inr h => sorry
+          | .inl h => subst h; exists 0
+          | .inr h => replace ⟨ i, h ⟩ := h; exists i + 1
         . intro ⟨i, h⟩
           match hi : i with
           | 0 => simp_all
           | n + 1 =>
             simp_all
             subst hi
-            sorry
+            right
+            exists n
 
 theorem getElem?_eq_some_iff_indexesOf_getElem?_eq_some
     [BEq α]
