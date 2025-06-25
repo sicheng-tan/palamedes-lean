@@ -84,6 +84,13 @@ theorem support_map :
     support (f <$> x) = fun b => ∃ a, support x a ∧ b = f a := by
   simp [Functor.map]
 
+@[simp]
+theorem support_dite
+  {b : Bool} {g1 : b = true → Gen α} {g2 : ¬ (b = true) → Gen α } :
+  support (if h : b then g1 h else g2 h) = fun a =>
+    if h : b then support (g1 h) a else support (g2 h) a :=
+  by sorry
+
 end Support
 
 end Gen

@@ -464,6 +464,36 @@ theorem Term.fold_accu_Option_function_true
       apply Iff.intro <;> intro hg <;> try simp_all
       replace ⟨ ⟨ v₁, h₁ ⟩ , ⟨ v₂, h₂ ⟩  ⟩ := hg; clear hg <;> simp_all
 
+theorem Term.fold_accu_Option_function_Option
+    {α σ : Type}
+    {i : σ}
+    {v : α}
+    {t : Term}
+    {z : (σ → Option α)}
+    {zn : Nat → (σ → Option α)}
+    {f_abs : Ty → (σ → Option α) → (σ → Option α)}
+    {f_app : (σ → Option α) → (σ → Option α) → (σ → Option α)}
+    {g_abs : Ty → α → σ → Option α}
+    {g_app : α → α → σ → Option α}
+    {st_abs : Ty → σ → σ}
+    {st_app₁ st_app₂ : σ → σ}
+    (h_abs : ∀ τ acc s w,
+      f_abs τ acc s = some w ↔ (do g_abs τ (← acc (st_abs τ s)) s) = some w)
+    (h_app : ∀ acc₁ acc₂ s w,
+      f_app acc₁ acc₂ s = some w ↔
+        (do g_app (← acc₁ (st_app₁ s)) (← acc₂ (st_app₂ s)) s) = some w)
+    :
+    Term.fold z zn f_abs f_app t i = some v ↔
+    Term.accuM
+      st_abs
+      (fun s => (st_app₁ s, st_app₂ s))
+      (fun s => z s)
+      (fun n s => zn n s)
+      g_abs
+      g_app
+      t
+      i = some v := by sorry
+
 end FoldConversions
 
 section FoldCoercion
@@ -669,6 +699,7 @@ def Term.toString : Term → String
 
 instance : ToString Term where
   toString := Term.toString
+
 end PrettyPrint
 
 end Gen

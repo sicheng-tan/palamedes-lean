@@ -17,9 +17,9 @@ open Gen CorrectGen
 
 macro "simp_list_predicate" : tactic =>
   `(tactic|
-    (try (conv => rhs; lhs; apply congrFun; apply (List.coerce_to_fold (by aesop) (by intros; simp_all; rflm)));
+    (try (conv => rhs; lhs; apply (List.coerce_to_fold (by rflm) (by intros; simp_all; rflm)));
      first
-      | rw [← List.fold_accu_Option_true]; (try aesop); done
+      | rw [← List.fold_accu_Option_true] <;> (try aesop); done
       | rw [← List.fold_accu_Option_function]; (try aesop); done
       | rw [← List.fold_accu_Option_function_true];
         (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
@@ -47,9 +47,9 @@ macro "simp_stack_predicate" : tactic =>
 
 macro "simp_ty_predicate" : tactic =>
   `(tactic|
-    (try (conv => rhs; lhs; apply congrFun; apply (Ty.coerce_to_fold (by aesop) (by intros; simp_all; rflm)));
+    (try (conv => rhs; lhs; apply (Ty.coerce_to_fold (by aesop) (by intros; simp_all; rflm)));
      first
-      | rw [← Ty.fold_accu_Option_true]; (try aesop); done
+      | rw [← Ty.fold_accu_Option_true] <;> (try aesop); done
       | rw [← Ty.fold_accu_Option_function]; (try aesop); done
       | rw [← Ty.fold_accu_Option_function_true];
         (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
@@ -63,6 +63,7 @@ macro "simp_term_predicate" : tactic =>
       | rw [← Term.fold_accu_Option_function]; (try aesop); done
       | rw [← Term.fold_accu_Option_function_true];
         (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
+      | rw [← Term.fold_accu_Option_function_Option] <;> (try aesop); done
       | rw [← Term.fold_accu_Option_basic]; (try aesop); done))
 
 macro "simp_predicate" : tactic =>
@@ -99,6 +100,7 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by gapply s_arbUnit),
   (by gapply s_arbBool),
   (by gapply s_arbNat),
+  (by gapply s_arbTy),
   (by gapply s_gt),
   (by gapply s_between_partial),
   (by gapply (s_between (by first | aesop | omega))),
@@ -123,5 +125,6 @@ add_aesop_rules unsafe (rule_sets := [totality]) [
   Total.Ty.total_unfold,
   Total.Term.total_unfold,
   Total.total_Bool_rec,
-  Total.total_Nat_rec
+  Total.total_Nat_rec,
+  Total.total_Ty_rec
 ]

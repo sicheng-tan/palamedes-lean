@@ -412,6 +412,7 @@ def Ty.s_unfold
 
 end CorrectGen
 
+
 namespace Total
 
 @[simp]
@@ -442,8 +443,6 @@ instance : ToString Ty where
 
 end PrettyPrint
 
-namespace Gen
-
 @[irreducible]
 def arbTy : Gen Ty := Ty.unfold
   (fun _ => pick
@@ -451,6 +450,83 @@ def arbTy : Gen Ty := Ty.unfold
     (pure (TyF.arrow PUnit.unit PUnit.unit)))
   PUnit.unit
 
-namespace Gen
+@[simp]
+theorem support_arbTy :
+    support arbTy = fun _ => True := by
+  simp [arbTy]
+  funext v
+  induction v <;> simp_all
 
-end Gen
+@[simp]
+def support_Ty_rec
+    {gu : (τ = Ty.unit) → Gen α}
+    {ga : (τ₁ τ₂ : Ty) → (τ = Ty.arrow τ₁ τ₂) → Gen α} :
+    support (Ty.rec
+            (motive := fun x => (τ = x) → Gen α)
+            (fun h => gu h)
+            (fun τ₁ τ₂ _ _ h => ga τ₁ τ₂ h)
+            τ
+            rfl) =
+    (fun a =>
+      (∃ h : τ = Ty.unit, a ∈ 〚gu h〛) ∨
+      (∃ (τ₁ τ₂ : Ty) (h : τ = Ty.arrow τ₁ τ₂), a ∈ 〚ga τ₁ τ₂ h〛)) := by
+  funext
+  simp
+  apply Iff.intro
+  . intro h
+    cases τ <;> aesop
+  . intro h
+    cases h <;> aesop
+
+namespace CorrectGen
+
+@[reducible]
+def s_arbTy : @CorrectGen Ty (λ _ => True) :=
+  Subtype.mk arbTy <| by
+    funext v
+    simp
+
+@[reducible]
+def caseTy
+    (τ : Ty)
+    (gu : (τ = Ty.unit) → @CorrectGen α P)
+    (ga : (τ₁ τ₂ : Ty) → (τ = Ty.arrow τ₁ τ₂) → @CorrectGen α P) :
+    @CorrectGen α P :=
+    Subtype.mk
+      (Ty.casesOn
+        (motive := fun x => (τ = x) → Gen α)
+        τ
+        (fun h => (gu h).val)
+        (fun τ₁ τ₂ h => (ga τ₁ τ₂ h).val)
+        rfl) <| by
+    match τ with
+    | .unit => exact (gu _).property
+    | .arrow τ₁ τ₂ => exact (ga _ _ _).property
+
+end CorrectGen
+
+
+namespace Total
+
+@[simp]
+def total_arbTy : total arbTy := by
+  simp [Gen.arbTy]
+
+@[simp]
+def total_Ty_rec
+    {gu : (τ = Ty.unit) → Gen α}
+    {ga : (τ₁ τ₂ : Ty) → (τ = Ty.arrow τ₁ τ₂) → Gen α}
+    (hu : ∀ h, total (gu h))
+    (ha : ∀ τ₁ τ₂ h, total (ga τ₁ τ₂ h)) :
+    total (Ty.rec
+          (motive := fun x => (τ = x) → Gen α)
+          (fun h => gu h)
+          (fun τ₁ τ₂ _ _ h => ga τ₁ τ₂ h)
+          τ
+          rfl)
+  := by
+  cases τ
+  case unit => exact hu rfl
+  case arrow τ₁ τ₂ => simp_all only
+
+end Total
