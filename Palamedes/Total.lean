@@ -64,7 +64,7 @@ theorem total_dite
     (h₁ : (h : b = true) → total (g₁ h))
     (h₂ : (h : ¬(b = true)) → total (g₂ h))
     : total (if h : b then g₁ h else g₂ h) := by
-  sorry
+  cases b <;> simp_all
 
 end Total
 
