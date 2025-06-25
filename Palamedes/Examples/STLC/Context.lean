@@ -39,13 +39,32 @@ def indicesOf [DecidableEq α] (xs : List α) (a : α) : Gen Nat :=
 @[reducible]
 def s_indicesOf [DecidableEq α] (xs : List α) (a : α) : CorrectGen (λ (n : Nat) => xs[n]? = some a) :=
   Subtype.mk (indicesOf xs a) <| by
+  funext v
+  simp
+  sorry
 
+@[reducible]
+def indicesOf' [DecidableEq α] (xs : List α) (a : α) : Gen Nat :=
+  let inds := List.indexesOf a xs
+  .assume (inds.length > 0)
+          (λ h => elements inds (by simp_all only [decide_eq_true_eq]))
+
+@[reducible]
+def s_indicesOf' [DecidableEq α] (xs : List α) (a : α) : CorrectGen (λ (n : Nat) => xs[n]? = some a) :=
+  Subtype.mk (indicesOf' xs a) <| by
+  funext v
+  simp_all
+  -- apply List.some_eq_getElem?_iff
+  -- apply List.findIdx_getElem?_eq_getElem_of_exists
   sorry
 
 namespace Total
 
 def total_elements :
     (Gen.total (elements xs h)) := by
-  sorry
+  induction xs <;> simp [List.length_pos_iff_exists_cons] at h
+  case cons x xs' ih _ =>
+    simp [elements]
+    cases xs' <;> simp_all
 
 end Total
