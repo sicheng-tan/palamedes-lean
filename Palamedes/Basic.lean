@@ -13,7 +13,8 @@ import Palamedes.Examples.List.SortedBetween
 import Palamedes.Examples.List.True
 
 import Palamedes.Examples.Tree.AVL
-import Palamedes.Examples.Tree.BST
+import Palamedes.Examples.Tree.BST.BST
+import Palamedes.Examples.Tree.BST.Fold
 import Palamedes.Examples.Tree.CompleteTree
 import Palamedes.Examples.Tree.GoodTree
 import Palamedes.Examples.Tree.NETree
