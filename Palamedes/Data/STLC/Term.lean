@@ -492,7 +492,8 @@ theorem Term.fold_accu_Option_function_Option
       g_abs
       g_app
       t
-      i = some v := by sorry
+      i = some v := by
+  induction t generalizing i v <;> simp_all [Term.fold, Term.accuM, Option.bind_eq_some]
 
 end FoldConversions
 
