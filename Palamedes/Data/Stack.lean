@@ -47,46 +47,57 @@ section RecursionSchemes
 
 def Stack.fold
   {α : Type}
-  (f : (Atom ⊕ Atom) → α → α)
   (z : α)
+  (f_c : Atom → α → α)
+  (f_rc : Atom → α → α)
   (s : Stack) : α :=
   match s with
   | .mty => z
-  | .cons x s' => f (Sum.inl x) (Stack.fold f z s')
-  | .ret_cons pc s' => f (Sum.inr pc) (Stack.fold f z s')
+  | .cons x s' => f_c x (Stack.fold z f_c f_rc s')
+  | .ret_cons pc s' => f_rc pc (Stack.fold z f_c f_rc s')
 
-@[simp] theorem Stack.fold_mty : Stack.fold f z .mty = z := rfl
-@[simp] theorem Stack.fold_cons {x} {s : Stack} {f : (Atom ⊕ Atom) → β → β} {z} :
-    Stack.fold f z (.cons x s) = f (Sum.inl x) (Stack.fold f z s) := rfl
-@[simp] theorem Stack.fold_ret_cons {x} {s : Stack} {f : (Atom ⊕ Atom) → β → β} {z} :
-    Stack.fold f z (.ret_cons x s) = f (Sum.inr x) (Stack.fold f z s) := rfl
+@[simp] theorem Stack.fold_mty :
+  Stack.fold z f_c f_rc .mty = z := rfl
+@[simp] theorem Stack.fold_cons
+  {x} {s : Stack} {z} {f_c : Atom → α → α} {f_rc : Atom → α → α} :
+  Stack.fold z f_c f_rc (.cons x s) = f_c x (Stack.fold z f_c f_rc s) := rfl
+@[simp] theorem Stack.fold_ret_cons
+  {x} {s : Stack} {z} {f_c : Atom → α → α} {f_rc : Atom → α → α} :
+    Stack.fold z f_c f_rc (.ret_cons x s) = f_rc x (Stack.fold z f_c f_rc s) := rfl
 
 def Stack.accuM
   [Monad m]
   {α σ : Type}
-  (st : (Atom ⊕ Atom) → σ → σ)
-  (f : (Atom ⊕ Atom) → α → σ → m α)
+  (st_c : Atom→ σ → σ)
+  (st_rc : Atom → σ → σ)
   (z : σ → m α)
+  (f_c : Atom → α → σ → m α)
+  (f_rc : Atom → α → σ → m α)
   (s : Stack)
   (i : σ) : m α :=
   match s with
   | .mty => z i
   | .cons x s' => do
-     f (Sum.inl x) (← Stack.accuM st f z s' (st (Sum.inl x) i)) i
+     f_c x (← Stack.accuM st_c st_rc z f_c f_rc s' (st_c x i)) i
   | .ret_cons pc s' => do
-     f (Sum.inr pc) (← Stack.accuM st f z s' (st (Sum.inr pc) i)) i
+     f_rc pc (← Stack.accuM st_c st_rc z f_c f_rc s' (st_rc pc i)) i
 
-@[simp] theorem Stack.accuM_nil [Monad m] {st : (Atom ⊕ Atom) → σ → σ}
-  {f : (Atom ⊕ Atom) → β → σ → m β} {z : σ → m β} {i : σ} :
-  Stack.accuM st f z .mty i = z i := rfl
-@[simp] theorem Stack.accuM_cons  [Monad m] {st : (Atom ⊕ Atom) → σ → σ}
-  {f : (Atom ⊕ Atom) → β → σ → m β} {z : σ → m β} {i : σ} {x} {s : Stack} :
-    Stack.accuM st f z (.cons x s) i
-    = (do f (Sum.inl x) (← Stack.accuM st f z s (st (Sum.inl x) i)) i) := rfl
-@[simp] theorem Stack.accuM_ret_cons [Monad m] {st : (Atom ⊕ Atom) → σ → σ}
-  {f : (Atom ⊕ Atom) → β → σ → m β} {z : σ → m β} {i : σ} {pc} {s : Stack} :
-    Stack.accuM st f z (.ret_cons pc s) i
-    = (do f (Sum.inr pc) (← Stack.accuM st f z s (st (Sum.inr pc) i)) i) := rfl
+@[simp] theorem Stack.accuM_nil [Monad m]
+  {st_c : Atom → σ → σ} {st_rc : Atom → σ → σ} {z : σ → m α}
+  {f_c : Atom → α → σ → m α} {f_rc : Atom → α → σ → m α} {i : σ} :
+  Stack.accuM st_c st_rc z f_c f_rc .mty i = z i := rfl
+@[simp] theorem Stack.accuM_cons  [Monad m]
+  {st_c : Atom → σ → σ} {st_rc : Atom → σ → σ} {z : σ → m α}
+  {f_c : Atom → α → σ → m α} {f_rc : Atom → α → σ → m α} {i : σ}
+  {x} {s : Stack} :
+  Stack.accuM st_c st_rc z f_c f_rc (.cons x s) i
+    = (do f_c x (← Stack.accuM st_c st_rc z f_c f_rc s (st_c x i)) i) := rfl
+@[simp] theorem Stack.accuM_ret_cons [Monad m]
+  {st_c : Atom → σ → σ} {st_rc : Atom → σ → σ} {z : σ → m α}
+  {f_c : Atom → α → σ → m α} {f_rc : Atom → α → σ → m α} {i : σ}
+  {pc} {s : Stack} :
+  Stack.accuM st_c st_rc z f_c f_rc (.ret_cons pc s) i
+    = (do f_rc pc (← Stack.accuM st_c st_rc z f_c f_rc s (st_rc pc i)) i) := rfl
 
 end RecursionSchemes
 
@@ -226,38 +237,46 @@ theorem Stack.fold_accu_Option_basic
     {v : α}
     {s : Stack}
     {z : α}
-    {f : (Atom ⊕ Atom) → α → α} :
-    Stack.fold f z s = v ↔
+    {f_c : Atom → α → α}
+    {f_rc : Atom → α → α} :
+    Stack.fold z f_c f_rc s = v ↔
     Stack.accuM
       (fun _ _ => ())
-      (fun x s' _ => some (f x s'))
+      (fun _ _ => ())
       (fun _ => some z)
+      (fun x s' _ => some (f_c x s'))
+      (fun pc s' _ => some (f_rc pc s'))
       s
       () = some v := by
     induction s generalizing v <;> simp_all [Stack.fold, Stack.accuM]
     case cons x s' ih =>
-      replace ih := @ih (Stack.fold f z s')
+      replace ih := @ih (Stack.fold z f_c f_rc s')
       simp_all [Stack.fold, Stack.accuM]
     case ret_cons pc s' ih =>
-      replace ih := @ih (Stack.fold f z s')
+      replace ih := @ih (Stack.fold z f_c f_rc s')
       simp_all [Stack.fold, Stack.accuM]
 
 theorem Stack.fold_accu_Option_true
-    {g : (Atom ⊕ Atom) → Bool}
-    {f : (Atom ⊕ Atom) → Bool → Bool}
-    (h : ∀ x acc, f x acc = (g x && acc)) :
-    Stack.fold f true s = true ↔
+    {f_c : Atom → Bool → Bool}
+    {f_rc : Atom → Bool → Bool}
+    {g_c : Atom → Bool}
+    {g_rc : Atom → Bool}
+    (h_c : ∀ x acc, f_c x acc = (g_c x && acc))
+    (h_rc : ∀ pc acc, f_rc pc acc = (g_rc pc && acc)) :
+    Stack.fold true f_c f_rc s = true ↔
     Stack.accuM
       (fun _ _ => ())
-      (fun x _ _ => guard (g x))
+      (fun _ _ => ())
       (fun _ => some ())
+      (fun x _ _ => guard (g_c x))
+      (fun x _ _ => guard (g_rc x))
       s
       () = some () := by
     induction s <;> simp_all [Stack.fold, Stack.accuM]
     case cons x s' ih =>
         apply Iff.intro <;> intro hf
         . -- (->)
-          generalize hv : fold f true s' = v
+          generalize hv : Stack.fold true f_c f_rc s' = v
           cases v <;>
             simp_all [Stack.fold, Stack.accuM, guard]
         . -- (<-)
@@ -267,7 +286,7 @@ theorem Stack.fold_accu_Option_true
     case ret_cons pc s' ih =>
         apply Iff.intro <;> intro hf
         . -- (->)
-          generalize hv : fold f true s' = v
+          generalize hv : Stack.fold true f_c f_rc s' = v
           cases v <;>
             simp_all [Stack.fold, Stack.accuM, guard]
         . -- (<-)
@@ -281,24 +300,31 @@ theorem Stack.fold_accu_Option_function
     {v : β}
     {s : Stack}
     {z : (σ → β)}
-    {f : (Atom ⊕ Atom) → (σ → β) → (σ → β)}
-    {g : (Atom ⊕ Atom) → β → σ → Option β}
-    {st : (Atom ⊕ Atom) → σ → σ}
-    (h : ∀ x acc s w,
-      f x acc s = w ↔ (do g x (← acc (st x s)) s) = some w)
+    {f_c : Atom → (σ → β) → (σ → β)}
+    {f_rc : Atom → (σ → β) → (σ → β)}
+    {g_c : Atom → β → σ → Option β}
+    {g_rc : Atom → β → σ → Option β}
+    {st_c : Atom → σ → σ}
+    {st_rc : Atom → σ → σ}
+    (h_c : ∀ x acc s w,
+      f_c x acc s = w ↔ (do g_c x (← acc (st_c x s)) s) = some w)
+    (h_rc : ∀ x acc s w,
+      f_rc x acc s = w ↔ (do g_rc x (← acc (st_rc x s)) s) = some w)
     :
-    Stack.fold f z s i = v ↔
+    Stack.fold z f_c f_rc s i = v ↔
     Stack.accuM
-      st
-      g
+      st_c
+      st_rc
       (fun s => some (z s))
+      g_c
+      g_rc
       s
       i = some v := by
     induction s generalizing v i <;> simp_all [Stack.fold, Stack.accuM, Option.bind_eq_some]
     case cons x s' ih =>
       apply Iff.intro <;> intro hg
       . -- (->)
-        exists (Stack.fold f z s' (st (Sum.inl x) i))
+        exists (Stack.fold z f_c f_rc s' (st_c x i))
         simp_all
         rw [← ih]
       . -- (<-)
@@ -309,7 +335,7 @@ theorem Stack.fold_accu_Option_function
     case ret_cons pc s' ih =>
       apply Iff.intro <;> intro hg
       . -- (->)
-        exists (Stack.fold f z s' (st (Sum.inr pc) i))
+        exists (Stack.fold z f_c f_rc s' (st_rc pc i))
         simp_all
         rw [← ih]
       . -- (<-)
@@ -322,17 +348,24 @@ theorem Stack.fold_accu_Option_function_true
     {σ : Type}
     {i : σ}
     {s : Stack}
-    {f : (Atom ⊕ Atom) → (σ → Bool) → (σ → Bool)}
-    {g : (Atom ⊕ Atom) → σ → Bool}
-    {st :  (Atom ⊕ Atom) → σ → σ}
-    (h : ∀ x acc s',
-      f x acc s' = true ↔ (do (return (g x s') && (← acc (st x s')))) = some true)
+    {f_c : Atom → (σ → Bool) → (σ → Bool)}
+    {f_rc : Atom → (σ → Bool) → (σ → Bool)}
+    {g_c : Atom → σ → Bool}
+    {g_rc : Atom → σ → Bool}
+    {st_c : Atom → σ → σ}
+    {st_rc : Atom → σ → σ}
+    (h_c : ∀ x acc s', f_c x acc s' = true ↔
+      (do (return (g_c x s') && (← acc (st_c x s')))) = some true)
+    (h_rc : ∀ x acc s', f_rc x acc s' = true ↔
+      (do (return (g_rc x s') && (← acc (st_rc x s')))) = some true)
     :
-    Stack.fold f (λ _ => true) s i = true ↔
+    Stack.fold (λ _ => true) f_c f_rc s i = true ↔
     Stack.accuM
-      st
-      (fun x _ s => guard $ g x s)
+      st_c
+      st_rc
       (fun _ => some ())
+      (fun x _ s => guard $ g_c x s)
+      (fun x _ s => guard $ g_rc x s)
       s
       i = some () := by
     induction s generalizing i <;> simp_all [Stack.fold, Stack.accuM, Option.bind_eq_some, guard]
@@ -349,36 +382,43 @@ theorem Stack.coerce_to_fold
     {s : Stack}
     {f : Stack → α} -- function to be coerced
     {z : α}
-    {g : (Atom ⊕ Atom) → α → α}
+    {g_c : Atom → α → α}
+    {g_rc : Atom → α → α}
     (hm : f .mty = z)
-    (hc : ∀ x s', f (.cons x s') = g (Sum.inl x) (f s'))
-    (hr : ∀ pc s', f (.ret_cons pc s') = g (Sum.inr pc) (f s')) :
-    f s = s.fold g z := by
+    (h_c : ∀ x s', f (.cons x s') = g_c x (f s'))
+    (h_rc : ∀ pc s', f (.ret_cons pc s') = g_rc pc (f s')) :
+    f s = Stack.fold z g_c g_rc s := by
   induction s <;> simp_all
 
 end FoldCoercion
 
 section FoldMerging
 
-
 theorem Stack.merge_accuM
     {s : Stack}
-    {st₁ : (Atom ⊕ Atom) → σ₁ → σ₁}
-    {st₂ : (Atom ⊕ Atom) → σ₂ → σ₂}
-    {f₁ : (Atom ⊕ Atom) → α₁ → σ₁ → Option α₁}
-    {f₂ : (Atom ⊕ Atom) → α₂ → σ₂ → Option α₂}
+    {st_c₁ : Atom → σ₁ → σ₁}
+    {st_c₂ : Atom → σ₂ → σ₂}
+    {st_rc₁ : Atom → σ₁ → σ₁}
+    {st_rc₂ : Atom → σ₂ → σ₂}
+    {f_c₁ : Atom → α₁ → σ₁ → Option α₁}
+    {f_c₂ : Atom → α₂ → σ₂ → Option α₂}
+    {f_rc₁ : Atom → α₁ → σ₁ → Option α₁}
+    {f_rc₂ : Atom → α₂ → σ₂ → Option α₂}
     {s₁ : σ₁} {s₂ : σ₂}
     {z₁ : σ₁ → Option α₁} {z₂ : σ₂ → Option α₂}
     {v₁ : α₁} {v₂ : α₂}
     :
-    (s.accuM st₁ f₁ z₁ s₁ = some v₁ ∧ s.accuM st₂ f₂ z₂ s₂ = some v₂)
+    (s.accuM st_c₁ st_rc₁ z₁ f_c₁ f_rc₁ s₁ = some v₁
+      ∧ s.accuM st_c₂ st_rc₂ z₂ f_c₂ f_rc₂ s₂ = some v₂)
     ↔
     (s.accuM
-      (λ x (s₁, s₂) => (st₁ x s₁, st₂ x s₂))
-      (λ x (v₁, v₂) (s₁, s₂) => do (← f₁ x v₁ s₁, ← f₂ x v₂ s₂))
+      (λ x (s₁, s₂) => (st_c₁ x s₁, st_c₂ x s₂))
+      (λ pc (s₁, s₂) => (st_rc₁ pc s₁, st_rc₂ pc s₂))
       (λ (s₁, s₂) => do (← z₁ s₁, ← z₂ s₂))
+      (λ x (v₁, v₂) (s₁, s₂) => do (← f_c₁ x v₁ s₁, ← f_c₂ x v₂ s₂))
+      (λ pc (v₁, v₂) (s₁, s₂) => do (← f_rc₁ pc v₁ s₁, ← f_rc₂ pc v₂ s₂))
       (s₁, s₂) = some (v₁, v₂)) := by
-    induction s generalizing st₁ st₂ f₁ f₂ s₁ s₂ z₁ z₂ v₁ v₂
+    induction s generalizing s₁ s₂ v₁ v₂
     case mty => simp_all [Stack.accuM, Option.bind_eq_some]
     case cons y s' ih =>
       simp_all [Stack.accuM, Option.bind_eq_some]
@@ -386,11 +426,11 @@ theorem Stack.merge_accuM
       . -- (->)
         intro ⟨ ⟨ v₁', ⟨ hv1h, hv1tl ⟩ ⟩ , ⟨ v₂', ⟨ hv2h, hv2tl ⟩ ⟩ ⟩
         exists v₁', v₂'
-        replace ih := @ih st₁ st₂ f₁ f₂ (st₁ (Sum.inl y) s₁) (st₂ (Sum.inl y) s₂) z₁ z₂ v₁' v₂'
+        replace ih := @ih (st_c₁ y s₁) (st_c₂ y s₂) v₁' v₂'
         simp_all [Stack.accuM, Option.bind_eq_some]
       . -- (<-)
         intro ⟨ v₁', v₂', h, h1, h2 ⟩
-        replace ih := @ih st₁ st₂ f₁ f₂ (st₁ (Sum.inl y) s₁) (st₂ (Sum.inl y) s₂) z₁ z₂ v₁' v₂'
+        replace ih := @ih (st_c₁ y s₁) (st_c₂ y s₂) v₁' v₂'
         apply And.intro
         . exists v₁'
           simp_all [Stack.accuM, Option.bind_eq_some]
@@ -402,11 +442,11 @@ theorem Stack.merge_accuM
       . -- (->)
         intro ⟨ ⟨ v₁', ⟨ hv1h, hv1tl ⟩ ⟩ , ⟨ v₂', ⟨ hv2h, hv2tl ⟩ ⟩ ⟩
         exists v₁', v₂'
-        replace ih := @ih st₁ st₂ f₁ f₂ (st₁ (Sum.inr pc) s₁) (st₂ (Sum.inr pc) s₂) z₁ z₂ v₁' v₂'
+        replace ih := @ih (st_rc₁ pc s₁) (st_rc₂ pc s₂) v₁' v₂'
         simp_all [Stack.accuM, Option.bind_eq_some]
       . -- (<-)
         intro ⟨ v₁', v₂', h, h1, h2 ⟩
-        replace ih := @ih st₁ st₂ f₁ f₂ (st₁ (Sum.inr pc) s₁) (st₂ (Sum.inr pc) s₂) z₁ z₂ v₁' v₂'
+        replace ih := @ih (st_rc₁ pc s₁) (st_rc₂ pc s₂) v₁' v₂'
         apply And.intro
         . exists v₁'
           simp_all [Stack.accuM, Option.bind_eq_some]
@@ -422,23 +462,25 @@ namespace CorrectGen
 @[reducible]
 def Stack.s_unfold
     {α σ : Type}
-    {st : (Atom ⊕ Atom) → σ → σ}
-    {f : (Atom ⊕ Atom) → α → σ → Option α}
+    {st_c : Atom → σ → σ}
+    {st_rc : Atom → σ → σ}
     {z : σ → Option α}
+    {f_c : Atom → α → σ → Option α}
+    {f_rc : Atom → α → σ → Option α}
     {s : σ}
     {b : α}
     (g : (b : α) → (s : σ) → CorrectGen
       (fun (x : StackF α) =>
         (z s = some b ∧ x = .mty) ∨
-        (∃ a b', f (Sum.inl a) b' s = some b ∧ x = .cons a b') ∨
-        (∃ pc b', f (Sum.inr pc) b' s = some b ∧ x = .ret_cons pc b'))) :
-    CorrectGen (λ v => Stack.accuM st f z v s = some b) :=
+        (∃ a b', f_c a b' s = some b ∧ x = .cons a b') ∨
+        (∃ pc b', f_rc pc b' s = some b ∧ x = .ret_cons pc b'))) :
+    CorrectGen (λ v => Stack.accuM st_c st_rc z f_c f_rc v s = some b) :=
   Subtype.mk
     (Stack.unfold (λ (b, s) => do
       match (← (g b s).val) with
       | .mty => pure .mty
-      | .cons a b' => pure (.cons a (b', (st (Sum.inl a) s)))
-      | .ret_cons pc b' => pure (.ret_cons pc (b', (st (Sum.inr pc) s)))) (b, s)) <| by
+      | .cons a b' => pure (.cons a (b', (st_c a s)))
+      | .ret_cons pc b' => pure (.ret_cons pc (b', (st_rc pc s)))) (b, s)) <| by
     rw [Stack.support_unfold]
     funext x
     induction x generalizing b s <;> simp_all
@@ -454,7 +496,7 @@ def Stack.s_unfold
         cases x'' <;> simp_all [(g b s).property]
       . rw [Option.bind_eq_some] at h
         replace ⟨ b', hb', h ⟩ := h
-        exists b', st (Sum.inl a) s
+        exists b', st_c a s
         apply And.intro
         . exists StackF.cons a b'
           simp_all [(g b s).property]
@@ -465,7 +507,7 @@ def Stack.s_unfold
         cases x'' <;> simp_all [(g b s).property]
       . rw [Option.bind_eq_some] at h
         replace ⟨ b', hb', h ⟩ := h
-        exists b', st (Sum.inr pc) s
+        exists b', st_rc pc s
         apply And.intro
         . exists StackF.ret_cons pc b'
           simp_all [(g b s).property]
