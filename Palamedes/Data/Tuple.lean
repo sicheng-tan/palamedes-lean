@@ -32,8 +32,8 @@ end CorrectGen
 
 namespace Total
 
-@[simp]
-def total_tuple
+@[simp, aesop safe (rule_sets := [totality])]
+theorem total_tuple
     (hx : total x)
     (hy : ∀ {a}, a ∈ 〚x〛 → total (f a)) :
     total (tuple x f) := by

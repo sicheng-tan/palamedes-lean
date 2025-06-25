@@ -423,7 +423,7 @@ end CorrectGen
 
 namespace Total
 
-@[simp]
+@[simp, aesop safe (rule_sets := [totality])]
 def Tree.total_unfold
     (h : ∀ b, total (g b)) :
     total (Tree.unfold g b) := by

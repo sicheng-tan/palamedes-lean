@@ -673,7 +673,7 @@ end CorrectGen
 
 namespace Total
 
-@[simp]
+@[simp, aesop safe (rule_sets := [totality])]
 def Term.total_unfold
     (h : ∀ b, total (g b)) :
     total (Term.unfold g b) := by

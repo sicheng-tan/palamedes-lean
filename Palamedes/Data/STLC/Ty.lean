@@ -540,12 +540,12 @@ end CorrectGen
 
 namespace Total
 
-@[simp]
-def total_arbTy : total arbTy := by
+@[simp, aesop safe (rule_sets := [totality])]
+theorem total_arbTy : total arbTy := by
   simp [Gen.arbTy]
 
-@[simp]
-def total_Ty_caseTy
+@[simp, aesop safe (rule_sets := [totality])]
+theorem total_Ty_caseTy
     {gu : (τ = Ty.unit) → Gen α}
     {ga : (τ₁ τ₂ : Ty) → (τ = Ty.arrow τ₁ τ₂) → Gen α}
     (hu : ∀ h, total (gu h))

@@ -155,15 +155,15 @@ end CorrectGen
 
 namespace Total
 
-@[simp]
-def total_arbNat : total arbNat := by
+@[simp, aesop safe (rule_sets := [totality])]
+theorem total_arbNat : total arbNat := by
   simp [arbNat]
   apply total_indexed
   intro n
   induction n <;> simp [arbNat.go, *]
 
-@[simp]
-def total_Nat_rec
+@[simp, aesop safe (rule_sets := [totality])]
+theorem total_Nat_rec
     {gz : (n = 0) → Gen α}
     {gs : (n' : Nat) → (n = n' + 1) → Gen α}
     (hz : ∀ h, total (gz h))
@@ -179,8 +179,8 @@ def total_Nat_rec
   case zero => exact hz rfl
   case succ n' => simp_all only
 
-@[simp]
-def total_choose : total (choose lo hi h) := by
+@[simp, aesop safe (rule_sets := [totality])]
+theorem total_choose : total (choose lo hi h) := by
   generalize hn : hi - lo = n
   induction n generalizing lo hi h with
   | zero =>
@@ -196,8 +196,8 @@ def total_choose : total (choose lo hi h) := by
       . apply ih
         omega
 
-@[simp]
-def total_gt : total (gt lo) := by simp [gt]
+@[simp, aesop safe (rule_sets := [totality])]
+theorem total_gt : total (gt lo) := by simp [gt]
 
 end Total
 

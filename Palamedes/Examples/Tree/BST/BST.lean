@@ -12,4 +12,4 @@ def isBST : Tree Nat → (Nat × Nat) → Bool := λ t ⟨lo, hi⟩ =>
     isBST r ⟨x + 1, hi⟩
 
 def genBST (lo hi : Nat) : Gen (Tree Nat) := by
-  generator_search (fun t => isBST t (lo, hi))
+  generator_search (fun t => isBST t (lo, hi) = true)

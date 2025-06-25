@@ -475,7 +475,7 @@ end CorrectGen
 
 namespace Total
 
-@[simp]
+@[simp, aesop safe (rule_sets := [totality])]
 def Stack.total_unfold
     (h : ∀ b, total (g b)) :
     total (Stack.unfold g b) := by

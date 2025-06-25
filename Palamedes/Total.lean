@@ -1,4 +1,5 @@
 import Palamedes.CorrectGen
+import Palamedes.RuleSets
 
 namespace Gen
 
@@ -11,26 +12,26 @@ def total : Gen α → Prop
 
 namespace Total
 
-@[simp]
+@[simp, aesop safe (rule_sets := [totality])]
 theorem total_pure :
     total (pure a) := by
   simp [pure, total]
 
-@[simp]
+@[simp, aesop safe (rule_sets := [totality])]
 theorem total_bind
     (hx : total x)
     (hf : ∀ {v}, v ∈ 〚x〛 → total (f v)) :
     total (x >>= f) := by
   simp_all [bind, total]
 
-@[simp]
+@[simp, aesop safe (rule_sets := [totality])]
 theorem total_pick
     (hx : total x)
     (hy : total y) :
     total (pick x y) := by
   simp_all [pick, total]
 
-@[simp]
+@[simp, aesop safe (rule_sets := [totality])]
 theorem total_assume
     {b : Bool}
     {f : b → Gen α}
@@ -38,26 +39,26 @@ theorem total_assume
     total (assume b f) := by
   simp_all [assume, total]
 
-@[simp]
+@[simp, aesop safe (rule_sets := [totality])]
 theorem total_indexed
     (hf : ∀ n, total (f n)) :
     total (indexed f) := by
   simp_all [indexed, total]
 
-@[simp]
+@[simp, aesop safe (rule_sets := [totality])]
 theorem total_map
     (hx : total x) :
     total (f <$> x) := by
   simp_all [total]
 
-@[simp]
+@[simp, aesop safe (rule_sets := [totality])]
 theorem total_internalizeProofs (h : total g) : total (internalizeProofs g):= by
-  induction g <;> simp_all [internalizeProofs, total]
+  induction g <;> simp_all [internalizeProofs, total, total_pick, total_indexed]
   case assume b f ihf =>
     have ⟨h, ht⟩ := h
-    simp_all [internalizeProofs, total]
+    simp_all [internalizeProofs, total, total_assume]
 
-@[simp]
+@[simp, aesop safe (rule_sets := [totality])]
 theorem total_dite
     {g₁ : b = true → Gen α}
     {g₂ : ¬ (b = true) → Gen α}

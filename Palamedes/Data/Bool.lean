@@ -27,12 +27,12 @@ end CorrectGen
 
 namespace Total
 
-@[simp]
-def total_arbBool : total (arbBool : Gen Bool) := by
+@[simp, aesop safe (rule_sets := [totality])]
+theorem total_arbBool : total (arbBool : Gen Bool) := by
   simp [arbBool]
 
-@[simp]
-def total_Bool_rec (hf : total gf) (ht : total gt) : total (Bool.rec gf gt b) := by
+@[simp, aesop safe (rule_sets := [totality])]
+theorem total_Bool_rec (hf : total gf) (ht : total gt) : total (Bool.rec gf gt b) := by
   cases b <;> simp_all
 
 end Total

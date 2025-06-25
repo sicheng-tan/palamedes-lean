@@ -62,7 +62,8 @@ def s_indicesOf' [DecidableEq α] (xs : List α) (a : α) : CorrectGen (λ (n : 
 
 namespace Total
 
-def total_elements :
+@[simp, aesop safe (rule_sets := [totality])]
+theorem total_elements :
     (Gen.total (elements xs h)) := by
   induction xs <;> simp [List.length_pos_iff_exists_cons] at h
   case cons x xs' ih _ =>

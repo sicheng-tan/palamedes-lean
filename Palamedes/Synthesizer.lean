@@ -111,24 +111,3 @@ add_aesop_rules 5% (rule_sets := [synthesis]) [
   (by apply caseBool (by assumption)),
   (by apply caseNat (by assumption))
 ]
-
-add_aesop_rules safe (rule_sets := [totality]) [
-  Total.total_pick,
-  Total.total_bind,
-  Total.total_assume,
-  Total.total_indexed,
-  Total.total_internalizeProofs,
-  Total.total_map,
-  Total.total_pure,
-  Total.List.total_unfold,
-  Total.Tree.total_unfold,
-  Total.Stack.total_unfold,
-  Total.Ty.total_unfold,
-  Total.Term.total_unfold,
-  Total.total_elements,
-  Total.total_Bool_rec,
-  Total.total_Nat_rec,
-  Total.total_Ty_caseTy,
-  Total.total_dite,
-  Total.total_arbTy,
-]

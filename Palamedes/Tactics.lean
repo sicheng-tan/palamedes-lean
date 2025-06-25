@@ -19,7 +19,11 @@ macro "cgenerator_search" : tactic =>
 macro "totality" : tactic =>
   `(tactic|
     aesop
-      (rule_sets := [totality]))
+      (rule_sets := [-default, -builtin, totality])
+      (config := {enableSimp := false})
+      (add safe (by intro))
+      (add 5% (by split))
+      (add 5% (by simp)))
 
 -- TODO: This is probably not good enough. If the optimizer fails to prove goals we care about, we
 -- probably want to revisit this.
