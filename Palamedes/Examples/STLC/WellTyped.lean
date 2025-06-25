@@ -65,5 +65,9 @@ def genWellTyped (Γ : List Ty) : Gen Term := by
     simp_all [-eq_iff_iff]
     congr! (config := .unfoldSameFun) <;> aesop
   have : Gen.total g := by
-    totality
+    aesop
+      (rule_sets := [-default, -builtin, totality])
+      (config := {enableSimp := false})
+      (add safe (by intro))
+      (add 5% (by split))
   exact g
