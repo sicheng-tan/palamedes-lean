@@ -41,3 +41,11 @@ def s_indicesOf [DecidableEq α] (xs : List α) (a : α) : CorrectGen (λ (n : N
   Subtype.mk (indicesOf xs a) <| by
 
   sorry
+
+namespace Total
+
+def total_elements :
+    (Gen.total (elements xs h)) := by
+  sorry
+
+end Total

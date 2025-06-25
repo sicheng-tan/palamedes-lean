@@ -57,6 +57,15 @@ theorem total_internalizeProofs (h : total g) : total (internalizeProofs g):= by
     have ⟨h, ht⟩ := h
     simp_all [internalizeProofs, total]
 
+@[simp]
+theorem total_dite
+    {g₁ : b = true → Gen α}
+    {g₂ : ¬ (b = true) → Gen α}
+    (h₁ : (h : b = true) → total (g₁ h))
+    (h₂ : (h : ¬(b = true)) → total (g₂ h))
+    : total (if h : b then g₁ h else g₂ h) := by
+  sorry
+
 end Total
 
 end Gen
