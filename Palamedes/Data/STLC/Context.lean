@@ -1,4 +1,6 @@
-import Palamedes.Synthesizer
+import Palamedes.Gen
+import Palamedes.CorrectGen
+import Palamedes.Total
 
 open Gen CorrectGen
 

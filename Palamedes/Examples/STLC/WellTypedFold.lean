@@ -1,8 +1,9 @@
 import Palamedes.Synthesizer
-import Palamedes.Examples.STLC.Context
 import Palamedes.Examples.STLC.Predicates
 
 open Gen CorrectGen
+
+set_option maxHeartbeats 5000000
 
 def genWellTypedFold (Γ : List Ty) : Gen Term := by
   -- generator_search (fun t => ∃ τ, getTypeFold t Γ = some τ)
@@ -52,7 +53,7 @@ def genWellTypedFold (Γ : List Ty) : Gen Term := by
             . cgenerator_search
   let g : Gen (Term) := by
     optimize_gen cg.val
-  let _ : support cg.val = support g := by
+  have support_eq : support cg.val = support g := by
     funext
     unfold cg g
     simp_all
@@ -81,37 +82,8 @@ def genWellTypedFold (Γ : List Ty) : Gen Term := by
         . exact Eq.to_iff rfl
         . aesop
     . exact Eq.to_iff rfl
-  let _ : Gen.total g := by
-    unfold g
-    simp [id]
-    apply Total.total_bind
-    . totality
-    . intros
-      apply Total.Term.total_unfold
-      intros
-      apply Total.total_bind
-      . apply Gen.Total.total_Ty_caseTy
-        . intro
-          apply Total.total_pick
-          . totality
-          . apply Total.total_dite
-            . intros
-              apply Total.total_pick
-              . apply Total.total_bind
-                . apply Total.total_elements
-                . totality
-              . totality
-            . totality
-        . intros
-          apply Total.total_dite
-          . intros
-            apply Total.total_pick
-            . apply Total.total_bind
-              . apply Total.total_elements
-              . totality
-            . totality
-          . totality
-      . intro v
-        intros
-        cases v <;> simp
+  clear support_eq
+  clear cg
+  have : Gen.total g := by
+    totality
   exact g

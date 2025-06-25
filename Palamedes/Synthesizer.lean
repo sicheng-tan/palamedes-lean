@@ -7,6 +7,7 @@ import Palamedes.Data.List
 import Palamedes.Data.Stack
 import Palamedes.Data.STLC.Term
 import Palamedes.Data.STLC.Ty
+import Palamedes.Data.STLC.Context
 import Palamedes.Data.Tree
 import Palamedes.Data.Unit
 import Palamedes.Data.Nat
@@ -111,7 +112,7 @@ add_aesop_rules 5% (rule_sets := [synthesis]) [
   (by apply caseNat (by assumption))
 ]
 
-add_aesop_rules unsafe (rule_sets := [totality]) [
+add_aesop_rules safe (rule_sets := [totality]) [
   Total.total_pick,
   Total.total_bind,
   Total.total_assume,
@@ -124,7 +125,10 @@ add_aesop_rules unsafe (rule_sets := [totality]) [
   Total.Stack.total_unfold,
   Total.Ty.total_unfold,
   Total.Term.total_unfold,
+  Total.total_elements,
   Total.total_Bool_rec,
   Total.total_Nat_rec,
-  Total.total_Ty_caseTy
+  Total.total_Ty_caseTy,
+  Total.total_dite,
+  Total.total_arbTy,
 ]
