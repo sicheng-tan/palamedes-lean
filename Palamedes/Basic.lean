@@ -23,3 +23,4 @@ import Palamedes.Examples.Tree.RBT
 import Palamedes.Examples.Stack.GoodStack
 
 import Palamedes.Examples.STLC.WellTyped
+import Palamedes.Examples.STLC.WellTypedFold

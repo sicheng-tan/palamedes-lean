@@ -7,7 +7,7 @@ open Gen CorrectGen
 def genWellTypedFold (Γ : List Ty) : Gen Term := by
   -- generator_search (fun t => ∃ τ, getTypeFold t Γ = some τ)
   let cg : CorrectGen (fun t => ∃ τ, getTypeFold t Γ = some τ) := by
-    unfold getTypeFold
+    -- NOTE: Apparently this was causing the kernel panic??? unfold getTypeFold
     gapply (s_bind _ _)
     . cgenerator_search
     . intro τ
@@ -17,7 +17,7 @@ def genWellTypedFold (Γ : List Ty) : Gen Term := by
         rw [← Term.fold_accu_Option_function_Option] <;> aesop
         ) (Term.s_unfold _)
       intros b Γ
-      apply caseTy b
+      apply s_caseTy b
       . intros
         gapply (s_pick _ _)
         . cgenerator_search
@@ -63,7 +63,6 @@ def genWellTypedFold (Γ : List Ty) : Gen Term := by
     apply congrFun
     apply congrArg
     funext
-    funext
     simp
     apply exists_congr
     intros
@@ -91,7 +90,7 @@ def genWellTypedFold (Γ : List Ty) : Gen Term := by
       apply Total.Term.total_unfold
       intros
       apply Total.total_bind
-      . apply Gen.Total.total_Ty_rec
+      . apply Gen.Total.total_Ty_caseTy
         . intro
           apply Total.total_pick
           . totality

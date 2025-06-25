@@ -59,7 +59,8 @@ def genWellTyped (Γ : List Ty) : Gen Term := by
     optimize_gen cg.val
   let _ : support cg.val = support g := by
     funext
-    unfold cg g
+    unfold g
+    unfold cg
     simp_all
     apply exists_congr
     intros
@@ -67,7 +68,6 @@ def genWellTyped (Γ : List Ty) : Gen Term := by
     apply congrFun
     apply congrFun
     apply congrArg
-    funext
     funext
     simp
     apply exists_congr
