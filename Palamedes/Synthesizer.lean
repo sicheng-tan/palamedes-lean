@@ -126,5 +126,5 @@ add_aesop_rules unsafe (rule_sets := [totality]) [
   Total.Term.total_unfold,
   Total.total_Bool_rec,
   Total.total_Nat_rec,
-  Total.total_Ty_rec
+  Total.total_Ty_caseTy
 ]

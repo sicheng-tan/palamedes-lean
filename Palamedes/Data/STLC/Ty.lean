@@ -477,6 +477,15 @@ def arbTy : Gen Ty := Ty.unfold
     (pure (TyF.arrow PUnit.unit PUnit.unit)))
   PUnit.unit
 
+def caseTy
+    (τ : Ty)
+    (gu : (τ = Ty.unit) → Gen α)
+    (ga : (τ₁ τ₂ : Ty) → (τ = Ty.arrow τ₁ τ₂) → Gen α) :
+    Gen α :=
+  match τ with
+  | .unit => gu rfl
+  | .arrow τ₁ τ₂ => (ga τ₁ τ₂ rfl)
+
 @[simp]
 theorem support_arbTy :
     support arbTy = fun _ => True := by
@@ -485,15 +494,13 @@ theorem support_arbTy :
   induction v <;> simp_all
 
 @[simp]
-def support_Ty_rec
+def support_Ty_caseTy
     {gu : (τ = Ty.unit) → Gen α}
     {ga : (τ₁ τ₂ : Ty) → (τ = Ty.arrow τ₁ τ₂) → Gen α} :
-    support (Ty.rec
-            (motive := fun x => (τ = x) → Gen α)
-            (fun h => gu h)
-            (fun τ₁ τ₂ _ _ h => ga τ₁ τ₂ h)
+    support (caseTy
             τ
-            rfl) =
+            (fun h => gu h)
+            (fun τ₁ τ₂ h => ga τ₁ τ₂ h)) =
     (fun a =>
       (∃ h : τ = Ty.unit, a ∈ 〚gu h〛) ∨
       (∃ (τ₁ τ₂ : Ty) (h : τ = Ty.arrow τ₁ τ₂), a ∈ 〚ga τ₁ τ₂ h〛)) := by
@@ -514,18 +521,16 @@ def s_arbTy : @CorrectGen Ty (λ _ => True) :=
     simp
 
 @[reducible]
-def caseTy
+def s_caseTy
     (τ : Ty)
     (gu : (τ = Ty.unit) → @CorrectGen α P)
     (ga : (τ₁ τ₂ : Ty) → (τ = Ty.arrow τ₁ τ₂) → @CorrectGen α P) :
     @CorrectGen α P :=
     Subtype.mk
-      (Ty.casesOn
-        (motive := fun x => (τ = x) → Gen α)
+      (caseTy
         τ
         (fun h => (gu h).val)
-        (fun τ₁ τ₂ h => (ga τ₁ τ₂ h).val)
-        rfl) <| by
+        (fun τ₁ τ₂ h => (ga τ₁ τ₂ h).val)) <| by
     match τ with
     | .unit => exact (gu _).property
     | .arrow τ₁ τ₂ => exact (ga _ _ _).property
@@ -540,21 +545,16 @@ def total_arbTy : total arbTy := by
   simp [Gen.arbTy]
 
 @[simp]
-def total_Ty_rec
+def total_Ty_caseTy
     {gu : (τ = Ty.unit) → Gen α}
     {ga : (τ₁ τ₂ : Ty) → (τ = Ty.arrow τ₁ τ₂) → Gen α}
     (hu : ∀ h, total (gu h))
     (ha : ∀ τ₁ τ₂ h, total (ga τ₁ τ₂ h)) :
-    total (Ty.rec
-          (motive := fun x => (τ = x) → Gen α)
-          (fun h => gu h)
-          (fun τ₁ τ₂ _ _ h => ga τ₁ τ₂ h)
-          τ
-          rfl)
+    total (Gen.caseTy τ (fun h => gu h) (fun τ₁ τ₂ h => ga τ₁ τ₂ h))
   := by
   cases τ
   case unit => exact hu rfl
-  case arrow τ₁ τ₂ => simp_all only
+  case arrow τ₁ τ₂ => simp_all only [Gen.caseTy]
 
 end Total
 

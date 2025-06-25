@@ -20,7 +20,7 @@ def genWellTyped (Γ : List Ty) : Gen Term := by
         rw [← Term.fold_accu_Option_function_Option] <;> aesop
         ) (Term.s_unfold _)
       intros b Γ
-      apply caseTy b
+      apply s_caseTy b
       . intros
         gapply (s_pick _ _)
         . cgenerator_search
@@ -96,7 +96,7 @@ def genWellTyped (Γ : List Ty) : Gen Term := by
       apply Total.Term.total_unfold
       intros
       apply Total.total_bind
-      . apply Gen.Total.total_Ty_rec
+      . apply Gen.Total.total_Ty_caseTy
         . intro
           apply Total.total_pick
           . totality
