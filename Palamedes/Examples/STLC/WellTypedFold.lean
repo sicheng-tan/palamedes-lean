@@ -4,19 +4,16 @@ import Palamedes.Examples.STLC.Predicates
 
 open Gen CorrectGen
 
-def genWellTyped (Γ : List Ty) : Gen Term := by
-  -- generator_search (λ t => wellTyped Γ t = true)
-  let cg : CorrectGen (λ (t : Term) => wellTyped Γ t = true) := by
-    apply convert (by
-      funext
-      simp [Option.isSome_iff_exists]
-      apply exists_congr; intro; rw [true_and]) (s_bind _ _)
-    . apply s_arbTy
-    . intro
+def genWellTypedFold (Γ : List Ty) : Gen Term := by
+  -- generator_search (fun t => ∃ τ, getTypeFold t Γ = some τ)
+  let cg : CorrectGen (fun t => ∃ τ, getTypeFold t Γ = some τ) := by
+    unfold getTypeFold
+    gapply (s_bind _ _)
+    . cgenerator_search
+    . intro τ
       apply convert (by
         funext
         simp [guard, *]
-        conv => rhs; lhs; fun; apply (Term.coerce_to_fold (by aesop) (by aesop) (by intros; simp; rflm) (by intros; simp; rflm))
         rw [← Term.fold_accu_Option_function_Option] <;> aesop
         ) (Term.s_unfold _)
       intros b Γ
@@ -30,7 +27,7 @@ def genWellTyped (Γ : List Ty) : Gen Term := by
             . cgenerator_search
           . apply convert (by
             funext
-            unfold getType.match_1
+            unfold getTypeFold.match_1
             simp_all [Ty.deforest_eq, Ty.as_or, Option.bind_eq_some]
             rw [exists_comm]
             apply exists_congr; intro; rw [true_and]
@@ -46,9 +43,7 @@ def genWellTyped (Γ : List Ty) : Gen Term := by
           . apply convert (by aesop) (s_pure _)
           . apply convert (by
             funext
-            conv =>
-              -- rhs; apply congrArg; intro; apply congrArg; intro; lhs; lhs; apply (Ty.coerce_match (by aesop) (by aesop))
-            unfold getType.match_1
+            unfold getTypeFold.match_1
             simp_all [Ty.deforest_eq, Ty.as_or, Option.bind_eq_some]
             rw [exists_comm]
             apply exists_congr; intro; rw [true_and]

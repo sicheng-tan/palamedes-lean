@@ -305,6 +305,32 @@ theorem Ty.coerce_to_fold
     f τ = τ.fold g z := by
   induction τ <;> simp_all
 
+theorem Ty.coerce_match
+  {τ : Ty}
+  {f : Ty → α}
+  {z : α}
+  {g : Ty → Ty → α}
+  (h₁ : f .unit = z)
+  (h₂ : ∀ τ₁ τ₂, f (.arrow τ₁ τ₂) = g τ₁ τ₂) :
+  f τ = Ty.rec z (fun τ₁ τ₂ _ _ => g τ₁ τ₂) τ := by sorry
+
+/-
+getTypeFold.match_1 (fun τ₄ => Option Ty) b₁ (fun τ₁ τ₂ => (if τ₁ = b₂ then some () else failure).bind fun x => some τ₂)
+  fun x => none : Option Ty
+
+theorem List.coerce_match
+    {xs : List α}
+    {f : List α → β}
+    {z : β}
+    {g : α → List α → β}
+    (h1 : f [] = z)
+    (h2 : ∀ x xs, f (x :: xs) = g x xs) :
+    f xs = List.rec z (fun x xs _ => g x xs) xs := by
+  induction xs <;> simp_all
+
+getType.match_1 (fun τ₁ => Option Ty) b₁
+  (fun τarg τres => (if τarg = b₂ then some () else failure).bind fun x => some τres) fun _ => failure : Option Ty-/
+
 end FoldCoercion
 
 section FoldMerging
@@ -530,3 +556,17 @@ def total_Ty_rec
   case arrow τ₁ τ₂ => simp_all only
 
 end Total
+
+theorem Ty.deforest_eq
+    {b b_unit : β}
+    {b_arrow : Ty → Ty → β} :
+    Ty.rec b_unit (λ τ₁ τ₂ _ _ => b_arrow τ₁ τ₂) τ = b ↔
+    Ty.rec (b_unit = b) (λ τ₁ τ₂ _ _ => b_arrow τ₁ τ₂ = b) τ := by
+  induction τ <;> aesop
+
+theorem Ty.as_or
+  {P_unit : Prop}
+  {P_arrow : Ty → Ty → Prop} :
+  Ty.rec P_unit (λ τ₁ τ₂ _ _ => P_arrow τ₁ τ₂) τ ↔
+  (τ = .unit ∧ P_unit) ∨ (∃ τ₁ τ₂, τ = .arrow τ₁ τ₂ ∧ P_arrow τ₁ τ₂) := by
+  induction τ <;> aesop
