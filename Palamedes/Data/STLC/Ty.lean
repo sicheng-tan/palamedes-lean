@@ -312,7 +312,8 @@ theorem Ty.coerce_match
   {g : Ty → Ty → α}
   (h₁ : f .unit = z)
   (h₂ : ∀ τ₁ τ₂, f (.arrow τ₁ τ₂) = g τ₁ τ₂) :
-  f τ = Ty.rec z (fun τ₁ τ₂ _ _ => g τ₁ τ₂) τ := by sorry
+  f τ = Ty.rec z (fun τ₁ τ₂ _ _ => g τ₁ τ₂) τ := by
+  induction τ <;> simp_all
 
 /-
 getTypeFold.match_1 (fun τ₄ => Option Ty) b₁ (fun τ₁ τ₂ => (if τ₁ = b₂ then some () else failure).bind fun x => some τ₂)
