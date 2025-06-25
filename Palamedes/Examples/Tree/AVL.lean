@@ -1,5 +1,5 @@
 import Palamedes.Synthesizer
-import Palamedes.Examples.Tree.BST
+import Palamedes.Examples.Tree.BST.BST
 
 open Gen CorrectGen
 
