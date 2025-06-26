@@ -32,7 +32,10 @@ macro "simp_list_predicate" : tactic =>
 
 macro "simp_tree_predicate" : tactic =>
   `(tactic|
-    (try (conv => rhs; lhs; apply congrFun; apply (Tree.coerce_to_fold (by aesop) (by intros; simp_all; rflm)));
+    (first
+      | conv => rhs; lhs; apply (Tree.coerce_to_fold (by aesop) (by intros; simp_all; rflm))
+      | conv => rhs; lhs; apply congrFun; apply (Tree.coerce_to_fold (by aesop) (by intros; simp_all; rflm))
+      | skip
      first
       | rw [← Tree.fold_accu_Option_true]; (try aesop); done
       | rw [← Tree.fold_accu_Option_function]; (try aesop); done
