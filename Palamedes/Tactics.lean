@@ -29,10 +29,16 @@ macro "totality" : tactic =>
 -- probably want to revisit this.
 macro "optimality" : tactic =>
   `(tactic|
-    aesop
-      (add safe (by omega))
-      (add unsafe congrFun)
-      (add unsafe congrArg))
+    first
+    | funext;
+      aesop
+        (add safe (by omega))
+        (add unsafe congrFun)
+        (add unsafe congrArg); done
+    | aesop
+        (add safe (by omega))
+        (add unsafe congrFun)
+        (add unsafe congrArg))
 
 elab "optimize_gen " t:term : tactic =>
   withMainContext do
