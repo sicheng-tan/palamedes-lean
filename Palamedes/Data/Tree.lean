@@ -272,17 +272,18 @@ theorem Tree.fold_accu_Option_function_true
     {α σ : Type}
     {i : σ}
     {t : Tree α}
+    {z : σ → Bool}
     {f : (σ → Bool) → α → (σ → Bool) → (σ → Bool)}
     {g : α → σ → Bool}
     {stL stR :  α → σ → σ}
     (h : ∀ accL x accR s,
       f accL x accR s = true ↔ (do (return (g x s) && (← accL (stL x s)) && (← accR (stR x s)))) = some true)
     :
-    Tree.fold f (λ _ => true) t i = true ↔
+    Tree.fold f z t i = true ↔
     Tree.accuM
       (fun x s => (stL x s, stR x s))
       (fun _ x _ s => guard $ g x s)
-      (fun _ => some ())
+      (fun s => guard (z s))
       t
       i = some () := by
     induction t generalizing i <;> simp_all [Tree.fold, Tree.accuM, Option.bind_eq_some, guard]
