@@ -18,12 +18,13 @@ open Gen CorrectGen
 
 macro "simp_list_predicate" : tactic =>
   `(tactic|
-    (try (conv => rhs; lhs; apply (List.coerce_to_fold (by rflm) (by intros; simp_all; rflm)));
+  -- todo: the bool lemma below is overfitting to the evenLen example
+    (try (conv => rhs; lhs; try apply congrFun; apply (List.coerce_to_fold (by rflm) (by intros; simp_all [- Bool.not_eq_eq_eq_not]; rflm)));
      first
       | rw [← List.fold_accu_Option_true] <;> (try aesop); done
       | rw [← List.fold_accu_Option_function]; (try aesop); done
-      | rw [← List.fold_accu_Option_function_true];
-        (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
+      | rw [← List.fold_accu_Option_function_true] <;>
+        (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]) <;> try aesop; done
       | rw [← List.fold_accu_Option_basic]; (try aesop); done))
 
 macro "simp_tree_predicate" : tactic =>
