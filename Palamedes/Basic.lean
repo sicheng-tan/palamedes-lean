@@ -1,5 +1,14 @@
-import Palamedes.Examples.Simple
-import Palamedes.Examples.Range
+import Palamedes.Examples.Simple.Eq2
+import Palamedes.Examples.Simple.Eq2'
+import Palamedes.Examples.Simple.Eq2Or5
+import Palamedes.Examples.Simple.Eq2Or5'
+import Palamedes.Examples.Simple.ThreePlusOne
+
+import Palamedes.Examples.Range.Between5And10
+import Palamedes.Examples.Range.BetweenLoAndHi
+import Palamedes.Examples.Range.Gt5
+import Palamedes.Examples.Range.OneOrInRange
+
 import Palamedes.Examples.Arbitrary
 import Palamedes.Examples.OptimizationTests
 
