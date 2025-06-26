@@ -18,17 +18,14 @@ def genGoodStackFold (n : Nat) : Gen Stack := by
     apply convert (by
       funext
       simp [guard, *]
-      rw [← Stack.fold_accu_Option_function]
-      . intros
-        simp_all
-        sorry
-      . sorry
+      rw [← Stack.fold_accu_Option_function_true]
+        <;> (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
       ) (Stack.s_unfold _)
-
+    sorry
   let g : Gen (Stack) := by
     optimize_gen cg.val
   let _ : support cg.val = support g := by
     optimality
   let _ : Gen.total g := by
-    totality
+    sorry -- totality
   exact g

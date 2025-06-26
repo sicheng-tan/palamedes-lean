@@ -348,6 +348,7 @@ theorem Stack.fold_accu_Option_function_true
     {σ : Type}
     {i : σ}
     {s : Stack}
+    {z : σ → Bool}
     {f_c : Atom → (σ → Bool) → (σ → Bool)}
     {f_rc : Atom → (σ → Bool) → (σ → Bool)}
     {g_c : Atom → σ → Bool}
@@ -359,11 +360,11 @@ theorem Stack.fold_accu_Option_function_true
     (h_rc : ∀ x acc s', f_rc x acc s' = true ↔
       (do (return (g_rc x s') && (← acc (st_rc x s')))) = some true)
     :
-    Stack.fold (λ _ => true) f_c f_rc s i = true ↔
+    Stack.fold z f_c f_rc s i = true ↔
     Stack.accuM
       st_c
       st_rc
-      (fun _ => some ())
+      (fun s => guard (z s))
       (fun x _ s => guard $ g_c x s)
       (fun x _ s => guard $ g_rc x s)
       s
