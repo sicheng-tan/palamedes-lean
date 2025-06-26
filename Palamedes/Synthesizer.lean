@@ -19,7 +19,10 @@ open Gen CorrectGen
 macro "simp_list_predicate" : tactic =>
   `(tactic|
   -- todo: the bool lemma below is overfitting to the evenLen example
-    (try (conv => rhs; lhs; (try apply congrFun); apply (List.coerce_to_fold (by rflm) (by intros; simp_all [- Bool.not_eq_eq_eq_not]; rflm)));
+    (first
+      | conv => rhs; lhs; apply (List.coerce_to_fold (by rflm) (by intros; simp_all [- Bool.not_eq_eq_eq_not]; rflm))
+      | conv => rhs; lhs; apply congrFun; apply (List.coerce_to_fold (by rflm) (by intros; simp_all [- Bool.not_eq_eq_eq_not]; rflm))
+      | skip
      first
       | rw [← List.fold_accu_Option_true] <;> (try aesop); done
       | rw [← List.fold_accu_Option_function]; (try aesop); done
