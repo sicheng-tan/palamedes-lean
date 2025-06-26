@@ -2,53 +2,42 @@ import Palamedes.Synthesizer
 
 open Gen CorrectGen
 
--- def genAllTwosEvenLenFold : Gen (List Nat) := by
---   -- generator_search (fun xs => List.fold (fun x b => x == 2 && b) true xs = true ∧ List.fold (fun x b => !b) true xs = true)
---   let cg : CorrectGen (fun (xs : List Nat) => List.fold (fun x b => x == 2 && b) true xs = true ∧ List.fold (fun x b => !b) true xs = true) := by
---     apply convert (by
---       funext
---       simp [guard, *]
---       rw [List.fold_accu_Option_true (by aesop)] -- NOTE: You can do this
---       rw [List.fold_accu_Option_basic] <;> try (aesop; done)
---       rw [List.merge_accuM]
---     ) (List.cunfold _)
---     intros b s
---     replace ⟨ (), b ⟩ := b
-    -- simp only [Option.bind_eq_bind, Option.some_bind, Option.some.injEq,
---     --   Prod.mk.injEq, Option.bind_eq_some, Option.guard_eq_some, true_and]
---     apply caseBool (by assumption) <;> intro h <;> rw [h]
---     . gapply (cpick _ _)
---       . cgenerator_search
---       . apply convert (by
---           funext
---           -- TODO here
---           simp only [Option.bind_eq_bind, Option.some_bind, Option.some.injEq, Prod.mk.injEq,
---           Bool.true_eq_false, and_false, false_and, guard, beq_iff_eq, Option.pure_def,
---           Option.bind_eq_some, ite_eq_left_iff, reduceCtorEq, imp_false, Decidable.not_not,
---           Bool.not_eq_eq_eq_not, Bool.not_false, true_and, exists_const, Prod.exists,
---           Bool.exists_bool, Bool.false_eq_true, and_true, false_or, or_false, exists_and_left]
---           rfl
---           ) (cbind _ _)
---         . cgenerator_search
---         . cgenerator_search
---     . apply convert (by
---         funext
---         -- TODO here
---         simp only [Option.bind_eq_bind, Option.some_bind, Option.some.injEq, Prod.mk.injEq,
---         Bool.true_eq_false, and_false, false_and, guard, beq_iff_eq, Option.pure_def,
-
---         Option.bind_eq_some, ite_eq_left_iff, reduceCtorEq, imp_false, Decidable.not_not,
---         Bool.not_eq_eq_eq_not, Bool.not_false, true_and, exists_const,
---         Prod.exists, Bool.exists_bool,
---         Bool.false_eq_true, and_true, false_or, exists_and_left, eq_iff_iff]
---         rfl
---         ) (cbind _ _)
---       . cgenerator_search
---       . cgenerator_search
---   let g : Gen (List Nat) := by
---       optimize_gen cg.val
---   let _ : support cg.val = support g := by
---     sorry
---   let _ : Gen.total g := by
---     sorry
---   exact g
+def genAllTwosEvenLenFold : Gen (List Nat) := by
+  -- generator_search (fun xs => List.fold (fun x b => x == 2 && b) true xs = true ∧ List.fold (fun x b => !b) true xs = true)
+  let cg : CorrectGen (fun (xs : List Nat) => List.fold (fun x b => x == 2 && b) true xs = true ∧ List.fold (fun x b => !b) true xs = true) := by
+    apply convert (by
+      funext
+      simp [guard, *]
+      rw [← List.merge_accuM]
+      apply and_congr
+      . simp_list_predicate
+      . simp_list_predicate
+    ) (List.s_unfold _)
+    intros s b
+    replace ⟨s1, s2⟩ := s
+    apply caseBool s2
+    . intro
+      gapply (s_pick _ _)
+      . cgenerator_search
+      . apply convert (by
+          funext
+          simp [guard, *, Option.bind_eq_some]
+          apply exists_congr; intro; rw [true_and]) (s_bind _ _)
+        . cgenerator_search
+        . cgenerator_search
+    . intro
+      apply convert (by
+        funext
+        simp [guard, *]
+        rw [exists_comm]
+        apply exists_congr; intro; rw [true_and]
+      ) (s_bind _ _)
+      . cgenerator_search
+      . intro
+        apply convert (by
+          funext
+          simp [guard, *, Option.bind_eq_some]
+          rfl) (s_pure _)
+  let g : Gen (List Nat) := by
+    optimize_gen cg.val
+  exact g
