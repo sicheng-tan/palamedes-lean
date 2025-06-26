@@ -60,14 +60,11 @@ def genWellTyped (Γ : List Ty) : Gen Term := by
   let g : Gen (Term) := by
     optimize_gen cg.val
   have : support cg.val = support g := by
-    unfold g
-    unfold cg
-    simp_all [-eq_iff_iff]
-    congr! (config := .unfoldSameFun) <;> aesop
-  have : Gen.total g := by
     aesop
-      (rule_sets := [-default, -builtin, totality])
-      (config := {enableSimp := false})
-      (add safe (by intro))
-      (add 5% (by split))
+      (add unsafe (by congr! 1))
+      (add safe (by omega))
+      (erase constructors Iff)
+      (add 5% constructors Iff)
+  have : Gen.total g := by
+    totality
   exact g

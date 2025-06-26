@@ -1,5 +1,6 @@
 import Palamedes.Synthesizer
 import Palamedes.Examples.STLC.Predicates
+import Mathlib.Tactic.CongrExclamation
 
 open Gen CorrectGen
 
@@ -41,7 +42,7 @@ def genWellTypedFold (Γ : List Ty) : Gen Term := by
           . apply (s_indicesOf _ _)
           . cgenerator_search
         . gapply (s_pick _ _)
-          . apply convert (by aesop) (s_pure _)
+          . apply convert (by funext; rfl) (s_pure _)
           . apply convert (by
             funext
             unfold getTypeFold.match_1
@@ -54,36 +55,11 @@ def genWellTypedFold (Γ : List Ty) : Gen Term := by
   let g : Gen (Term) := by
     optimize_gen cg.val
   have support_eq : support cg.val = support g := by
-    funext
-    unfold cg g
-    simp_all
-    apply exists_congr
-    intros
-    apply Iff.of_eq
-    apply congrFun
-    apply congrFun
-    apply congrArg
-    funext
-    simp
-    apply exists_congr
-    intros
-    apply and_congr
-    . apply or_congr
-      . apply and_congr
-        . exact Eq.to_iff rfl
-        . apply or_congr
-          . exact Eq.to_iff rfl
-          . aesop
-      . apply exists_congr
-        intros
-        apply exists_congr
-        intros
-        apply and_congr
-        . exact Eq.to_iff rfl
-        . aesop
-    . exact Eq.to_iff rfl
-  clear support_eq
-  clear cg
+    aesop
+      (add unsafe (by congr! 1))
+      (add safe (by omega))
+      (erase constructors Iff)
+      (add unsafe constructors Iff)
   have : Gen.total g := by
     totality
   exact g
