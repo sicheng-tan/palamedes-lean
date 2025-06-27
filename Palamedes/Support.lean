@@ -1,4 +1,4 @@
-import Palamedes.Synthesizer -- TODO: Don't just import everything
+import Palamedes.Gen
 
 open Gen
 
@@ -16,6 +16,12 @@ theorem support_assume_bind :
 
 theorem support_pick_bind :
     support (pick (x >>= f) (y >>= f)) = support (pick x y >>= f) := by
+  aesop
+
+theorem support_if_bind
+    {x : b = true → Gen α}
+    {y : ¬ (b = true) → Gen α} :
+    support (if h : b then x h >>= f else y h >>= f) = support ((if h : b then x h else y h) >>= f) := by
   aesop
 
 theorem support_pure_bind :
@@ -38,19 +44,10 @@ theorem support_pick_congr
     support (pick x y) = support (pick x' y') := by
   aesop
 
-theorem Term.support_unfold_congr
-    {hf : ∀ {b}, support (f b) = support (f' b)} :
-    support (Term.unfold f b) = support (Term.unfold f' b) := by
-  aesop
-
-theorem Term.support_caseTy_congr
-    {unitCase : (τ = .unit) → Gen α}
-    {h_unitCase : ∀ {h}, support (unitCase h) = support (unitCase' h)}
-    {h_arrowCase : ∀ {τ₁ τ₂ h}, support (arrowCase τ₁ τ₂ h) = support (arrowCase' τ₁ τ₂ h)} :
-    support (caseTy τ unitCase arrowCase) = support (caseTy τ unitCase' arrowCase') := by
-  aesop
-
-theorem Tree.support_unfold_congr
-    {hf : ∀ {b}, support (f b) = support (f' b)} :
-    support (Tree.unfold f b) = support (Tree.unfold f' b) := by
+theorem support_if_congr
+    {x x' : b = true → Gen α}
+    {y y' : ¬ (b = true) → Gen α}
+    (hx : ∀ {h}, support (x h) = support (x' h))
+    (hy : ∀ {h}, support (y h) = support (y' h)) :
+    support (if h : b then x h else y h) = support (if h : b then x' h else y' h) := by
   aesop

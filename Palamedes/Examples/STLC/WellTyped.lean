@@ -60,11 +60,7 @@ def genWellTyped (Γ : List Ty) : Gen Term := by
   let g : Gen (Term) := by
     optimize_gen cg.val
   have : support cg.val = support g := by
-    aesop
-      (add unsafe (by congr! 1))
-      (add safe (by omega))
-      (erase constructors Iff)
-      (add 5% constructors Iff)
+    optimality
   have : Gen.total g := by
     totality
   exact g

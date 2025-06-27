@@ -4,6 +4,12 @@ import Palamedes.CorrectGen
 import Palamedes.Optimizer
 import Palamedes.Total
 import Palamedes.Data.List
+import Palamedes.Data.Stack
+import Palamedes.Data.STLC.Ty
+import Palamedes.Data.STLC.Term
+import Palamedes.Data.Tree
+import Palamedes.Data.Nat
+import Palamedes.Support
 
 open Lean Tactic Elab Meta Tactic
 
@@ -29,16 +35,34 @@ macro "totality" : tactic =>
 -- probably want to revisit this.
 macro "optimality" : tactic =>
   `(tactic|
-    first
-    | funext;
-      aesop
-        (add safe (by omega))
-        (add unsafe congrFun)
-        (add unsafe congrArg); done
-    | aesop
-        (add safe (by omega))
-        (add unsafe congrFun)
-        (add unsafe congrArg))
+    repeat'
+      first
+        | rfl
+        | (intro)
+        | try simp only
+          rw [support_assume_pick]
+        | try simp only
+          rw [support_pick_assume]
+        | try simp only
+          rw [support_assume_bind]
+        | try simp only
+          rw [support_pure_bind]
+        | try simp only
+          rw [support_bind_bind]
+        | try simp only
+          rw [← support_pick_bind]
+        | try simp only
+          rw [← support_if_bind]
+        | apply Term.support_unfold_congr
+        | apply Tree.support_unfold_congr
+        | apply List.support_unfold_congr
+        | apply Stack.support_unfold_congr
+        | apply Ty.support_unfold_congr
+        | apply Gen.support_caseTy_congr
+        | apply Gen.Gen.support_Nat_rec_congr
+        | apply support_bind_congr
+        | apply support_pick_congr
+        | apply support_if_congr)
 
 elab "optimize_gen " t:term : tactic =>
   withMainContext do
@@ -66,7 +90,7 @@ register_option palamedes.debug : Bool := {
 
 def generatorSearchElab
     (stx : Syntax)
-    (t : Term)
+    (t : Lean.Term)
     (checkTotal : Bool)
     (tryThis : Bool) :
     TacticM Unit := do
