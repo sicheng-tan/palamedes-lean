@@ -1,69 +1,22 @@
-import Aesop
 import Palamedes.Gen
 import Palamedes.CorrectGen
 import Palamedes.Optimizer
-import Palamedes.Total
-import Palamedes.Data.List
-import Palamedes.Data.Stack
-import Palamedes.Data.STLC.Ty
-import Palamedes.Data.STLC.Term
-import Palamedes.Data.Tree
-import Palamedes.Data.Nat
-import Palamedes.Support
+import Palamedes.Synthesizer.CGeneratorSearch
+import Palamedes.Synthesizer.Optimality
+import Palamedes.Synthesizer.Totality
 
 open Lean Tactic Elab Meta Tactic
 
 initialize
   registerTraceClass `palamedes.synthesis
 
-macro "cgenerator_search" : tactic =>
-  `(tactic|
-    aesop
-      (rule_sets := [-default, -builtin, synthesis])
-      (config := {enableSimp := false}))
+register_option palamedes.debug : Bool := {
+  defValue := false
+  group := "palamedes"
+  descr := "enable debug messages from palamedes"
+}
 
-macro "totality" : tactic =>
-  `(tactic|
-    aesop
-      (rule_sets := [-default, -builtin, totality])
-      (config := {enableSimp := false})
-      (add safe (by intro))
-      (add 5% (by split))
-      (add 5% (by simp)))
-
--- TODO: This is probably not good enough. If the optimizer fails to prove goals we care about, we
--- probably want to revisit this.
-macro "optimality" : tactic =>
-  `(tactic|
-    repeat'
-      first
-        | rfl
-        | (intro)
-        | try simp only
-          rw [support_assume_pick]
-        | try simp only
-          rw [support_pick_assume]
-        | try simp only
-          rw [support_assume_bind]
-        | try simp only
-          rw [support_pure_bind]
-        | try simp only
-          rw [support_bind_bind]
-        | try simp only
-          rw [← support_pick_bind]
-        | try simp only
-          rw [← support_if_bind]
-        | apply Term.support_unfold_congr
-        | apply Tree.support_unfold_congr
-        | apply List.support_unfold_congr
-        | apply Stack.support_unfold_congr
-        | apply Ty.support_unfold_congr
-        | apply Gen.support_caseTy_congr
-        | apply Gen.Gen.support_Nat_rec_congr
-        | apply support_bind_congr
-        | apply support_pick_congr
-        | apply support_if_congr)
-
+/-- This is just a utility tactic for debugging. We don't call it in the real synthesizer. -/
 elab "optimize_gen " t:term : tactic =>
   withMainContext do
     let g ← getMainGoal
@@ -74,19 +27,12 @@ elab "optimize_gen " t:term : tactic =>
     let gen''' ← withReducible (reduce gen'')
     g.assign gen'''
 
-open Lean Tactic Elab Meta Tactic in
 def solveGoalWithTactic (goalType : Expr) (tactic : TSyntax `tactic) : TacticM Expr := do
   let m ← mkFreshExprMVar goalType
   let unsolved ← evalTacticAt tactic m.mvarId!
   if unsolved.length > 0 then do
     throwError "goals left unsolved: {unsolved}"
   instantiateMVars m
-
-register_option palamedes.debug : Bool := {
-  defValue := false
-  group := "palamedes"
-  descr := "enable debug messages from palamedes"
-}
 
 def generatorSearchElab
     (stx : Syntax)
@@ -195,55 +141,3 @@ def expandGeneratorSearch? : Tactic := fun stx =>
   | `(tactic| generator_search? $t) =>
     generatorSearchElab stx t true true
   | _ => throwError "invalid syntax"
-
--- From Kyle Miller
-
-def ensureLHSIsMVar (g : MVarId) : MetaM (Expr × Expr × MVarId) :=
-  g.withContext do
-    let gty ← g.getType'
-    let some (_, lhs, rhs) := gty.eq? | throwError "goal must be eq"
-    let lhs ← whnfCore lhs
-    if lhs.getAppFn.isMVar then
-      return (lhs, rhs, g)
-    let rhs ← whnfCore rhs
-    if rhs.getAppFn.isMVar then
-      let [g] ← g.applyConst ``Eq.symm | throwError "failure to apply Eq.symm"
-      return (rhs, lhs, g)
-    throwError "neither the LHS nor the RHS is a metavariable application"
-
-/--
-Replace each expr in `exprs` with the corresponding fvar in `fvars` by using `kabstract`,
-and then creates a lambda that closes the fvars.
-Throws an error if the result is not type correct.
-Returns a lambda, like `mkLambdaFVars fvars e`.
--/
-def mkLambdaGeneralizeFVars (exprs : Array Expr) (fvars : Array Expr) (e : Expr) : MetaM Expr := do
-  let e ← (exprs.zip fvars).foldrM (init := e) fun (expr, fvar) e => do
-    let e' ← kabstract e expr
-    pure <| e'.instantiate1 fvar
-  unless ← isTypeCorrect e do
-    throwError "failed to generalize expression"
-  return (← getLCtx).mkBinding (isLambda := true) fvars e
-
-elab "rflm" : tactic => do
-  let g ← popMainGoal
-  let (lhs, rhs, g) ← ensureLHSIsMVar g
-  g.withContext do
-    let m := lhs.getAppFn.mvarId!
-    if ← m.isDelayedAssigned then
-      -- We could probably try to handle these, but an error for now.
-      throwError "metavariable is delayed assigned"
-    let args ← lhs.getAppArgs.mapM instantiateMVars
-    -- Enter a telescope for the mvar type.
-    -- We will replace each `arg` with the corresponding `fvar` while using `kabstract`.
-    -- This makes sure that when we do `mkLambdaFVars` that we get a function with
-    -- the right type.
-    forallBoundedTelescope (← m.getType) args.size fun fvars _ => do
-      let rhs ← instantiateMVars rhs
-      let rhs' ← mkLambdaGeneralizeFVars args fvars rhs
-      unless ← m.checkedAssign rhs' do
-        throwError "failed to assign metavariable (due to occurs check or local context mismatches)\n\n\
-          Metavariable:{m}\n\
-          Value:{indentExpr rhs'}"
-    -- Given that that succeeded, now both sides are unified, so Eq.refl must work.
-    g.assign (← mkEqRefl rhs)
