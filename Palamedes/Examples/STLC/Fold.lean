@@ -1,6 +1,7 @@
 import Palamedes.Synthesizer
 import Palamedes.Examples.STLC.Predicates
 import Mathlib.Tactic.CongrExclamation
+import Palamedes.Support -- TODO Remove
 
 open Gen CorrectGen
 
@@ -55,11 +56,27 @@ def genWellTypedFold (Γ : List Ty) : Gen Term := by
   let g : Gen (Term) := by
     optimize_gen cg.val
   have support_eq : support cg.val = support g := by
-    aesop
-      (add unsafe (by congr! 1))
-      (add safe (by omega))
-      (erase constructors Iff)
-      (add unsafe constructors Iff)
+    repeat'
+      first
+        | rfl
+        | (intro)
+        | try simp only
+          rw [support_assume_pick]
+        -- | try simp only
+        --   rw [support_pick_assume]
+        | try simp only
+          rw [support_assume_bind]
+        -- | try simp only
+        --   rw [support_pure_bind]
+        -- | try simp only
+        --   rw [support_bind_bind]
+        -- | try simp only
+        --   rw [← support_pick_bind]
+        | apply Term.support_unfold_congr
+        | apply Tree.support_unfold_congr
+        | apply Term.support_caseTy_congr
+        | apply support_bind_congr
+        | apply support_pick_congr
   have : Gen.total g := by
     totality
   exact g
