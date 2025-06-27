@@ -12,19 +12,7 @@ BASE_CMD = [
     "-Dtrace.profiler=true",
 ]
 FILES = [
-    "Palamedes/Examples/Simple.lean", "Palamedes/Examples/Range.lean",
-    "Palamedes/Examples/List/AllTwos.lean",
-    "Palamedes/Examples/List/AllTwosEvenLen.lean",
-    "Palamedes/Examples/List/EvenLen.lean",
-    "Palamedes/Examples/List/IncreasingByOne.lean",
-    "Palamedes/Examples/List/LengthK.lean",
-    "Palamedes/Examples/List/LengthKAllTwos.lean",
-    "Palamedes/Examples/List/SortedBetween.lean",
-    "Palamedes/Examples/List/True.lean", "Palamedes/Examples/Tree/AVL.lean",
-    "Palamedes/Examples/Tree/BST.lean",
-    "Palamedes/Examples/Tree/CompleteTree.lean",
-    "Palamedes/Examples/Tree/GoodTree.lean",
-    "Palamedes/Examples/Tree/NETree.lean", "Palamedes/Examples/Tree/RBT.lean"
+    "Palamedes/Examples/Tree/BST/BST.lean",
 ]
 
 # Regular expression to match the desired output
@@ -61,5 +49,6 @@ for label, numbers in data.items():
     label = label.replace("TARGET", "`\\textbf{v}`")
 
     print(
-        "\\mintinline[mathescape=true,escapeinside=``]{lean}" +
-        f"|{label}| & Yes & ${mean * 1000:.2f}$ & (${stdev * 1000:.2f}$) \\\\")
+        "\\mintinline[mathescape=true,escapeinside=``]{text}" +
+        f"|{label}| & $\checkmark$ & ${mean * 1000:.2f}$ & (${stdev * 1000:.2f}$) \\\\"
+    )

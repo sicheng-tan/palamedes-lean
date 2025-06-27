@@ -229,6 +229,11 @@ theorem Stack.support_unfold :
       simp_all
       exists (some s')
 
+theorem Stack.support_unfold_congr
+    {hf : ∀ {b}, support (f b) = support (f' b)} :
+    support (Stack.unfold f b) = support (Stack.unfold f' b) := by
+  aesop
+
 end Unfold
 
 section FoldConversions

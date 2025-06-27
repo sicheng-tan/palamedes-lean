@@ -183,6 +183,11 @@ theorem Tree.support_unfold :
       rw [Nat.add_comm]
       simp_all [Tree.unfold_aux_monotonic]
 
+theorem Tree.support_unfold_congr
+    {hf : ∀ {b}, support (f b) = support (f' b)} :
+    support (Tree.unfold f b) = support (Tree.unfold f' b) := by
+  aesop
+
 end Unfold
 
 section FoldConversions

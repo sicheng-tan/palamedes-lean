@@ -54,6 +54,26 @@ def support_Nat_rec
   . intro h
     cases h <;> aesop
 
+theorem support_Nat_rec_congr
+    {gz gz' : (n = 0) → Gen α}
+    {gs gs' : (n' : Nat) → (n = n' + 1) → Gen α}
+    (hz : ∀ {h}, support (gz h) = support (gz' h))
+    (hs : ∀ {n'} {h}, support (gs n' h) = support (gs' n' h)) :
+    support (Nat.rec
+            (motive := fun x => (n = x) → Gen α)
+            (fun h => gz h)
+            (fun a _ b => gs a b)
+            n
+            rfl) =
+    support (Nat.rec
+            (motive := fun x => (n = x) → Gen α)
+            (fun h => gz' h)
+            (fun a _ b => gs' a b)
+            n
+            rfl)
+     := by
+  aesop
+
 @[simp]
 theorem support_gt :
     support (gt lo) = fun a => lo < a := by

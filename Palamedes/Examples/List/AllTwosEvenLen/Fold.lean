@@ -40,4 +40,8 @@ def genAllTwosEvenLenFold : Gen (List Nat) := by
           rfl) (s_pure _)
   let g : Gen (List Nat) := by
     optimize_gen cg.val
+  let _ : support cg.val = support g := by
+    optimality
+  let _ : Gen.total g := by
+    totality
   exact g

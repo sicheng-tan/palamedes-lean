@@ -158,6 +158,11 @@ theorem List.support_unfold :
       simp_all
       exists some xs
 
+theorem List.support_unfold_congr
+    {hf : ∀ {b}, support (f b) = support (f' b)} :
+    support (List.unfold f b) = support (List.unfold f' b) := by
+  aesop
+
 end Unfold
 
 section FoldConversions
