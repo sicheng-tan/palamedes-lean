@@ -186,6 +186,11 @@ theorem Ty.support_unfold :
       rw [Nat.add_comm]
       simp_all [Ty.unfold_aux_monotonic]
 
+theorem Ty.support_unfold_congr
+    {hf : ∀ {b}, support (f b) = support (f' b)} :
+    support (Ty.unfold f b) = support (Ty.unfold f' b) := by
+  aesop
+
 end Unfold
 
 section FoldConversions
@@ -511,6 +516,13 @@ def support_Ty_caseTy
     cases τ <;> aesop
   . intro h
     cases h <;> aesop
+
+theorem support_caseTy_congr
+    {unitCase : (τ = .unit) → Gen α}
+    {h_unitCase : ∀ {h}, support (unitCase h) = support (unitCase' h)}
+    {h_arrowCase : ∀ {τ₁ τ₂ h}, support (arrowCase τ₁ τ₂ h) = support (arrowCase' τ₁ τ₂ h)} :
+    support (caseTy τ unitCase arrowCase) = support (caseTy τ unitCase' arrowCase') := by
+  aesop
 
 namespace CorrectGen
 
