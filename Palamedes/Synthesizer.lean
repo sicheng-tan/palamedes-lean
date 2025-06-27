@@ -109,6 +109,7 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by gapply s_arbBool),
   (by gapply s_arbNat),
   (by gapply s_arbTy),
+  (by gapply s_arbAtom),
   (by gapply s_gt),
   (by gapply s_between_partial),
   (by gapply (s_between (by first | aesop | omega))),
