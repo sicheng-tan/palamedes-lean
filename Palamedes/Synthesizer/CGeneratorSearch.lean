@@ -125,3 +125,9 @@ macro "cgenerator_search" : tactic =>
     aesop
       (rule_sets := [-default, -builtin, synthesis])
       (config := {enableSimp := false}))
+
+macro "cgenerator_search?" : tactic =>
+  `(tactic|
+    aesop?
+      (rule_sets := [-default, -builtin, synthesis])
+      (config := {enableSimp := false}))
