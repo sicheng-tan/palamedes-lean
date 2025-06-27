@@ -52,13 +52,6 @@ theorem total_map
   simp_all [total]
 
 @[simp, aesop safe (rule_sets := [totality])]
-theorem total_internalizeProofs (h : total g) : total (internalizeProofs g):= by
-  induction g <;> simp_all [internalizeProofs, total, total_pick, total_indexed]
-  case assume b f ihf =>
-    have ⟨h, ht⟩ := h
-    simp_all [internalizeProofs, total, total_assume]
-
-@[simp, aesop safe (rule_sets := [totality])]
 theorem total_dite
     {g₁ : b = true → Gen α}
     {g₂ : ¬ (b = true) → Gen α}
