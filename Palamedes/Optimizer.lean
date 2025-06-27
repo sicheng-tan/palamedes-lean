@@ -74,7 +74,7 @@ def optimizePick? (x y : Expr) : MetaM (Option Expr) :=
   | assume _ b f => do
     let c ← mkEq b (.const ``true [])
     let fPos ← withLocalDecl `h .default c fun h => do
-      mkLambdaFVars #[h] (← mkAppM ``pick #[.app f (.bvar 0), y])
+      mkLambdaFVars #[h] (← mkAppM ``pick #[.app f h, y])
     let fNeg ← withLocalDecl `h .default (.app (.const ``Not []) c) fun h =>
       mkLambdaFVars #[h] y
     return (some (← mkAppM ``dite #[c, fPos, fNeg]))
@@ -84,7 +84,7 @@ def optimizePick? (x y : Expr) : MetaM (Option Expr) :=
     | assume _ b f => do
       let c ← mkEq b (.const ``true [])
       let fPos ← withLocalDecl `h .default c fun h => do
-        mkLambdaFVars #[h] (← mkAppM ``pick #[x, .app f (.bvar 0)])
+        mkLambdaFVars #[h] (← mkAppM ``pick #[x, .app f h])
       let fNeg ← withLocalDecl `h .default (.app (.const ``Not []) c) fun h =>
         mkLambdaFVars #[h] x
       return (some (← mkAppM ``dite #[c, fPos, fNeg]))
