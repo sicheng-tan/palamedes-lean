@@ -95,7 +95,6 @@ macro "gapply " t:term : tactic =>
 
 add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by fail_if_no_progress intros),
-  (by assumption),
   (by gapply (s_pure _)),
   (by gapply (s_pick _ _)),
   (by gapply (s_bind _ _)),
@@ -113,6 +112,7 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by gapply s_gt),
   (by gapply s_between_partial),
   (by gapply (s_between (by first | aesop | omega))),
+  (by assumption),
 ]
 
 add_aesop_rules 5% (rule_sets := [synthesis]) [
