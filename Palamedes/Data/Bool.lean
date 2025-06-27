@@ -16,9 +16,9 @@ def s_arbBool : @CorrectGen Bool (fun _ => True) :=
 def caseBool
     (b : Bool)
     (gt : (b = true) → @CorrectGen α P)
-    (gf : (b = false) → @CorrectGen α P) :
+    (gf : (¬b = true) → @CorrectGen α P) :
     @CorrectGen α P :=
-  Subtype.mk (if h : b then (gt h).val else (gf (by simp [h])).val) <| by
+  Subtype.mk (if h : b then (gt h).val else (gf h).val) <| by
     split <;> rename_i h
     . simp [(gt h).property]
     . simp [(gf _).property]

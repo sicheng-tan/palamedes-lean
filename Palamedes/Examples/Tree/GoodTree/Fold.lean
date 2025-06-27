@@ -9,7 +9,7 @@ def genGoodTreeFold (n₁ n₂ : Nat) : Gen (Tree Nat) := by
   let cg : CorrectGen (fun (t : Tree Nat) => Tree.fold (fun bl x br => bl && false && br) (n₁ == n₂) t = true) := by
     gapply (Tree.s_unfold _)
     intros b s
-    apply caseBool (by assumption) <;> intro h <;> subst h
+    apply caseBool (by assumption) <;> intro h
     . exact (Subtype.mk (assume (n₁ == n₂) (fun _ => pure TreeF.leaf)) <| by simp_all)
     . gapply (s_pick _ _)
       . exact (Subtype.mk (assume (¬n₁ == n₂) (fun _ => pure TreeF.leaf)) <| by simp_all)
