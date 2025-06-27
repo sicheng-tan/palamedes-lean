@@ -50,5 +50,5 @@ for label, numbers in data.items():
 
     print(
         "\\mintinline[mathescape=true,escapeinside=``]{text}" +
-        f"|{label}| & $\checkmark$ & ${mean * 1000:.2f}$ & (${stdev * 1000:.2f}$) \\\\"
+        f"|{label}| & $\checkmark$ & ${int(mean * 1000)}$ & (${stdev * 1000:.1f}$) \\\\"
     )
