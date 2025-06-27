@@ -2,13 +2,13 @@ import Palamedes.Synthesizer
 
 open Gen CorrectGen
 
-def isGoodInt : Int → Bool
-  | 0 => true
-  | 1 => true
-  | _ => false
+@[simp]
+def isGoodNat (n : Nat) : Bool :=
+  n == 0 || n == 1
 
+@[simp]
 def isGoodAtom : Atom → Bool
-  | .atm z _ => isGoodInt z
+  | .atm z _ => isGoodNat z
 
 @[simp]
 def isGoodStack (n : Nat) (s : Stack) : Bool :=
