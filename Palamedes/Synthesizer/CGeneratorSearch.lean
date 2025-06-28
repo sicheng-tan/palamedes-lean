@@ -100,6 +100,17 @@ macro "norm_for_bind" : tactic =>
           | apply exists_congr; intro; rw [true_and]
       | rfl)
 
+macro "norm_for_bind'" : tactic =>
+  `(tactic|
+    first
+      | funext
+        simp [guard, Option.bind_eq_some_iff, *]
+        rw [exists_comm]
+        first
+          | rfl
+          | apply exists_congr; intro; rw [true_and]
+      | rfl)
+
 macro "gapply " t:term : tactic =>
   `(tactic| apply convert (by simp_predicate) $t)
 
@@ -113,6 +124,7 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by gapply (s_pure _)),
   (by gapply (s_pick _ _)),
   (by apply convert (by norm_for_bind) (s_bind _ _)),
+  (by apply convert (by norm_for_bind') (s_bind _ _)),
   (by gapply (List.s_unfold _)),
   (by gapply (Tree.s_unfold _)),
   (by gapply (Stack.s_unfold _)),

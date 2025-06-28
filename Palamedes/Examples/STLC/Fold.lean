@@ -48,12 +48,7 @@ def genWellTypedFold (Γ : List Ty) : Gen Term := by
           . cgenerator_search
         . gapply (s_pick _ _)
           . apply convert (by funext; rfl) (s_pure _)
-          . apply convert
-              (by
-                funext
-                rw [exists_comm]
-                congr; funext; rw [true_and])
-              (s_bind _ _)
+          . apply convert (by norm_for_bind') (s_bind _ _)
             . cgenerator_search
             . intro
               apply (s_bind _ _)
