@@ -234,9 +234,9 @@ theorem Ty.fold_accu_Option_true
           cases v₁ <;> cases v₂ <;>
             simp_all [Ty.fold, Ty.accuM, guard]
         . -- (<-)
-          rw [Option.bind_eq_some] at hf
+          rw [Option.bind_eq_some_iff] at hf
           replace ⟨ v₁, hf ⟩ := hf
-          rw [Option.bind_eq_some] at hf
+          rw [Option.bind_eq_some_iff] at hf
           replace ⟨ h₁, ⟨ v₂, h₂ ⟩ ⟩ := hf
           simp_all [Ty.fold, Ty.accuM, guard]
 
@@ -259,7 +259,7 @@ theorem Ty.fold_accu_Option_function
       (fun s => some (z s))
       τ
       i = some v := by
-    induction τ generalizing v i <;> simp_all [Ty.fold, Ty.accuM, Option.bind_eq_some]
+    induction τ generalizing v i <;> simp_all [Ty.fold, Ty.accuM, Option.bind_eq_some_iff]
     case arrow τ₁ τ₂ ih₁ ih₂ =>
       apply Iff.intro <;> intro hg
       . -- (->)
@@ -291,7 +291,7 @@ theorem Ty.fold_accu_Option_function_true
       (fun _ => some ())
       τ
       i = some () := by
-    induction τ generalizing i <;> simp_all [Ty.fold, Ty.accuM, Option.bind_eq_some, guard]
+    induction τ generalizing i <;> simp_all [Ty.fold, Ty.accuM, Option.bind_eq_some_iff, guard]
     case arrow τ₁ τ₂ ih₁ ih₂ =>
       apply Iff.intro <;> intro hg <;> simp_all
       replace ⟨⟨ v₁, h₁ ⟩, ⟨ v₂, h₂ ⟩ , hg⟩ := hg <;> simp_all
@@ -372,10 +372,10 @@ theorem Ty.merge_accuM
     apply Iff.intro
     . -- (->)
       intro ⟨ h₁, h₂ ⟩
-      rw [Option.bind_eq_some] at h₁ h₂
+      rw [Option.bind_eq_some_iff] at h₁ h₂
       replace ⟨ v₁₁, ⟨ hv₁₁, h₁ ⟩  ⟩ := @h₁
       replace ⟨ v₁₂, ⟨ hv₁₂, h₂ ⟩  ⟩ := @h₂
-      rw [Option.bind_eq_some] at h₁ h₂
+      rw [Option.bind_eq_some_iff] at h₁ h₂
       replace ⟨ v₂₁, ⟨ hv₂₁, h₁ ⟩  ⟩ := @h₁
       replace ⟨ v₂₂, ⟨ hv₂₂, h₂ ⟩  ⟩ := @h₂
       replace ih₁ := @ih₁ (st₁ i₁).1 (st₂ i₂).1 v₁₁ v₁₂
@@ -383,13 +383,13 @@ theorem Ty.merge_accuM
       simp_all
     . -- (<-)
       intro h
-      rw [Option.bind_eq_some] at h
+      rw [Option.bind_eq_some_iff] at h
       replace ⟨ ⟨ v₁₁, v₁₂ ⟩ , ⟨ h₁, h ⟩ ⟩ := @h
-      rw [Option.bind_eq_some] at h
+      rw [Option.bind_eq_some_iff] at h
       replace ⟨ ⟨ v₂₁, v₂₂ ⟩ , ⟨ h₂, h ⟩ ⟩ := @h
-      rw [Option.bind_eq_some] at h
+      rw [Option.bind_eq_some_iff] at h
       replace ⟨ v₁, ⟨ hv₁ , h ⟩ ⟩ := @h
-      rw [Option.bind_eq_some] at h
+      rw [Option.bind_eq_some_iff] at h
       replace ⟨ v₂, ⟨ hv₂ , h ⟩ ⟩ := @h
       replace ih₁ := @ih₁ (st₁ i₁).1 (st₂ i₂).1 v₁₁ v₁₂
       replace ih₂ := @ih₂ (st₁ i₁).2 (st₂ i₂).2 v₂₁ v₂₂
@@ -432,9 +432,9 @@ def Ty.s_unfold
       apply Iff.intro <;> intro h
       . replace ⟨ b₁, s₁, b₂, s₂, ⟨ ⟨ τ', ⟨ hτ' , h ⟩  ⟩, ⟨ hτ₁, hτ₂ ⟩ ⟩ ⟩ := h
         cases τ' <;> simp_all [(g b s).property]
-      . rw [Option.bind_eq_some] at h
+      . rw [Option.bind_eq_some_iff] at h
         replace ⟨ b₁, ⟨ h₁, h ⟩ ⟩ := h
-        rw [Option.bind_eq_some] at h
+        rw [Option.bind_eq_some_iff] at h
         replace ⟨ b₂, ⟨ h₂, h ⟩ ⟩ := h
         exists b₁, (st s).fst, b₂, (st s).snd
         apply And.intro

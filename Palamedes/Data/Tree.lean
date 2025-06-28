@@ -233,9 +233,9 @@ theorem Tree.fold_accu_Option_true
           cases vl <;> cases vr <;>
             simp_all [Tree.fold, Tree.accuM, guard]
         . -- (<-)
-          rw [Option.bind_eq_some] at hf
+          rw [Option.bind_eq_some_iff] at hf
           replace ⟨ vl, hf ⟩ := hf
-          rw [Option.bind_eq_some] at hf
+          rw [Option.bind_eq_some_iff] at hf
           replace ⟨ h1, ⟨ v, h2 ⟩ ⟩ := hf
           simp_all [Tree.fold, Tree.accuM, guard]
 
@@ -258,7 +258,7 @@ theorem Tree.fold_accu_Option_function
       (fun s => some (z s))
       t
       i = some v := by
-    induction t generalizing v i <;> simp_all [Tree.fold, Tree.accuM, Option.bind_eq_some]
+    induction t generalizing v i <;> simp_all [Tree.fold, Tree.accuM, Option.bind_eq_some_iff]
     case node l x r ihl ihr =>
       apply Iff.intro <;> intro hg
       . -- (->)
@@ -291,7 +291,7 @@ theorem Tree.fold_accu_Option_function_true
       (fun s => guard (z s))
       t
       i = some () := by
-    induction t generalizing i <;> simp_all [Tree.fold, Tree.accuM, Option.bind_eq_some, guard]
+    induction t generalizing i <;> simp_all [Tree.fold, Tree.accuM, Option.bind_eq_some_iff, guard]
     case node l x r ihl ihr =>
       apply Iff.intro <;> intro hg <;> simp_all
       replace ⟨⟨ vl, hl ⟩, ⟨ vr, hr ⟩ , hg⟩ := hg <;> simp_all
@@ -349,10 +349,10 @@ theorem Tree.merge_accuM
       intro ⟨ H1, H2 ⟩
       unfold accuM at H1 H2 ⊢
       simp at H1 H2 ⊢
-      rw [Option.bind_eq_some] at H1 H2
+      rw [Option.bind_eq_some_iff] at H1 H2
       replace ⟨ lv₁, ⟨ Hlv₁, H1 ⟩  ⟩ := @H1
       replace ⟨ lv₂, ⟨ Hlv₂, H2 ⟩  ⟩ := @H2
-      rw [Option.bind_eq_some] at H1 H2
+      rw [Option.bind_eq_some_iff] at H1 H2
       replace ⟨ rv₁, ⟨ Hrv₁, H1 ⟩  ⟩ := @H1
       replace ⟨ rv₂, ⟨ Hrv₂, H2 ⟩  ⟩ := @H2
       replace IHl := @IHl st₁ st₂ f₁ f₂ (st₁ x s₁).fst (st₂ x s₂).fst z₁ z₂ lv₁ lv₂
@@ -362,13 +362,13 @@ theorem Tree.merge_accuM
       intro H
       unfold accuM at H ⊢
       simp at H ⊢
-      rw [Option.bind_eq_some] at H
+      rw [Option.bind_eq_some_iff] at H
       replace ⟨ ⟨ lv₁, lv₂ ⟩ , ⟨ Hlv, H ⟩  ⟩ := @H
-      rw [Option.bind_eq_some] at H
+      rw [Option.bind_eq_some_iff] at H
       replace ⟨ ⟨ rv₁, rv₂ ⟩ , ⟨ Hrv, H ⟩ ⟩ := @H
-      rw [Option.bind_eq_some] at H
+      rw [Option.bind_eq_some_iff] at H
       replace ⟨ v₁, ⟨ Hv₁ , H ⟩ ⟩ := @H
-      rw [Option.bind_eq_some] at H
+      rw [Option.bind_eq_some_iff] at H
       replace ⟨ v₂, ⟨ Hv₂ , H ⟩ ⟩ := @H
       replace IHl := @IHl st₁ st₂ f₁ f₂ (st₁ x s₁).fst (st₂ x s₂).fst z₁ z₂ lv₁ lv₂
       replace IHr := @IHr st₁ st₂ f₁ f₂ (st₁ x s₁).snd (st₂ x s₂).snd z₁ z₂ rv₁ rv₂
@@ -414,9 +414,9 @@ def Tree.s_unfold
         case mp.node bl' x' br' =>
           replace ⟨ x'', l'', r'', ht', hx, hr, hl ⟩ := ht'
           simp_all
-      . rw [Option.bind_eq_some] at h
+      . rw [Option.bind_eq_some_iff] at h
         replace ⟨ bl, ⟨ hl, h ⟩ ⟩ := h
-        rw [Option.bind_eq_some] at h
+        rw [Option.bind_eq_some_iff] at h
         replace ⟨ br, ⟨ hr, h ⟩ ⟩ := h
         exists bl, (st x s).fst, br, (st x s).snd
         apply And.intro

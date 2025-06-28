@@ -5,12 +5,9 @@ import Palamedes.Support -- TODO Remove
 
 open Gen CorrectGen
 
-set_option maxHeartbeats 5000000
-
 def genWellTypedFold (Γ : List Ty) : Gen Term := by
   -- generator_search (fun t => ∃ τ, getTypeFold t Γ = some τ)
   let cg : CorrectGen (fun t => ∃ τ, getTypeFold t Γ = some τ) := by
-    -- NOTE: Apparently this was causing the kernel panic??? unfold getTypeFold
     gapply (s_bind _ _)
     . cgenerator_search
     . intro τ
@@ -31,7 +28,7 @@ def genWellTypedFold (Γ : List Ty) : Gen Term := by
           . apply convert (by
             funext
             unfold getTypeFold.match_1
-            simp_all [Ty.deforest_eq, Ty.as_or, Option.bind_eq_some]
+            simp_all [Ty.deforest_eq, Ty.as_or, Option.bind_eq_some_iff]
             rw [exists_comm]
             apply exists_congr; intro; rw [true_and]
             ) (s_bind _ _)
@@ -47,7 +44,7 @@ def genWellTypedFold (Γ : List Ty) : Gen Term := by
           . apply convert (by
             funext
             unfold getTypeFold.match_1
-            simp_all [Ty.deforest_eq, Ty.as_or, Option.bind_eq_some]
+            simp_all [Ty.deforest_eq, Ty.as_or, Option.bind_eq_some_iff]
             rw [exists_comm]
             apply exists_congr; intro; rw [true_and]
             ) (s_bind _ _)

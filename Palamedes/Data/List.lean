@@ -204,7 +204,7 @@ theorem List.fold_accu_Option_true
     . generalize hv : fold f true xs' = v
       cases v <;>
         simp_all [List.fold, List.accuM, guard]
-    . rw [Option.bind_eq_some] at hf
+    . rw [Option.bind_eq_some_iff] at hf
       replace ⟨ v, hf ⟩ := hf
       simp_all [List.fold, List.accuM, guard]
 
@@ -225,7 +225,7 @@ theorem List.fold_accu_Option_function
       (fun s => some (z s))
       xs
       i = some v := by
-  induction xs generalizing v i <;> simp_all [List.fold, List.accuM, Option.bind_eq_some]
+  induction xs generalizing v i <;> simp_all [List.fold, List.accuM, Option.bind_eq_some_iff]
   case cons x xs' ih =>
     apply Iff.intro <;> intro hg
     . exists (foldr f z xs' (st x i))
@@ -253,7 +253,7 @@ theorem List.fold_accu_Option_function_true
       (fun _ => some ())
       xs
       i = some () := by
-    induction xs generalizing i <;> simp_all [List.fold, List.accuM, Option.bind_eq_some, guard]
+    induction xs generalizing i <;> simp_all [List.fold, List.accuM, Option.bind_eq_some_iff, guard]
     case cons x xs' ih =>
       apply Iff.intro <;> intro hg <;> simp_all
       replace ⟨⟨v, hv ⟩ , hg⟩ := hg <;> simp_all
@@ -293,23 +293,23 @@ theorem List.merge_accuM
       (λ (s₁, s₂) => do (← z₁ s₁, ← z₂ s₂))
       (s₁, s₂) = some (b₁, b₂)) := by
   induction xs generalizing st₁ st₂ f₁ f₂ s₁ s₂ z₁ z₂ b₁ b₂
-  case nil => simp_all [List.accuM, Option.bind_eq_some]
+  case nil => simp_all [List.accuM, Option.bind_eq_some_iff]
   case cons y ys ih =>
-    simp_all [List.accuM, Option.bind_eq_some]
+    simp_all [List.accuM, Option.bind_eq_some_iff]
     apply Iff.intro
     . -- (->)
       intro ⟨ ⟨ v₁, ⟨ hv1h, hv1tl ⟩ ⟩ , ⟨ v₂, ⟨ hv2h, hv2tl ⟩ ⟩ ⟩
       exists v₁, v₂
       replace ih := @ih st₁ st₂ f₁ f₂ (st₁ y s₁) (st₂ y s₂) z₁ z₂ v₁ v₂
-      simp_all [List.accuM, Option.bind_eq_some]
+      simp_all [List.accuM, Option.bind_eq_some_iff]
     . -- (<-)
       intro ⟨ v₁, v₂, h, h1, h2 ⟩
       replace ih := @ih st₁ st₂ f₁ f₂ (st₁ y s₁) (st₂ y s₂) z₁ z₂ v₁ v₂
       apply And.intro
       . exists v₁
-        simp_all [List.accuM, Option.bind_eq_some]
+        simp_all [List.accuM, Option.bind_eq_some_iff]
       . exists v₂
-        simp_all [List.accuM, Option.bind_eq_some]
+        simp_all [List.accuM, Option.bind_eq_some_iff]
 
 end FoldMerging
 
@@ -348,7 +348,7 @@ def List.s_unfold
       apply Iff.intro <;> intro h
       . replace ⟨ b', ⟨ s', ⟨ ⟨ ys, ⟨ hys, h ⟩ ⟩ , h' ⟩ ⟩ ⟩ := h
         cases ys <;> simp_all [(g b s).property]
-      . rw [Option.bind_eq_some] at h
+      . rw [Option.bind_eq_some_iff] at h
         replace ⟨ b', ⟨ hxs, h ⟩ ⟩ := h
         exists b', st x s
         apply And.intro

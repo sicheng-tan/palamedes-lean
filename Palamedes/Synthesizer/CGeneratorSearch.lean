@@ -78,7 +78,7 @@ macro "simp_predicate" : tactic =>
   `(tactic|
     first
       | funext
-        simp [guard, Option.bind_eq_some, *]
+        simp [guard, *]
         first
           | exact Eq.comm
           | simp_list_predicate

@@ -21,12 +21,12 @@ def genLengthKAllTwosFold (k : Nat) : Gen (List Nat) := by
     . intros
       apply convert (by
         funext
-        simp [guard, *, Option.bind_eq_some]
+        simp [guard, *, Option.bind_eq_some_iff]
         rfl) (s_pure _)
     . intros
       apply convert (by
         funext
-        simp [guard, *, Option.bind_eq_some, and_assoc]
+        simp [guard, *, Option.bind_eq_some_iff, and_assoc]
         apply exists_congr
         intro
         rw [true_and]
@@ -68,14 +68,14 @@ def genLengthKAllTwosFold (k : Nat) : Gen (List Nat) := by
 --       rw [h]
 --       apply convert (by
 --         funext
---         simp [guard, Option.bind_eq_some, *]
+--         simp [guard, Option.bind_eq_some_iff, *]
 --         rfl
 --         ) (cpure _)
 --     . intro n' h
 --       rw [h]
 --       apply convert (by
 --         funext
---         simp [guard, Option.bind_eq_some, *] -- TODO here
+--         simp [guard, Option.bind_eq_some_iff, *] -- TODO here
 --         sorry) (cbind _ _)
 --       sorry
 --   let g : Gen (List Nat) := by

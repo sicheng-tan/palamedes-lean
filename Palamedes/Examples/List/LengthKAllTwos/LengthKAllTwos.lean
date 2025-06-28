@@ -29,12 +29,12 @@ def genLengthKAllTwos (k : Nat): Gen (List Nat) := by
     . intros
       apply convert (by
         funext
-        simp [guard, *, Option.bind_eq_some]
+        simp [guard, *, Option.bind_eq_some_iff]
         rfl) (s_pure _)
     . intros
       apply convert (by
         funext
-        simp [guard, *, Option.bind_eq_some, and_assoc]
+        simp [guard, *, Option.bind_eq_some_iff, and_assoc]
         apply exists_congr
         intro
         rw [true_and]

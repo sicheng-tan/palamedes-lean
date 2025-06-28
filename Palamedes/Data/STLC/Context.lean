@@ -34,7 +34,7 @@ def s_elements_partial [DecidableEq α] (xs : List α) : CorrectGen (λ v => Lis
 
 @[reducible]
 def indicesOf [DecidableEq α] (xs : List α) (a : α) : Gen Nat :=
-  let inds := (xs.enum.filter (λ (_, x) => x == a)).map (λ (n, _) => n)
+  let inds := xs.indexesOf a
   .assume (inds.length > 0)
           (λ h => elements inds (by simp_all only [decide_eq_true_eq]))
 

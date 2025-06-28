@@ -33,7 +33,7 @@ def genWellTyped (Γ : List Ty) : Gen Term := by
           . apply convert (by
             funext
             unfold getType.match_1
-            simp_all [Ty.deforest_eq, Ty.as_or, Option.bind_eq_some]
+            simp_all [Ty.deforest_eq, Ty.as_or, Option.bind_eq_some_iff]
             rw [exists_comm]
             apply exists_congr; intro; rw [true_and]
             ) (s_bind _ _)
@@ -51,7 +51,7 @@ def genWellTyped (Γ : List Ty) : Gen Term := by
             conv =>
               -- rhs; apply congrArg; intro; apply congrArg; intro; lhs; lhs; apply (Ty.coerce_match (by aesop) (by aesop))
             unfold getType.match_1
-            simp_all [Ty.deforest_eq, Ty.as_or, Option.bind_eq_some]
+            simp_all [Ty.deforest_eq, Ty.as_or, Option.bind_eq_some_iff]
             rw [exists_comm]
             apply exists_congr; intro; rw [true_and]
             ) (s_bind _ _)

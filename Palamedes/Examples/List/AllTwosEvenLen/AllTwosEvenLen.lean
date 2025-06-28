@@ -36,7 +36,7 @@ def genAllTwosEvenLen : Gen (List Nat) := by
       . cgenerator_search
       . apply convert (by
           funext
-          simp [guard, *, Option.bind_eq_some]
+          simp [guard, *, Option.bind_eq_some_iff]
           apply exists_congr; intro; rw [true_and]) (s_bind _ _)
         . cgenerator_search
         . cgenerator_search
@@ -51,7 +51,7 @@ def genAllTwosEvenLen : Gen (List Nat) := by
       . intro
         apply convert (by
           funext
-          simp [guard, *, Option.bind_eq_some]
+          simp [guard, *, Option.bind_eq_some_iff]
           rfl) (s_pure _)
   let g : Gen (List Nat) := by
     optimize_gen cg.val

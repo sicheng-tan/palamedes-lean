@@ -286,7 +286,7 @@ theorem Stack.fold_accu_Option_true
           cases v <;>
             simp_all [Stack.fold, Stack.accuM, guard]
         . -- (<-)
-          rw [Option.bind_eq_some] at hf
+          rw [Option.bind_eq_some_iff] at hf
           replace ⟨ v, hf ⟩ := hf
           simp_all [Stack.fold, Stack.accuM, guard]
     case ret_cons pc s' ih =>
@@ -296,7 +296,7 @@ theorem Stack.fold_accu_Option_true
           cases v <;>
             simp_all [Stack.fold, Stack.accuM, guard]
         . -- (<-)
-          rw [Option.bind_eq_some] at hf
+          rw [Option.bind_eq_some_iff] at hf
           replace ⟨ v, hf ⟩ := hf
           simp_all [Stack.fold, Stack.accuM, guard]
 
@@ -326,7 +326,7 @@ theorem Stack.fold_accu_Option_function
       g_rc
       s
       i = some v := by
-    induction s generalizing v i <;> simp_all [Stack.fold, Stack.accuM, Option.bind_eq_some]
+    induction s generalizing v i <;> simp_all [Stack.fold, Stack.accuM, Option.bind_eq_some_iff]
     case cons x s' ih =>
       apply Iff.intro <;> intro hg
       . -- (->)
@@ -375,7 +375,7 @@ theorem Stack.fold_accu_Option_function_true
       (fun x _ s => guard $ g_rc x s)
       s
       i = some () := by
-    induction s generalizing i <;> simp_all [Stack.fold, Stack.accuM, Option.bind_eq_some, guard]
+    induction s generalizing i <;> simp_all [Stack.fold, Stack.accuM, Option.bind_eq_some_iff, guard]
     all_goals
       (apply Iff.intro <;> intro hg <;> simp_all <;>
       replace ⟨ ⟨ v, hv ⟩ , hg⟩ := hg <;> simp_all)
@@ -426,39 +426,39 @@ theorem Stack.merge_accuM
       (λ pc (v₁, v₂) (s₁, s₂) => do (← f_rc₁ pc v₁ s₁, ← f_rc₂ pc v₂ s₂))
       (s₁, s₂) = some (v₁, v₂)) := by
     induction s generalizing s₁ s₂ v₁ v₂
-    case mty => simp_all [Stack.accuM, Option.bind_eq_some]
+    case mty => simp_all [Stack.accuM, Option.bind_eq_some_iff]
     case cons y s' ih =>
-      simp_all [Stack.accuM, Option.bind_eq_some]
+      simp_all [Stack.accuM, Option.bind_eq_some_iff]
       apply Iff.intro
       . -- (->)
         intro ⟨ ⟨ v₁', ⟨ hv1h, hv1tl ⟩ ⟩ , ⟨ v₂', ⟨ hv2h, hv2tl ⟩ ⟩ ⟩
         exists v₁', v₂'
         replace ih := @ih (st_c₁ y s₁) (st_c₂ y s₂) v₁' v₂'
-        simp_all [Stack.accuM, Option.bind_eq_some]
+        simp_all [Stack.accuM, Option.bind_eq_some_iff]
       . -- (<-)
         intro ⟨ v₁', v₂', h, h1, h2 ⟩
         replace ih := @ih (st_c₁ y s₁) (st_c₂ y s₂) v₁' v₂'
         apply And.intro
         . exists v₁'
-          simp_all [Stack.accuM, Option.bind_eq_some]
+          simp_all [Stack.accuM, Option.bind_eq_some_iff]
         . exists v₂'
-          simp_all [Stack.accuM, Option.bind_eq_some]
+          simp_all [Stack.accuM, Option.bind_eq_some_iff]
     case ret_cons pc s' ih =>
-      simp_all [Stack.accuM, Option.bind_eq_some]
+      simp_all [Stack.accuM, Option.bind_eq_some_iff]
       apply Iff.intro
       . -- (->)
         intro ⟨ ⟨ v₁', ⟨ hv1h, hv1tl ⟩ ⟩ , ⟨ v₂', ⟨ hv2h, hv2tl ⟩ ⟩ ⟩
         exists v₁', v₂'
         replace ih := @ih (st_rc₁ pc s₁) (st_rc₂ pc s₂) v₁' v₂'
-        simp_all [Stack.accuM, Option.bind_eq_some]
+        simp_all [Stack.accuM, Option.bind_eq_some_iff]
       . -- (<-)
         intro ⟨ v₁', v₂', h, h1, h2 ⟩
         replace ih := @ih (st_rc₁ pc s₁) (st_rc₂ pc s₂) v₁' v₂'
         apply And.intro
         . exists v₁'
-          simp_all [Stack.accuM, Option.bind_eq_some]
+          simp_all [Stack.accuM, Option.bind_eq_some_iff]
         . exists v₂'
-          simp_all [Stack.accuM, Option.bind_eq_some]
+          simp_all [Stack.accuM, Option.bind_eq_some_iff]
 
 end FoldMerging
 
@@ -501,7 +501,7 @@ def Stack.s_unfold
       apply Iff.intro <;> intro h
       . replace ⟨ b', s', ⟨ ⟨ x'', ⟨ hx'', h ⟩ ⟩ , hx'⟩ ⟩ := h
         cases x'' <;> simp_all [(g b s).property]
-      . rw [Option.bind_eq_some] at h
+      . rw [Option.bind_eq_some_iff] at h
         replace ⟨ b', hb', h ⟩ := h
         exists b', st_c a s
         apply And.intro
@@ -512,7 +512,7 @@ def Stack.s_unfold
       apply Iff.intro <;> intro h
       . replace ⟨ b', s', ⟨ ⟨ x'', ⟨ hx'', h ⟩ ⟩ , hx'⟩ ⟩ := h
         cases x'' <;> simp_all [(g b s).property]
-      . rw [Option.bind_eq_some] at h
+      . rw [Option.bind_eq_some_iff] at h
         replace ⟨ b', hb', h ⟩ := h
         exists b', st_rc pc s
         apply And.intro

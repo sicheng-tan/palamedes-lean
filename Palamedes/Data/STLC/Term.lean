@@ -363,7 +363,7 @@ theorem Term.fold_accu_Option_true
         cases v' <;>
           simp_all [Term.fold, Term.accuM, guard]
       . -- (<-)
-        rw [Option.bind_eq_some] at hf
+        rw [Option.bind_eq_some_iff] at hf
         replace ⟨ v₁, hf ⟩ := hf
         simp_all [Term.fold, Term.accuM, guard]
     case app t₁ t₂ ih₁ ih₂ =>
@@ -374,9 +374,9 @@ theorem Term.fold_accu_Option_true
         cases v₁ <;> cases v₂ <;>
           simp_all [Term.fold, Term.accuM, guard]
       . -- (<-)
-        rw [Option.bind_eq_some] at hf
+        rw [Option.bind_eq_some_iff] at hf
         replace ⟨ v₁, hf ⟩ := hf
-        rw [Option.bind_eq_some] at hf
+        rw [Option.bind_eq_some_iff] at hf
         replace ⟨ h₁, ⟨ v₂, h₂ ⟩ ⟩ := hf
         simp_all [Term.fold, Term.accuM, guard]
 
@@ -409,7 +409,7 @@ theorem Term.fold_accu_Option_function
       g_app
       t
       i = some v := by
-    induction t generalizing v i <;> simp_all [Term.fold, Term.accuM, Option.bind_eq_some]
+    induction t generalizing v i <;> simp_all [Term.fold, Term.accuM, Option.bind_eq_some_iff]
     case abs τ t' ih =>
       apply Iff.intro <;> intro hg
       . -- (->)
@@ -461,7 +461,7 @@ theorem Term.fold_accu_Option_function_true
       (fun _ _ _ => some ())
       t
       i = some () := by
-    induction t generalizing i <;> simp_all [Term.fold, Term.accuM, Option.bind_eq_some, guard]
+    induction t generalizing i <;> simp_all [Term.fold, Term.accuM, Option.bind_eq_some_iff, guard]
     case abs τ t' ih =>
       apply Iff.intro <;> intro hg <;> simp_all
       replace ⟨⟨ v', h' ⟩ , hg⟩ := hg <;> simp_all
@@ -498,7 +498,7 @@ theorem Term.fold_accu_Option_function_Option
       g_app
       t
       i = some v := by
-  induction t generalizing i v <;> simp_all [Term.fold, Term.accuM, Option.bind_eq_some]
+  induction t generalizing i v <;> simp_all [Term.fold, Term.accuM, Option.bind_eq_some_iff]
 
 end FoldConversions
 
@@ -561,18 +561,18 @@ theorem Term.merge_accu_Option
       apply Iff.intro
       . -- (->)
         intro ⟨ h₁, h₂ ⟩
-        rw [Option.bind_eq_some] at h₁ h₂
+        rw [Option.bind_eq_some_iff] at h₁ h₂
         replace ⟨ v₁, ⟨ hv₁, h₁ ⟩ ⟩ := @h₁
         replace ⟨ v₂, ⟨ hv₂, h₂ ⟩ ⟩ := @h₂
         replace ih := @ih (st_abs₁ τ i₁) (st_abs₂ τ i₂) v₁ v₂
         simp_all
       . -- (<-)
         intro h
-        rw [Option.bind_eq_some] at h
+        rw [Option.bind_eq_some_iff] at h
         replace ⟨ ⟨ v₁, v₂ ⟩ , ⟨ hv, h ⟩ ⟩ := h
-        rw [Option.bind_eq_some] at h
+        rw [Option.bind_eq_some_iff] at h
         replace ⟨ v₁', ⟨ hv₁' , h ⟩ ⟩ := h <;> simp_all
-        rw [Option.bind_eq_some] at h
+        rw [Option.bind_eq_some_iff] at h
         replace ⟨ v₂', ⟨ hv₂' , h ⟩ ⟩ := h <;> simp_all
         replace ih := @ih (st_abs₁ τ i₁) (st_abs₂ τ i₂) v₁ v₂
         simp_all
@@ -580,10 +580,10 @@ theorem Term.merge_accu_Option
       apply Iff.intro
       . -- (->)
         intro ⟨ h₁, h₂ ⟩
-        rw [Option.bind_eq_some] at h₁ h₂
+        rw [Option.bind_eq_some_iff] at h₁ h₂
         replace ⟨ v₁₁, ⟨ hv₁₁, h₁ ⟩ ⟩ := @h₁
         replace ⟨ v₁₂, ⟨ hv₁₂, h₂ ⟩ ⟩ := @h₂
-        rw [Option.bind_eq_some] at h₁ h₂
+        rw [Option.bind_eq_some_iff] at h₁ h₂
         replace ⟨ v₂₁, ⟨ hv₂₁, h₁ ⟩ ⟩ := @h₁
         replace ⟨ v₂₂, ⟨ hv₂₂, h₂ ⟩ ⟩ := @h₂
         replace ih₁ := @ih₁ (st_app₁ i₁).1 (st_app₂ i₂).1 v₁₁ v₁₂
@@ -591,13 +591,13 @@ theorem Term.merge_accu_Option
         simp_all
       . -- (<-)
         intro h
-        rw [Option.bind_eq_some] at h
+        rw [Option.bind_eq_some_iff] at h
         replace ⟨ ⟨ v₁₁, v₁₂ ⟩ , ⟨ h₁, h ⟩ ⟩ := @h
-        rw [Option.bind_eq_some] at h
+        rw [Option.bind_eq_some_iff] at h
         replace ⟨ ⟨ v₂₁, v₂₂ ⟩ , ⟨ h₂, h ⟩ ⟩ := @h
-        rw [Option.bind_eq_some] at h
+        rw [Option.bind_eq_some_iff] at h
         replace ⟨ v₁, ⟨ hv₁ , h ⟩ ⟩ := @h <;> simp_all
-        rw [Option.bind_eq_some] at h
+        rw [Option.bind_eq_some_iff] at h
         replace ⟨ v₂, ⟨ hv₂ , h ⟩ ⟩ := @h <;> simp_all
         replace ih₁ := @ih₁ (st_app₁ i₁).1 (st_app₂ i₂).1 v₁₁ v₁₂
         replace ih₂ := @ih₂ (st_app₁ i₁).2 (st_app₂ i₂).2 v₂₁ v₂₂
@@ -653,7 +653,7 @@ def Term.s_unfold
       apply Iff.intro <;> intro h
       . replace ⟨ b', s', ⟨ ⟨ t'', ⟨ ht'' , h ⟩  ⟩, h' ⟩ ⟩ := h
         cases t'' <;> simp_all [(g b s).property]
-      . rw [Option.bind_eq_some] at h
+      . rw [Option.bind_eq_some_iff] at h
         replace ⟨ b', ⟨ h', h ⟩ ⟩ := h
         exists b', st_abs τ s
         apply And.intro
@@ -664,9 +664,9 @@ def Term.s_unfold
       apply Iff.intro <;> intro h
       . replace ⟨ b₁, s₁, b₂, s₂, ⟨ ⟨ t', ⟨ ht' , h ⟩  ⟩, ⟨ h₁, h₂ ⟩ ⟩ ⟩ := h
         cases t' <;> simp_all [(g b s).property]
-      . rw [Option.bind_eq_some] at h
+      . rw [Option.bind_eq_some_iff] at h
         replace ⟨ b₁, ⟨ h₁, h ⟩ ⟩ := h
-        rw [Option.bind_eq_some] at h
+        rw [Option.bind_eq_some_iff] at h
         replace ⟨ b₂, ⟨ h₂, h ⟩ ⟩ := h
         exists b₁, (st_app s).fst, b₂, (st_app s).snd
         apply And.intro
