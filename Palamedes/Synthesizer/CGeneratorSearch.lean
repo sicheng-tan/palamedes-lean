@@ -103,6 +103,10 @@ macro "norm_for_bind" : tactic =>
 macro "gapply " t:term : tactic =>
   `(tactic| apply convert (by simp_predicate) $t)
 
+add_aesop_rules safe (rule_sets := [synthesis]) [
+  (by (repeat apply duncurry); intro),
+]
+
 add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by (repeat apply duncurry); intro),
   (by assumption),
@@ -126,17 +130,18 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
 
 add_aesop_rules 5% (rule_sets := [synthesis]) [
   (by apply caseBool (by assumption)),
-  (by apply s_caseNat (by assumption))
+  (by rename_i n; apply s_caseNat n),
+  (by rename_i n _; apply s_caseNat n),
 ]
 
 macro "cgenerator_search" : tactic =>
   `(tactic|
     aesop
       (rule_sets := [-default, -builtin, synthesis])
-      (config := {enableSimp := false}))
+      (config := {enableSimp := false, maxRuleApplications := 500}))
 
 macro "cgenerator_search?" : tactic =>
   `(tactic|
     aesop?
       (rule_sets := [-default, -builtin, synthesis])
-      (config := {enableSimp := false}))
+      (config := {enableSimp := false, maxRuleApplications := 500}))
