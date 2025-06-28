@@ -24,9 +24,9 @@ def genWellTyped (Γ : List Ty) : Gen Term := by
       intros b Γ
       apply s_caseTy b
       . intros
-        gapply (s_pick _ _)
+        apply convert (by norm_for_pick) (s_pick _ _)
         . cgenerator_search
-        . gapply (s_pick _ _)
+        . apply convert (by norm_for_pick) (s_pick _ _)
           . apply (s_bind _ _)
             . apply (s_indicesOf _ _)
             . cgenerator_search
@@ -40,11 +40,11 @@ def genWellTyped (Γ : List Ty) : Gen Term := by
             . cgenerator_search
             . cgenerator_search
       . intros
-        gapply (s_pick _ _)
+        apply convert (by norm_for_pick) (s_pick _ _)
         . apply (s_bind _ _)
           . apply (s_indicesOf _ _)
           . cgenerator_search
-        . gapply (s_pick _ _)
+        . apply convert (by norm_for_pick) (s_pick _ _)
           . apply convert (by funext; rfl) (s_pure _)
           . apply convert (by
             funext

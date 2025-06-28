@@ -16,10 +16,14 @@ import Mathlib.Tactic.FailIfNoProgress
 
 open Gen CorrectGen
 
-macro "simp_list_predicate" : tactic =>
+macro "simp_predicate" : tactic => `(tactic| try simp [guard, Option.bind_eq_some_iff, *])
+
+macro "norm_for_List_unfold" : tactic =>
   `(tactic|
   -- todo: the bool lemma below is overfitting to the evenLen example
-    (first
+    (funext
+     simp_predicate
+     first
       | conv => rhs; lhs; apply (List.coerce_to_fold (by rflm) (by intros; simp_all [- Bool.not_eq_eq_eq_not]; rflm))
       | conv => rhs; lhs; apply congrFun; apply (List.coerce_to_fold (by rflm) (by intros; simp_all [- Bool.not_eq_eq_eq_not]; rflm))
       | skip
@@ -30,9 +34,11 @@ macro "simp_list_predicate" : tactic =>
         (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]) <;> (try aesop); done
       | rw [← List.fold_accu_Option_basic]; (try aesop); done))
 
-macro "simp_tree_predicate" : tactic =>
+macro "norm_for_Tree_unfold" : tactic =>
   `(tactic|
-    (first
+    (funext
+     simp_predicate
+     first
       | conv => rhs; lhs; apply (Tree.coerce_to_fold (by aesop) (by intros; simp_all; rflm))
       | conv => rhs; lhs; apply congrFun; apply (Tree.coerce_to_fold (by aesop) (by intros; simp_all; rflm))
       | skip
@@ -43,9 +49,11 @@ macro "simp_tree_predicate" : tactic =>
         (try intros; simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
       | rw [← Tree.fold_accu_Option_basic]; (try aesop); done))
 
-macro "simp_stack_predicate" : tactic =>
+macro "norm_for_Stack_unfold" : tactic =>
   `(tactic|
-    (try (conv => rhs; lhs; apply congrFun; apply (Stack.coerce_to_fold (by aesop) (by intros; simp_all; rflm)));
+    (funext
+     simp_predicate
+     try (conv => rhs; lhs; apply congrFun; apply (Stack.coerce_to_fold (by aesop) (by intros; simp_all; rflm)));
      first
       | rw [← Stack.fold_accu_Option_true]; (try aesop); done
       | rw [← Stack.fold_accu_Option_function]; (try aesop); done
@@ -53,9 +61,11 @@ macro "simp_stack_predicate" : tactic =>
         (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
       | rw [← Stack.fold_accu_Option_basic]; (try aesop); done))
 
-macro "simp_ty_predicate" : tactic =>
+macro "norm_for_Ty_unfold" : tactic =>
   `(tactic|
-    (try (conv => rhs; lhs; apply (Ty.coerce_to_fold (by aesop) (by intros; simp_all; rflm)));
+    (funext
+     simp_predicate
+     try (conv => rhs; lhs; apply (Ty.coerce_to_fold (by aesop) (by intros; simp_all; rflm)));
      first
       | rw [← Ty.fold_accu_Option_true] <;> (try aesop); done
       | rw [← Ty.fold_accu_Option_function]; (try aesop); done
@@ -63,9 +73,11 @@ macro "simp_ty_predicate" : tactic =>
         (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
       | rw [← Ty.fold_accu_Option_basic]; (try aesop); done))
 
-macro "simp_term_predicate" : tactic =>
+macro "norm_for_Term_unfold" : tactic =>
   `(tactic|
-    (try (conv => rhs; lhs; apply congrFun; apply (Term.coerce_to_fold (by aesop) (by intros; simp_all; rflm)));
+    (funext
+     simp_predicate
+     try (conv => rhs; lhs; apply congrFun; apply (Term.coerce_to_fold (by aesop) (by intros; simp_all; rflm)));
      first
       | rw [← Term.fold_accu_Option_true]; (try aesop); done
       | rw [← Term.fold_accu_Option_function]; (try aesop); done
@@ -74,26 +86,35 @@ macro "simp_term_predicate" : tactic =>
       | rw [← Term.fold_accu_Option_function_Option] <;> (try aesop); done
       | rw [← Term.fold_accu_Option_basic]; (try aesop); done))
 
-macro "simp_predicate" : tactic =>
+macro "norm_for_any" : tactic =>
   `(tactic|
     first
       | funext
-        simp [guard, Option.bind_eq_some_iff, *]
+        simp_predicate
         first
           | exact Eq.comm
-          | simp_list_predicate
-          | simp_tree_predicate
-          | simp_stack_predicate
-          | simp_ty_predicate
-          | simp_term_predicate
           | apply exists_congr; intro; rw [true_and]
           | rfl
       | rfl)
 
+macro "norm_for_pure" : tactic =>
+  `(tactic| (
+    funext
+    simp_predicate
+    first
+      | rfl
+      | exact Eq.comm))
+
+macro "norm_for_pick" : tactic =>
+  `(tactic| (
+    funext
+    simp_predicate
+    rfl))
+
 macro "norm_for_bind" : tactic =>
   `(tactic| (
     funext
-    simp [guard, Option.bind_eq_some_iff, *]
+    simp_predicate
     first
       | rfl
       | apply exists_congr; intro; rw [true_and]))
@@ -101,14 +122,11 @@ macro "norm_for_bind" : tactic =>
 macro "norm_for_bind'" : tactic =>
   `(tactic| (
     funext
-    simp [guard, Option.bind_eq_some_iff, *]
+    simp_predicate
     rw [exists_comm]
     first
       | rfl
       | apply exists_congr; intro; rw [true_and]))
-
-macro "gapply " t:term : tactic =>
-  `(tactic| apply convert (by simp_predicate) $t)
 
 add_aesop_rules safe (rule_sets := [synthesis]) [
   (by (repeat apply duncurry); intro),
@@ -117,24 +135,24 @@ add_aesop_rules safe (rule_sets := [synthesis]) [
 add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by (repeat apply duncurry); intro),
   (by assumption),
-  (by gapply (s_pure _)),
-  (by gapply (s_pick _ _)),
+  (by apply convert (by norm_for_pure) (s_pure _)),
+  (by apply convert (by norm_for_pick) (s_pick _ _)),
   (by apply convert (by norm_for_bind) (s_bind _ _)),
   (by apply convert (by norm_for_bind') (s_bind _ _)),
-  (by gapply (List.s_unfold _)),
-  (by gapply (Tree.s_unfold _)),
-  (by gapply (Stack.s_unfold _)),
-  (by gapply (Ty.s_unfold _)),
-  (by gapply (Term.s_unfold _)),
-  (by gapply s_arbUnit),
-  (by gapply s_arbBool),
-  (by gapply s_arbNat),
-  (by gapply s_arbTy),
-  (by gapply s_arbLabel),
-  (by gapply s_arbAtom _),
-  (by gapply s_gt),
-  (by gapply s_between_partial),
-  (by gapply (s_between (by first | aesop | omega))),
+  (by apply convert (by norm_for_List_unfold) (List.s_unfold _)),
+  (by apply convert (by norm_for_Tree_unfold) (Tree.s_unfold _)),
+  (by apply convert (by norm_for_Stack_unfold) (Stack.s_unfold _)),
+  (by apply convert (by norm_for_Ty_unfold) (Ty.s_unfold _)),
+  (by apply convert (by norm_for_Term_unfold) (Term.s_unfold _)),
+  (by apply s_arbUnit),
+  (by apply s_arbBool),
+  (by apply s_arbNat),
+  (by apply s_arbTy),
+  (by apply s_arbLabel),
+  (by apply s_arbAtom _),
+  (by apply s_gt),
+  (by apply s_between_partial),
+  (by apply (s_between (by first | aesop | omega))),
 ]
 
 add_aesop_rules 5% (rule_sets := [synthesis]) [

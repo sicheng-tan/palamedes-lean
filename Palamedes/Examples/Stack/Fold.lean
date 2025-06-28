@@ -26,9 +26,9 @@ def genGoodStackFold (n : Nat) : Gen Stack := by
     intros b i
     apply s_caseNat (by assumption)
     . intros h
-      gapply (s_pure _)
+      apply convert (by norm_for_pure) (s_pure _)
     . intros i' h
-      gapply (s_pick _ _)
+      apply convert (by norm_for_pick) (s_pick _ _)
       -- apply convert (by
       --   funext
       --   simp only [guard, Nat.reduceBeqDiff, Bool.false_eq_true, ↓reduceIte, reduceCtorEq,
