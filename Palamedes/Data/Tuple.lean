@@ -5,43 +5,17 @@ import Palamedes.RuleSets
 
 namespace Gen
 
-def tuple
-    (x : Gen α)
-    (f : α → Gen β) :
-    Gen (α × β) := do
-  let a ← x
-  let b ← f a
-  pure (a, b)
-
 namespace CorrectGen
 
-@[reducible, aesop unsafe (rule_sets := [synthesis])]
+@[reducible]
 def s_tuple
-    {P : α → Prop}
-    {Q : α → β → Prop}
-    {R : α × β → Prop}
-    {h : ∀ v, P v.1 ∧ Q v.1 v.2 ↔ R v}
-    (x : CorrectGen P)
-    (f : (a : α) → CorrectGen (Q a)) :
-    CorrectGen R :=
-  Subtype.mk (tuple x.val (fun a => (f a).val)) <| by
+    {P : α × β → Prop}
+    (g : CorrectGen (fun (p : α × β) => ∃ (a : α) (b : β), P (a, b) ∧ p = (a, b))) :
+    CorrectGen (fun (p : α × β) => P p) :=
+  Subtype.mk g.val <| by
     funext (a, b)
-    simp_all [x.property, (f a).property, tuple]
+    simp_all [g.property]
 
 end CorrectGen
-
-namespace Total
-
-@[simp, aesop safe (rule_sets := [totality])]
-theorem total_tuple
-    (hx : total x)
-    (hy : ∀ {a}, a ∈ 〚x〛 → total (f a)) :
-    total (tuple x f) := by
-  simp [tuple]
-  apply total_bind <;> try assumption
-  intro v hv
-  simp [hy hv]
-
-end Total
 
 end Gen
