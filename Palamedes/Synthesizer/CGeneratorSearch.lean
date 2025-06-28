@@ -90,7 +90,7 @@ macro "simp_predicate" : tactic =>
           | rfl
       | rfl)
 
-macro "simp_bind_predicate" : tactic =>
+macro "norm_for_bind" : tactic =>
   `(tactic|
     first
       | funext
@@ -104,12 +104,11 @@ macro "gapply " t:term : tactic =>
   `(tactic| apply convert (by simp_predicate) $t)
 
 add_aesop_rules unsafe (rule_sets := [synthesis]) [
-  (by fail_if_no_progress intros),
+  (by (repeat apply duncurry); intro),
   (by assumption),
   (by gapply (s_pure _)),
   (by gapply (s_pick _ _)),
-  (by gapply (s_bind _ _)),
-  (by apply (s_bind _ _)), -- TODO
+  (by apply convert (by norm_for_bind) (s_bind _ _)),
   (by gapply (List.s_unfold _)),
   (by gapply (Tree.s_unfold _)),
   (by gapply (Stack.s_unfold _)),
@@ -127,7 +126,7 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
 
 add_aesop_rules 5% (rule_sets := [synthesis]) [
   (by apply caseBool (by assumption)),
-  (by apply caseNat (by assumption))
+  (by apply s_caseNat (by assumption))
 ]
 
 macro "cgenerator_search" : tactic =>

@@ -24,7 +24,7 @@ def genGoodStackFold (n : Nat) : Gen Stack := by
         <;> (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
       ) (Stack.s_unfold _)
     intros b i
-    apply caseNat (by assumption)
+    apply s_caseNat (by assumption)
     . intros h
       gapply (s_pure _)
     . intros i' h

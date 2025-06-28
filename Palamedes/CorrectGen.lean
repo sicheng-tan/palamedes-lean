@@ -46,6 +46,12 @@ def convert
   Subtype.mk g.val <| by
     simp [h, g.property]
 
+@[reducible]
+def duncurry
+    {F : α × β → Type u} :
+    ((a : α) → (b : β) → F (a, b)) → (p : α × β) → F p :=
+  fun f p => f p.1 p.2
+
 end CorrectGen
 
 end Gen
