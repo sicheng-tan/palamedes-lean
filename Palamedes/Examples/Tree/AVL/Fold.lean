@@ -13,31 +13,14 @@ def duncurry
     ((a : α) → (b : β) → F (a, b)) → (p : α × β) → F p :=
   fun f p => f p.1 p.2
 
-def splitNat
-    (n : Nat)
-    (z : (n = 0) → α)
-    (s : (n' : Nat) → (n = n' + 1) → α) :
-    α :=
-  match n with
-  | 0 => z rfl
-  | n' + 1 => s n' rfl
-
-def support_splitNat_congr
-    {z z' : n = 0 → Gen α}
-    {s s' : (n' : Nat) → n = n' + 1 → Gen α}
-    (hz : ∀ {h}, support (z h) = support (z' h))
-    (hz : ∀ {n} {h}, support (s n h) = support (s' n h)) :
-    support (splitNat n z s) = support (splitNat n z' s') := by
-  aesop (add simp splitNat)
-
+-- TODO: Move this to Nat
 @[reducible]
 def s_splitNat
     (n : Nat)
     (gz : (n = 0) → CorrectGen P)
     (gs : (n' : Nat) → (n = n' + 1) → CorrectGen P) :
     CorrectGen P :=
-    Subtype.mk
-      (splitNat n (fun h => (gz h).val) (fun a b => (gs a b).val)) <| by
+    Subtype.mk (if h : n = 0 then gz h else gs n.pred (by simp; omega)) <| by
     match n with
     | 0 => exact (gz _).property
     | n' + 1 => exact (gs _ _).property
@@ -90,9 +73,4 @@ def genAVL (height lo hi : Nat) : Gen (Tree Nat) := by
     optimize_gen cg.val
   let _ : support cg.val = support g := by
     optimality
-    apply support_splitNat_congr
-    . optimality
-    . optimality
-      apply support_splitNat_congr
-      optimality
   exact g
