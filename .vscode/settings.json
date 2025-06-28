@@ -1,6 +1,0 @@
-{
-    "lean4.showUnsolvedGoalsDecoration": false,
-    "lean4.unsolvedGoalsDecorationDarkThemeColor": "editorInfo.textPreformat.background",
-    "lean4.unsolvedGoalsDecorationLightThemeColor": "editorInfo.textPreformat.background",
-    "lean4.decorationEditDelay": 7500000
-}
