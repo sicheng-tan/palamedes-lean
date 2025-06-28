@@ -45,9 +45,11 @@ theorem support_pick_congr
   aesop
 
 theorem support_if_congr
-    {x x' : b = true → Gen α}
-    {y y' : ¬ (b = true) → Gen α}
+    {P : Prop}
+    [Decidable P]
+    {x x' : P → Gen α}
+    {y y' : ¬ P → Gen α}
     (hx : ∀ {h}, support (x h) = support (x' h))
     (hy : ∀ {h}, support (y h) = support (y' h)) :
-    support (if h : b then x h else y h) = support (if h : b then x' h else y' h) := by
+    support (if h : P then x h else y h) = support (if h : P then x' h else y' h) := by
   aesop
