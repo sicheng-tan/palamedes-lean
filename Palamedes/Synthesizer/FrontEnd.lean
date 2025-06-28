@@ -19,13 +19,12 @@ register_option palamedes.debug : Bool := {
 /-- This is just a utility tactic for debugging. We don't call it in the real synthesizer. -/
 elab "optimize_gen " t:term : tactic =>
   withMainContext do
-    let g ← getMainGoal
-    let m ← mkFreshExprMVar none
+    let m ← mkFreshExprMVar (some (.sort 0))
     let gen ← elabTerm t (some (.app (.const ``Gen []) m))
     let gen' ← withReducible (reduce gen)
     let gen'' ← optimizeGen gen'
     let gen''' ← withReducible (reduce gen'')
-    g.assign gen'''
+    closeMainGoal `optimize_gen gen'''
 
 def solveGoalWithTactic (goalType : Expr) (tactic : TSyntax `tactic) : TacticM Expr := do
   let m ← mkFreshExprMVar goalType
