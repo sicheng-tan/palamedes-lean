@@ -34,7 +34,7 @@ def genAVL (height lo hi : Nat) : Gen (Tree Nat) := by
       replace ⟨ ⟨ low, high ⟩ , h ⟩ := s
       apply caseNat (by assumption)
       . intro h'
-        simp [guard, Option.bind_eq_some, *]
+        simp [guard, Option.bind_eq_some_iff, *]
         cgenerator_search
       . intros n' h'
         apply caseNat (by assumption)
@@ -46,7 +46,7 @@ def genAVL (height lo hi : Nat) : Gen (Tree Nat) := by
           intros h''
           apply convert (by
             funext
-            simp [guard, Option.bind_eq_some, *]
+            simp [guard, Option.bind_eq_some_iff, *]
             rfl
             ) (s_bind _ _)
           . cgenerator_search
