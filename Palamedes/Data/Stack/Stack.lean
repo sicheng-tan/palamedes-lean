@@ -1,17 +1,10 @@
 import Palamedes.Gen
 import Palamedes.CorrectGen
 import Palamedes.Total
-import Palamedes.Data.Nat
+import Palamedes.Data.Stack.Atom
 
 section TypeDef
 /- adapted from https://github.com/QuickChick/QuickChick/tree/master/examples/ifc-basic -/
-
-inductive Label where
-  | low
-  | high
-
-inductive Atom where
-  | atm (z : Nat) (l : Label)
 
 inductive Stack where
   | mty
@@ -543,19 +536,6 @@ end Total
 
 namespace PrettyPrint
 
-def Label.toString : Label → String
-  | .low => "low"
-  | .high => "high"
-
-instance : ToString Label where
-  toString := Label.toString
-
-def Atom.toString : Atom → String
-  | .atm z l => s!"({z} {l})"
-
-instance : ToString Atom where
-  toString := Atom.toString
-
 def Stack.toString : Stack → String
   | .mty => "(empty)"
   | .cons a s  => s!"(cons {a} {Stack.toString s})"
@@ -565,54 +545,5 @@ instance : ToString Stack where
   toString := Stack.toString
 
 end PrettyPrint
-
-@[irreducible]
-def arbLabel  : Gen Label :=
-  pick (pure .low) (pure .high)
-
-@[irreducible]
-def arbAtom  : Gen Atom := do
-  let n ← arbNat
-  let l ← arbLabel
-  pure (.atm n l)
-
-@[simp]
-theorem support_arbLabel : support arbLabel = fun _ => True := by
-  funext v
-  cases v <;> simp_all [arbLabel]
-
-@[simp]
-theorem support_arbAtom : support arbAtom = fun _ => True := by
-  funext v
-  cases v <;> simp_all [arbAtom]
-
-namespace CorrectGen
-
-@[reducible]
-def s_arbLabel : @CorrectGen Label (λ _ => True) :=
-  Subtype.mk arbLabel <| by
-    funext v
-    simp
-
-@[reducible]
-def s_arbAtom : @CorrectGen Atom (λ _ => True) :=
-  Subtype.mk arbAtom <| by
-    funext v
-    simp
-
-end CorrectGen
-
-
-namespace Total
-
-@[simp, aesop safe (rule_sets := [totality])]
-theorem total_arbLabel : total arbLabel := by
-  simp [Gen.arbLabel]
-
-@[simp, aesop safe (rule_sets := [totality])]
-theorem total_arbAtom : total arbAtom := by
-  simp [Gen.arbAtom]
-
-end Total
 
 end Gen
