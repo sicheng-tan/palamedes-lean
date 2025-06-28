@@ -3,7 +3,7 @@ import Palamedes.CorrectGen
 import Palamedes.RuleSets
 import Palamedes.Total
 import Palamedes.Data.List
-import Palamedes.Data.Stack
+import Palamedes.Data.Stack.Stack
 import Palamedes.Data.STLC.Term
 import Palamedes.Data.STLC.Ty
 import Palamedes.Data.STLC.Context
@@ -119,7 +119,8 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by gapply s_arbBool),
   (by gapply s_arbNat),
   (by gapply s_arbTy),
-  (by gapply s_arbAtom),
+  (by gapply s_arbLabel),
+  (by gapply s_arbAtom _),
   (by gapply s_gt),
   (by gapply s_between_partial),
   (by gapply (s_between (by first | aesop | omega))),

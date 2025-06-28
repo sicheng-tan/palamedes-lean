@@ -1,5 +1,5 @@
 import Palamedes.Data.List
-import Palamedes.Data.Stack
+import Palamedes.Data.Stack.Stack
 import Palamedes.Data.STLC.Ty
 import Palamedes.Data.STLC.Term
 import Palamedes.Data.Tree
@@ -33,6 +33,8 @@ macro "optimality" : tactic =>
         | apply Ty.support_unfold_congr
         | apply Gen.support_caseTy_congr
         | apply Gen.Gen.support_Nat_rec_congr
+        | apply support_arbLabel
+        | apply support arbAtom
         | apply support_bind_congr
         | apply support_pick_congr
         | apply support_if_congr)

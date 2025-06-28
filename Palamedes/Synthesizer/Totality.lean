@@ -1,5 +1,5 @@
 import Palamedes.Data.List
-import Palamedes.Data.Stack
+import Palamedes.Data.Stack.Stack
 import Palamedes.Data.STLC.Ty
 import Palamedes.Data.STLC.Term
 import Palamedes.Data.Tree
@@ -36,10 +36,8 @@ macro "totality" : tactic =>
         | apply total_choose
         | apply total_gt
         | apply Tree.total_unfold
-        | apply total_tuple
         | apply Stack.total_unfold
         | apply total_arbLabel
-        | apply total_arbAtom
         | apply total_elements
         | apply total_arbTy
         | apply total_Ty_caseTy
