@@ -16,14 +16,14 @@ set_option palamedes.debug true
 def genAVL (height lo hi : Nat) : Gen (Tree Nat) := by
   -- generator_search (fun t => isBalanced t height = true ∧ isBST t (lo, hi) = true)
   let cg : CorrectGen (fun t => isBalanced t height = true ∧ isBST t (lo, hi) = true) := by
-    apply convert (by
-      funext
-      simp [guard, *]
-      rw [← Tree.merge_accuM]
-      apply and_congr
-      . simp_tree_predicate
-      . simp_tree_predicate
-    ) (Tree.s_unfold _)
+    -- apply convert (by
+    --   funext
+    --   simp [guard, *]
+    --   rw [← Tree.merge_accuM]
+    --   apply and_congr
+    --   . simp_tree_predicate
+    --   . simp_tree_predicate
+    -- ) (Tree.s_unfold _)
     sorry
   let g : Gen (Tree Nat) := by
     optimize_gen cg.val

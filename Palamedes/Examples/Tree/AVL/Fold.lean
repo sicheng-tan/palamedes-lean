@@ -5,6 +5,8 @@ open Gen CorrectGen
 
 set_option palamedes.debug true
 
+namespace AVLFold
+
 def genAVL (height lo hi : Nat) : Gen (Tree Nat) := by
    -- generator_search (fun t =>
   -- Tree.fold (fun bl x br h => decide (h > 0) && bl (h - 1) && br (h - 1)) (fun h => decide (h ≤ 1)) t height = true ∧
@@ -34,7 +36,6 @@ def genAVL (height lo hi : Nat) : Gen (Tree Nat) := by
       replace ⟨ ⟨ low, high ⟩ , h ⟩ := s
       apply caseNat (by assumption)
       . intro h'
-        simp [guard, Option.bind_eq_some_iff, *]
         cgenerator_search
       . intros n' h'
         apply caseNat (by assumption)
