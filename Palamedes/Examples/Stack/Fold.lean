@@ -10,7 +10,7 @@ def isGoodNat (n : Nat) : Bool :=
 
 @[simp]
 def isGoodAtom : Atom → Bool
-  | .atm z _ => isGoodNat z
+  | .atm n _ => isGoodNat n
 
 -- set_option palamedes.debug true
 
@@ -38,22 +38,41 @@ def genGoodStackFold (n : Nat) : Gen Stack := by
       --   ) (s_pick _ _)
       . apply (s_bind _ _)
         . simp [← Decidable.or_iff_not_imp_left]
-          gapply (s_pick _ _)
-          . sorry
-          . sorry
-        . sorry--cgenerator_search
+          cgenerator_search  --sorry
+          --. sorry
+        . cgenerator_search
       . apply (s_bind _ _)
         . simp [← Decidable.or_iff_not_imp_left]
-          gapply (s_pick _ _)
-          . sorry
-          . sorry
-        . sorry--cgenerator_search
+          cgenerator_search
+        . cgenerator_search
   let g : Gen (Stack) := by
     optimize_gen cg.val
-  -- let _ : support cg.val = support g := by
-  --   optimality
-  -- let _ : Gen.total g := by
-  --   sorry -- totality
+  let _ : support cg.val = support g := by
+    optimality
+  let _ : Gen.total g := by
+    apply Gen.Total.Stack.total_unfold
+    intros
+    apply Total.total_bind
+    . apply Gen.Total.total_Nat_rec
+      . intros
+        apply Total.total_pure
+      . intros
+        apply Total.total_pick
+        . apply Total.total_bind
+          . sorry
+          . intros
+            apply Total.total_pure
+        . apply Total.total_bind
+          . sorry
+          . intros
+            apply Total.total_pure
+    . simp
+      intros
+      split
+      . apply Total.total_pure
+      . apply Total.total_pure
+      . apply Total.total_pure
+    --totality
   exact g
 
 end GoodStackFold
