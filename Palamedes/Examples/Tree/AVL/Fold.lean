@@ -7,6 +7,7 @@ set_option palamedes.debug true
 
 namespace AVLFold
 
+@[reducible]
 def duncurry
     {F : α × β → Type u} :
     ((a : α) → (b : β) → F (a, b)) → (p : α × β) → F p :=
@@ -32,9 +33,9 @@ def support_splitNat_congr
 @[reducible]
 def s_splitNat
     (n : Nat)
-    (gz : (n = 0) → @CorrectGen α P)
-    (gs : (n' : Nat) → (n = n' + 1) → @CorrectGen α P) :
-    @CorrectGen α P :=
+    (gz : (n = 0) → CorrectGen P)
+    (gs : (n' : Nat) → (n = n' + 1) → CorrectGen P) :
+    CorrectGen P :=
     Subtype.mk
       (splitNat n (fun h => (gz h).val) (fun a b => (gs a b).val)) <| by
     match n with
@@ -50,7 +51,7 @@ def genAVL (height lo hi : Nat) : Gen (Tree Nat) := by
   --         | (sl, sr) => decide (sl ≤ x) && decide (x ≤ sr) && bl (sl, x - 1) && br (x + 1, sr))
   --       (fun x => true) t (lo, hi) =
   --     true)
-  letI cg : CorrectGen (fun (t : Tree Nat) =>
+  let cg : CorrectGen (fun (t : Tree Nat) =>
       Tree.fold
           (fun bl x br bounds =>
             match bounds with
@@ -66,26 +67,26 @@ def genAVL (height lo hi : Nat) : Gen (Tree Nat) := by
         . simp_tree_predicate
         . simp_tree_predicate
         ) (Tree.s_unfold _)
-      intros b s
-      apply s_splitNat s.2
+      apply duncurry
+      intro
+      intro
+      apply duncurry
+      apply duncurry
+      intro
+      intro
+      intro
+      rename_i n; apply s_splitNat n
       . cgenerator_search
-      . intro n'
+      . intro
         intro
-        apply s_splitNat n'
-        . intros
-          gapply (s_pick _ _)
+        rename_i n _; apply s_splitNat n
+        . cgenerator_search
+        . intro
+          intro
+          apply convert (by simp_bind_predicate) (s_bind _ _)
           . cgenerator_search
           . cgenerator_search
-        . intros n''
-          intros h''
-          apply convert (by
-            funext
-            simp [guard, Option.bind_eq_some_iff, *]
-            rfl
-            ) (s_bind _ _)
-          . cgenerator_search
-          . cgenerator_search
-  letI g : Gen (Tree Nat) := by
+  let g : Gen (Tree Nat) := by
     optimize_gen cg.val
   let _ : support cg.val = support g := by
     optimality
