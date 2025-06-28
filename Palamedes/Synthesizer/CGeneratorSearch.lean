@@ -91,25 +91,21 @@ macro "simp_predicate" : tactic =>
       | rfl)
 
 macro "norm_for_bind" : tactic =>
-  `(tactic|
+  `(tactic| (
+    funext
+    simp [guard, Option.bind_eq_some_iff, *]
     first
-      | funext
-        simp [guard, Option.bind_eq_some_iff, *]
-        first
-          | rfl
-          | apply exists_congr; intro; rw [true_and]
-      | rfl)
+      | rfl
+      | apply exists_congr; intro; rw [true_and]))
 
 macro "norm_for_bind'" : tactic =>
-  `(tactic|
+  `(tactic| (
+    funext
+    simp [guard, Option.bind_eq_some_iff, *]
+    rw [exists_comm]
     first
-      | funext
-        simp [guard, Option.bind_eq_some_iff, *]
-        rw [exists_comm]
-        first
-          | rfl
-          | apply exists_congr; intro; rw [true_and]
-      | rfl)
+      | rfl
+      | apply exists_congr; intro; rw [true_and]))
 
 macro "gapply " t:term : tactic =>
   `(tactic| apply convert (by simp_predicate) $t)
