@@ -37,12 +37,11 @@ def genGoodStackFold (n : Nat) : Gen Stack := by
       --     exists_and_left, false_or, eq_iff_iff, h]
       --   ) (s_pick _ _)
       . apply (s_bind _ _)
-        . simp [← Decidable.or_iff_not_imp_left]
-          cgenerator_search  --sorry
-          --. sorry
+        . apply convert (by simp [← Decidable.or_iff_not_imp_left]; rfl) _
+          cgenerator_search
         . cgenerator_search
       . apply (s_bind _ _)
-        . simp [← Decidable.or_iff_not_imp_left]
+        . apply convert (by simp [← Decidable.or_iff_not_imp_left]; rfl) _
           cgenerator_search
         . cgenerator_search
   let g : Gen (Stack) := by
@@ -50,29 +49,7 @@ def genGoodStackFold (n : Nat) : Gen Stack := by
   let _ : support cg.val = support g := by
     optimality
   let _ : Gen.total g := by
-    apply Gen.Total.Stack.total_unfold
-    intros
-    apply Total.total_bind
-    . apply Gen.Total.total_Nat_rec
-      . intros
-        apply Total.total_pure
-      . intros
-        apply Total.total_pick
-        . apply Total.total_bind
-          . sorry
-          . intros
-            apply Total.total_pure
-        . apply Total.total_bind
-          . sorry
-          . intros
-            apply Total.total_pure
-    . simp
-      intros
-      split
-      . apply Total.total_pure
-      . apply Total.total_pure
-      . apply Total.total_pure
-    --totality
+    totality
   exact g
 
 end GoodStackFold
