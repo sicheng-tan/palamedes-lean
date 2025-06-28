@@ -17,7 +17,7 @@ def genLengthKAllTwosFold (k : Nat) : Gen (List Nat) := by
     ) (List.s_unfold _)
     intros b s
     replace ⟨ n , () ⟩ := b
-    apply caseNat (by assumption)
+    apply s_caseNat (by assumption)
     . intros
       apply convert (by
         funext

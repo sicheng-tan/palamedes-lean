@@ -34,47 +34,6 @@ theorem support_arbNat :
     simp +arith [hn']
 
 @[simp]
-def support_Nat_rec
-    {gz : (n = 0) → Gen α}
-    {gs : (n' : Nat) → (n = n' + 1) → Gen α} :
-    support (Nat.rec
-            (motive := fun x => (n = x) → Gen α)
-            (fun h => gz h)
-            (fun a _ b => gs a b)
-            n
-            rfl) =
-    (fun a =>
-      (∃ h : n = 0, a ∈ 〚gz h〛) ∨
-      (∃ (n' : Nat) (h : n = n' + 1), a ∈ 〚gs n' h〛)) := by
-  funext
-  simp
-  apply Iff.intro
-  . intro h
-    cases n <;> aesop
-  . intro h
-    cases h <;> aesop
-
-theorem support_Nat_rec_congr
-    {gz gz' : (n = 0) → Gen α}
-    {gs gs' : (n' : Nat) → (n = n' + 1) → Gen α}
-    (hz : ∀ {h}, support (gz h) = support (gz' h))
-    (hs : ∀ {n'} {h}, support (gs n' h) = support (gs' n' h)) :
-    support (Nat.rec
-            (motive := fun x => (n = x) → Gen α)
-            (fun h => gz h)
-            (fun a _ b => gs a b)
-            n
-            rfl) =
-    support (Nat.rec
-            (motive := fun x => (n = x) → Gen α)
-            (fun h => gz' h)
-            (fun a _ b => gs' a b)
-            n
-            rfl)
-     := by
-  aesop
-
-@[simp]
 theorem support_gt :
     support (gt lo) = fun a => lo < a := by
   simp [gt]
@@ -130,18 +89,12 @@ def s_arbNat : @CorrectGen Nat (λ _ => True) :=
     simp
 
 @[reducible]
-def caseNat
+def s_caseNat
     (n : Nat)
-    (gz : (n = 0) → @CorrectGen α P)
-    (gs : (n' : Nat) → (n = n' + 1) → @CorrectGen α P) :
-    @CorrectGen α P :=
-    Subtype.mk
-      (Nat.rec
-        (motive := fun x => (n = x) → Gen α)
-        (fun h => (gz h).val)
-        (fun a _ b => (gs a b).val)
-        n
-        rfl) <| by
+    (gz : (n = 0) → CorrectGen P)
+    (gs : (n' : Nat) → (n = n' + 1) → CorrectGen P) :
+    CorrectGen P :=
+    Subtype.mk (if h : n = 0 then gz h else gs n.pred (by simp; omega)) <| by
     match n with
     | 0 => exact (gz _).property
     | n' + 1 => exact (gs _ _).property
@@ -181,23 +134,6 @@ theorem total_arbNat : total arbNat := by
   apply total_indexed
   intro n
   induction n <;> simp [arbNat.go, *]
-
-@[simp, aesop safe (rule_sets := [totality])]
-theorem total_Nat_rec
-    {gz : (n = 0) → Gen α}
-    {gs : (n' : Nat) → (n = n' + 1) → Gen α}
-    (hz : ∀ h, total (gz h))
-    (hs : ∀ n' gn', total (gs n' gn')) :
-    total (Nat.rec
-          (motive := fun x => (n = x) → Gen α)
-          (fun h => gz h)
-          (fun a _ b => gs a b)
-          n
-          rfl)
-  := by
-  cases n
-  case zero => exact hz rfl
-  case succ n' => simp_all only
 
 @[simp, aesop safe (rule_sets := [totality])]
 theorem total_choose : total (choose lo hi h) := by
