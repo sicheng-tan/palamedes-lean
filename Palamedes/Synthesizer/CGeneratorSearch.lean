@@ -90,6 +90,16 @@ macro "simp_predicate" : tactic =>
           | rfl
       | rfl)
 
+macro "simp_bind_predicate" : tactic =>
+  `(tactic|
+    first
+      | funext
+        simp [guard, Option.bind_eq_some_iff, *]
+        first
+          | rfl
+          | apply exists_congr; intro; rw [true_and]
+      | rfl)
+
 macro "gapply " t:term : tactic =>
   `(tactic| apply convert (by simp_predicate) $t)
 
