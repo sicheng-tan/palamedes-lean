@@ -82,7 +82,7 @@ macro "norm_for_Term_unfold" : tactic =>
   `(tactic|
     (funext
      simp_predicate
-     try (conv => rhs; lhs; apply congrFun; apply (Term.coerce_to_fold (by aesop) (by intros; simp_all; rflm)));
+     try (conv => rhs; lhs; apply congrFun; apply (Term.coerce_to_fold (by aesop) (by aesop) (by intros; simp_all; rflm) (by intros; simp_all; rflm)));
      first
       | rw [← Term.fold_accu_Option_true]; (try aesop); done
       | rw [← Term.fold_accu_Option_function]; (try aesop); done

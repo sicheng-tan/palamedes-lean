@@ -22,10 +22,9 @@ def getType (t : Term) (Γ : List Ty) : Option Ty :=
     | .unit => failure
 
 @[simp]
-def wellTyped (Γ : List Ty) (t : Term) : Bool :=
-  Option.isSome (getType t Γ)
+def wellTyped (Γ : List Ty) (t : Term) : Prop :=
+  ∃ (τ : Ty), getType t Γ = τ
 
 attribute [local simp] Ty.as_or Ty.deforest_eq in
 def genWellTyped (Γ : List Ty) : Gen Term := by
-  -- generator_search (λ t => wellTyped Γ t = true)
-  sorry
+  generator_search (fun t => wellTyped Γ t)
