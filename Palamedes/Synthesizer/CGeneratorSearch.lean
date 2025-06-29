@@ -129,16 +129,22 @@ add_aesop_rules safe (rule_sets := [synthesis]) [
   (by apply convert (by norm_for_pure) (s_pure _)),
 ]
 
+macro "goal_is_eq_or_and" : tactic =>
+  `(tactic|
+    first
+      | guard_target = CorrectGen (fun _ => _ = _)
+      | guard_target = CorrectGen (fun _ => _ ∧ _))
+
 add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by assumption),
   (by apply convert (by norm_for_pick) (s_pick _ _)),
   (by apply convert (by norm_for_bind) (s_bind _ _)),
   (by apply convert (by norm_for_bind') (s_bind _ _)), -- TODO Fix this
-  (by apply convert (by norm_for_List_unfold) (List.s_unfold _)),
-  (by apply convert (by norm_for_Tree_unfold) (Tree.s_unfold _)),
-  (by apply convert (by norm_for_Stack_unfold) (Stack.s_unfold _)),
-  (by apply convert (by norm_for_Term_unfold) (Term.s_unfold _)),
-  (by apply convert (by norm_for_Ty_unfold) (Ty.s_unfold _)),
+  (by goal_is_eq_or_and; apply convert (by norm_for_List_unfold) (List.s_unfold _)),
+  (by goal_is_eq_or_and; apply convert (by norm_for_Tree_unfold) (Tree.s_unfold _)),
+  (by goal_is_eq_or_and; apply convert (by norm_for_Stack_unfold) (Stack.s_unfold _)),
+  (by goal_is_eq_or_and; apply convert (by norm_for_Term_unfold) (Term.s_unfold _)),
+  (by goal_is_eq_or_and; apply convert (by norm_for_Ty_unfold) (Ty.s_unfold _)),
   (by apply s_arbUnit),
   (by apply s_arbBool),
   (by apply s_arbNat),
@@ -151,12 +157,15 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by apply (s_indicesOf _ _)), -- TODO Fix this
 ]
 
+macro "goal_is_or" : tactic =>
+  `(tactic| guard_target = CorrectGen (fun _ => _ ∨ _))
+
 add_aesop_rules 5% (rule_sets := [synthesis]) [
   (by apply caseBool (by assumption)),
-  (by guard_target = CorrectGen (fun _ => _ ∨ _); clear_unused_assumptions; apply s_caseTy (by nth_assumption 0) (by intros; rflm)),
-  (by guard_target = CorrectGen (fun _ => _ ∨ _); clear_unused_assumptions; apply s_caseTy (by nth_assumption 1) (by intros; rflm)),
-  (by guard_target = CorrectGen (fun _ => _ ∨ _); clear_unused_assumptions; apply s_caseNat (by nth_assumption 0) (by intros; rflm)),
-  (by guard_target = CorrectGen (fun _ => _ ∨ _); clear_unused_assumptions; apply s_caseNat (by nth_assumption 1) (by intros; rflm)),
+  (by goal_is_or; clear_unused_assumptions; apply s_caseTy (by nth_assumption 0) (by intros; rflm)),
+  (by goal_is_or; clear_unused_assumptions; apply s_caseTy (by nth_assumption 1) (by intros; rflm)),
+  (by goal_is_or; clear_unused_assumptions; apply s_caseNat (by nth_assumption 0) (by intros; rflm)),
+  (by goal_is_or; clear_unused_assumptions; apply s_caseNat (by nth_assumption 1) (by intros; rflm)),
 ]
 
 macro "cgenerator_search" : tactic =>
