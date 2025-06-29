@@ -19,8 +19,7 @@ def genGoodStackFold (n : Nat) : Gen Stack := by
   let cg : CorrectGen (λ (s : Stack) => Stack.fold (λ i => i == 0) (λ x acc i => i > 0 && isGoodAtom x && acc (i - 1)) (λ pc acc i => i > 0 && isGoodAtom pc && acc (i - 1)) s n = true) := by
     apply convert (by norm_for_Stack_unfold ) (Stack.s_unfold _)
     intros
-    rename_i n
-    apply s_caseNat n
+    rename_i n; apply s_caseNat n
     . cgenerator_search
     . cgenerator_search
   let g : Gen (Stack) := by
