@@ -11,54 +11,47 @@ def genWellTypedFold (Γ : List Ty) : Gen Term := by
     apply convert (by norm_for_bind) (s_bind _ _)
     . cgenerator_search
     . intro τ
-      apply convert (by
-        funext
-        simp [guard, *]
-        rw [← Term.fold_accu_Option_function_Option] <;> aesop
-        ) (Term.s_unfold _)
+      apply convert (by norm_for_Term_unfold) (Term.s_unfold _)
       intros b Γ
       apply s_caseTy b
       . intros
         apply convert (by norm_for_pick) (s_pick _ _)
         . cgenerator_search
         . apply convert (by norm_for_pick) (s_pick _ _)
-          . apply (s_bind _ _)
+          . apply convert (by norm_for_bind) (s_bind _ _)
             . apply (s_indicesOf _ _)
             . cgenerator_search
-          . apply convert (by
-            funext
-            simp
-            rw [exists_comm]
-            apply exists_congr; intro; rw [true_and]
-            ) (s_bind _ _)
+          . apply convert (by norm_for_bind') (s_bind _ _)
             . cgenerator_search
             . intro
-              apply (s_bind _ _)
+              apply convert (by norm_for_bind) (s_bind _ _)
               . apply convert
                   (by
                     funext
+                    simp_predicate
                     split <;> aesop (add simp Option.bind_eq_some_iff))
                   (s_pure _)
               . intro
-                apply (s_pure _)
+                apply convert (by norm_for_pure) (s_pure _)
       . intros
         apply convert (by norm_for_pick) (s_pick _ _)
         . apply (s_bind _ _)
           . apply (s_indicesOf _ _)
           . cgenerator_search
         . apply convert (by norm_for_pick) (s_pick _ _)
-          . apply convert (by funext; rfl) (s_pure _)
+          . apply convert (by norm_for_pure) (s_pure _)
           . apply convert (by norm_for_bind') (s_bind _ _)
             . cgenerator_search
             . intro
-              apply (s_bind _ _)
+              apply convert (by norm_for_bind) (s_bind _ _)
               . apply convert
                   (by
                     funext
+                    simp_predicate
                     split <;> aesop (add simp Option.bind_eq_some_iff))
                   (s_pure _)
               . intro
-                apply (s_pure _)
+                apply convert (by norm_for_pure) (s_pure _)
   let g : Gen (Term) := by
     optimize_gen cg.val
   have support_eq : support cg.val = support g := by
