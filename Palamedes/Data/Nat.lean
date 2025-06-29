@@ -90,14 +90,17 @@ def s_arbNat : @CorrectGen Nat (λ _ => True) :=
 
 @[reducible]
 def s_caseNat
+    {Q : α → Prop}
+    {P : α → Nat → Prop}
     (n : Nat)
-    (gz : (n = 0) → CorrectGen P)
-    (gs : (n' : Nat) → (n = n' + 1) → CorrectGen P) :
-    CorrectGen P :=
-    Subtype.mk (if h : n = 0 then gz h else gs n.pred (by simp; omega)) <| by
+    (h : ∀ {a}, P a n = Q a)
+    (gz : CorrectGen (fun a => P a 0))
+    (gs : (n' : Nat) → CorrectGen (fun a => P a (n' + 1))) :
+    CorrectGen Q :=
+  Subtype.mk (if n = 0 then gz.val else (gs n.pred).val) <| by
     match n with
-    | 0 => exact (gz _).property
-    | n' + 1 => exact (gs _ _).property
+    | 0 => simp [gz.property, h]
+    | n' + 1 => simp [(gs n').property, h]
 
 @[reducible]
 def s_between

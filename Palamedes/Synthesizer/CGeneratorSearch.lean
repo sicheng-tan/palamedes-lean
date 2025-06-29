@@ -12,7 +12,6 @@ import Palamedes.Data.Unit
 import Palamedes.Data.Nat
 import Palamedes.Data.Bool
 import Palamedes.Synthesizer.Util
-import Mathlib.Tactic.FailIfNoProgress
 
 open Gen CorrectGen
 
@@ -137,12 +136,11 @@ macro "norm_for_bind'" : tactic =>
 
 add_aesop_rules safe (rule_sets := [synthesis]) [
   (by (repeat apply duncurry); intro),
+  (by apply convert (by norm_for_pure) (s_pure _)),
 ]
 
 add_aesop_rules unsafe (rule_sets := [synthesis]) [
-  (by (repeat apply duncurry); intro),
   (by assumption),
-  (by apply convert (by norm_for_pure) (s_pure _)),
   (by apply convert (by norm_for_pick) (s_pick _ _)),
   (by apply convert (by norm_for_bind) (s_bind _ _)),
   (by apply convert (by norm_for_bind') (s_bind _ _)),
@@ -162,22 +160,20 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by apply (s_between (by first | aesop | omega))),
 ]
 
-add_aesop_rules 5% (rule_sets := [synthesis]) [
+add_aesop_rules 1% (rule_sets := [synthesis]) [
   (by apply caseBool (by assumption)),
-  (by rename_i n; apply s_caseNat n),
-  (by rename_i n _; apply s_caseNat n),
-  (by rename_i n _ _; apply s_caseNat n),
-  (by rename_i n _ _ _; apply s_caseNat n),
+  (by guard_target = CorrectGen (fun _ => _ ∨ _); clear_unused_assumptions; apply s_caseNat (by nth_assumption 0) (by intros; rflm)),
+  (by guard_target = CorrectGen (fun _ => _ ∨ _); clear_unused_assumptions; apply s_caseNat (by nth_assumption 1) (by intros; rflm)),
 ]
 
 macro "cgenerator_search" : tactic =>
   `(tactic|
     aesop
       (rule_sets := [-default, -builtin, synthesis])
-      (config := {enableSimp := false, maxRuleApplications := 500}))
+      (config := {enableSimp := false, maxRuleApplications := 1000}))
 
 macro "cgenerator_search?" : tactic =>
   `(tactic|
     aesop?
       (rule_sets := [-default, -builtin, synthesis])
-      (config := {enableSimp := false, maxRuleApplications := 500}))
+      (config := {enableSimp := false, maxRuleApplications := 1000}))

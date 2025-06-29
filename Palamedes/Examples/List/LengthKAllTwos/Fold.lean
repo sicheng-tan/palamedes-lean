@@ -13,10 +13,9 @@ def genLengthKAllTwosFold (k : Nat) : Gen (List Nat) := by
     (repeat apply duncurry); intro
     (repeat apply duncurry); intro
     rename_i n _ _ _
-    apply s_caseNat n
+    apply s_caseNat n (by intros; rflm)
     . cgenerator_search
     . (repeat apply duncurry); intro
-      (repeat apply duncurry); intro
       apply convert (by
         funext
         /- PROBLEM: the and_assoc is the issue

@@ -32,11 +32,10 @@ def genAVL (height lo hi : Nat) : Gen (Tree Nat) := by
     (repeat apply duncurry); intro /- Possible problem: caseNat could get tried here, making the whole thing perform worse-/
     (repeat apply duncurry); intro /- also here, it could try this one and rename_i n _ -/
     (repeat apply duncurry); intro
-    rename_i n; apply s_caseNat n
+    apply s_caseNat (by nth_assumption 0) (by intros; rflm)
     . cgenerator_search
     . (repeat apply duncurry); intro
-      (repeat apply duncurry); intro
-      rename_i n _; apply s_caseNat n
+      apply s_caseNat (by nth_assumption 0) (by intros; rflm)
       . cgenerator_search
       . cgenerator_search
   let g : Gen (Tree Nat) := by
