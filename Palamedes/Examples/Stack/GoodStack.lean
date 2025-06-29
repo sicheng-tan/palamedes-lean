@@ -20,19 +20,16 @@ def isGoodStack (n : Nat) (s : Stack) : Bool :=
 
 set_option palamedes.debug true
 
--- def genGoodStack (n : Nat) : Gen Stack := by
---   -- generator_search (λ s => isGoodStack s n = true)
---   let cg : CorrectGen (λ s => isGoodStack n s = true) := by
---     apply convert (by
---       funext
---       simp [*]
---       conv => rhs; lhs; apply (Stack.coerce_to_fold (by aesop) (by intros; simp_all; rflm) (by intros; simp_all; rflm))
---       sorry) (Stack.s_unfold _)
---   let g : Gen (Stack) := by
---     optimize_gen cg.val
---   let _ : support cg.val = support g := by
---     optimality
---   let _ : Gen.total g := by
---     totality
---   exact g
---   sorry
+def genGoodStack (n : Nat) : Gen Stack := by
+  -- generator_search (λ s => isGoodStack s n = true)
+  let cg : CorrectGen (λ s => isGoodStack n s = true) := by
+    sorry
+    -- apply convert (by norm_for_Stack_unfold ) (Stack.s_unfold _)
+    -- cgenerator_search
+  let g : Gen (Stack) := by
+    optimize_gen cg.val
+  let _ : support cg.val = support g := by
+    optimality
+  -- let _ : Gen.total g := by
+  --   totality
+  exact g
