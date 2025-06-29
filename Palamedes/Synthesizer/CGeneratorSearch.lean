@@ -41,16 +41,19 @@ macro "norm_for_Tree_unfold" : tactic =>
   `(tactic|
     (funext
      simp_predicate
-     first
-      | conv => rhs; lhs; apply (Tree.coerce_to_fold (by aesop) (by intros; simp_all; rflm))
-      | conv => rhs; lhs; apply congrFun; apply (Tree.coerce_to_fold (by aesop) (by intros; simp_all; rflm))
-      | skip
-     first
-      | rw [← Tree.fold_accu_Option_true]; (try aesop); done
-      | rw [← Tree.fold_accu_Option_function]; (try aesop); done
-      | rw [← Tree.fold_accu_Option_function_true];
-        (try intros; simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
-      | rw [← Tree.fold_accu_Option_basic]; (try aesop); done))
+     repeat'
+      (first
+        | rw [← Tree.merge_accuM]; apply and_congr
+        | (first
+            | conv => rhs; lhs; apply (Tree.coerce_to_fold (by aesop) (by intros; simp_all; rflm))
+            | conv => rhs; lhs; apply congrFun; apply (Tree.coerce_to_fold (by aesop) (by intros; simp_all; rflm))
+            | skip
+           first
+            | rw [← Tree.fold_accu_Option_true]; (try aesop); done
+            | rw [← Tree.fold_accu_Option_function]; (try aesop); done
+            | rw [← Tree.fold_accu_Option_function_true];
+              (try intros; simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
+            | rw [← Tree.fold_accu_Option_basic]; (try aesop); done))))
 
 macro "norm_for_Stack_unfold" : tactic =>
   `(tactic|
