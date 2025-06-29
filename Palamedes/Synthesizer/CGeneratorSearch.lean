@@ -57,7 +57,7 @@ macro "norm_for_Stack_unfold" : tactic =>
      first
       | rw [← Stack.fold_accu_Option_true]; (try aesop); done
       | rw [← Stack.fold_accu_Option_function]; (try aesop); done
-      | rw [← Stack.fold_accu_Option_function_true];
+      | rw [← Stack.fold_accu_Option_function_true] <;>
         (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
       | rw [← Stack.fold_accu_Option_basic]; (try aesop); done))
 
@@ -109,6 +109,7 @@ macro "norm_for_pick" : tactic =>
   `(tactic| (
     funext
     simp_predicate
+    try simp [← Decidable.or_iff_not_imp_left]
     rfl))
 
 macro "norm_for_bind" : tactic =>
