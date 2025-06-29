@@ -8,28 +8,14 @@ def isGoodNat (n : Nat) : Bool :=
 
 @[simp]
 def isGoodAtom : Atom → Bool
-  | .atm z _ => isGoodNat z
+  | .atm n _ => isGoodNat n
 
 @[simp]
-def isGoodStack (n : Nat) (s : Stack) : Bool :=
-  match s, n with
-  | .mty, 0 => true
-  | .cons x s, n' + 1 => isGoodAtom x && isGoodStack n' s
-  | .ret_cons pc s, n' + 1 => isGoodAtom pc && isGoodStack n' s
-  | _, _ => false
-
-set_option palamedes.debug true
+def isGoodStack (s : Stack) (n : Nat) : Bool :=
+  match s with
+  | .mty => n == 0
+  | .cons x s' => (n > 0 && isGoodAtom x) && isGoodStack s' (n - 1)
+  | .ret_cons pc s' => (n > 0 && isGoodAtom pc) && isGoodStack s' (n - 1)
 
 def genGoodStack (n : Nat) : Gen Stack := by
-  -- generator_search (λ s => isGoodStack s n = true)
-  let cg : CorrectGen (λ s => isGoodStack n s = true) := by
-    sorry
-    -- apply convert (by norm_for_Stack_unfold ) (Stack.s_unfold _)
-    -- cgenerator_search
-  let g : Gen (Stack) := by
-    optimize_gen cg.val
-  let _ : support cg.val = support g := by
-    optimality
-  -- let _ : Gen.total g := by
-  --   totality
-  exact g
+  generator_search (λ s => isGoodStack s n = true)

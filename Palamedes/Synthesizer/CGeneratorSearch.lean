@@ -58,7 +58,7 @@ macro "norm_for_Stack_unfold" : tactic =>
   `(tactic|
     (funext
      simp_predicate
-     try (conv => rhs; lhs; apply congrFun; apply (Stack.coerce_to_fold (by aesop) (by intros; simp_all; rflm)));
+     try (conv => rhs; lhs; apply congrFun; apply (Stack.coerce_to_fold (by aesop) (by intros; simp_all; rflm) (by intros; simp_all; rflm)));
      first
       | rw [← Stack.fold_accu_Option_true]; (try aesop); done
       | rw [← Stack.fold_accu_Option_function]; (try aesop); done
