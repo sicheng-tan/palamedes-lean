@@ -81,3 +81,11 @@ elab "clear_unused_assumptions" : tactic => do
       else
         g.clear decl.fvarId
     replaceMainGoal [g']
+
+elab "unfold_matches" : tactic =>
+  withMainContext do
+    let goalType ← getMainTarget
+    let consts := goalType.getUsedConstants
+    let ms := consts.filter (fun n => n.components.any (·.getString!.startsWith "match_"))
+    for m in ms do
+      unfoldTarget m

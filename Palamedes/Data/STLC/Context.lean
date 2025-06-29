@@ -1,6 +1,8 @@
 import Palamedes.Gen
 import Palamedes.CorrectGen
 import Palamedes.Total
+import Batteries.Data.List.Lemmas
+import Mathlib.Data.List.Basic
 
 open Gen CorrectGen
 
@@ -38,27 +40,33 @@ def indicesOf [DecidableEq α] (xs : List α) (a : α) : Gen Nat :=
   .assume (inds.length > 0)
           (λ h => elements inds (by simp_all only [decide_eq_true_eq]))
 
+-- example {xs : List α} : v ∈ xs → 0 < xs.length := by
+--   exact fun a => List.length_pos_of_mem a
+
 @[reducible]
 def s_indicesOf [DecidableEq α] (xs : List α) (a : α) : CorrectGen (λ (n : Nat) => xs[n]? = some a) :=
   Subtype.mk (indicesOf xs a) <| by
-  funext v
-  simp
-  sorry
-
-@[reducible]
-def indicesOf' [DecidableEq α] (xs : List α) (a : α) : Gen Nat :=
-  let inds := List.indexesOf a xs
-  .assume (inds.length > 0)
-          (λ h => elements inds (by simp_all only [decide_eq_true_eq]))
-
-@[reducible]
-def s_indicesOf' [DecidableEq α] (xs : List α) (a : α) : CorrectGen (λ (n : Nat) => xs[n]? = some a) :=
-  Subtype.mk (indicesOf' xs a) <| by
-  funext v
-  simp_all
-  -- apply List.some_eq_getElem?_iff
-  -- apply List.findIdx_getElem?_eq_getElem_of_exists
-  sorry
+    funext v
+    simp
+    have : (0 < (List.indexesOf a xs).length ∧ v ∈ List.indexesOf a xs) = Membership.mem (List.indexesOf a xs) v := by
+      simp
+      intro a
+      exact List.length_pos_of_mem a
+    rw [this]
+    clear this
+    induction xs generalizing a v with
+    | nil => simp [List.indexesOf_nil]
+    | cons x xs ih =>
+      simp [List.indexesOf_cons, List.getElem?_cons]
+      cases hxa : x == a
+      . simp [hxa]
+        cases v
+        . aesop
+        . simp [ih]
+      . simp [hxa]
+        cases v
+        . aesop
+        . simp [ih]
 
 namespace Total
 

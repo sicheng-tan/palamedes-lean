@@ -105,6 +105,7 @@ macro "norm_for_any" : tactic =>
 macro "norm_for_pure" : tactic =>
   `(tactic| (
     funext
+    unfold_matches
     simp_predicate
     first
       | rfl
@@ -143,7 +144,7 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by assumption),
   (by apply convert (by norm_for_pick) (s_pick _ _)),
   (by apply convert (by norm_for_bind) (s_bind _ _)),
-  (by apply convert (by norm_for_bind') (s_bind _ _)),
+  (by apply convert (by norm_for_bind') (s_bind _ _)), -- TODO Fix this
   (by apply convert (by norm_for_List_unfold) (List.s_unfold _)),
   (by apply convert (by norm_for_Tree_unfold) (Tree.s_unfold _)),
   (by apply convert (by norm_for_Stack_unfold) (Stack.s_unfold _)),
@@ -158,6 +159,7 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by apply s_gt),
   (by apply s_between_partial),
   (by apply (s_between (by first | aesop | omega))),
+  (by apply (s_indicesOf _ _)), -- TODO Fix this
 ]
 
 add_aesop_rules 1% (rule_sets := [synthesis]) [

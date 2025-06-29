@@ -5,6 +5,9 @@ import Palamedes.Support -- TODO Remove
 
 open Gen CorrectGen
 
+set_option maxHeartbeats 1000000
+
+attribute [local simp] Ty.as_or Ty.deforest_eq in
 def genWellTypedFold (Γ : List Ty) : Gen Term := by
   -- generator_search (fun t => ∃ τ, getTypeFold t Γ = some τ)
   let cg : CorrectGen (fun t => ∃ τ, getTypeFold t Γ = some τ) := by
@@ -14,44 +17,8 @@ def genWellTypedFold (Γ : List Ty) : Gen Term := by
       apply convert (by norm_for_Term_unfold) (Term.s_unfold _)
       intros b Γ
       apply s_caseTy b
-      . intros
-        apply convert (by norm_for_pick) (s_pick _ _)
-        . cgenerator_search
-        . apply convert (by norm_for_pick) (s_pick _ _)
-          . apply convert (by norm_for_bind) (s_bind _ _)
-            . apply (s_indicesOf _ _)
-            . cgenerator_search
-          . apply convert (by norm_for_bind') (s_bind _ _)
-            . cgenerator_search
-            . intro
-              apply convert (by norm_for_bind) (s_bind _ _)
-              . apply convert
-                  (by
-                    funext
-                    simp_predicate
-                    split <;> aesop (add simp Option.bind_eq_some_iff))
-                  (s_pure _)
-              . intro
-                apply convert (by norm_for_pure) (s_pure _)
-      . intros
-        apply convert (by norm_for_pick) (s_pick _ _)
-        . apply (s_bind _ _)
-          . apply (s_indicesOf _ _)
-          . cgenerator_search
-        . apply convert (by norm_for_pick) (s_pick _ _)
-          . apply convert (by norm_for_pure) (s_pure _)
-          . apply convert (by norm_for_bind') (s_bind _ _)
-            . cgenerator_search
-            . intro
-              apply convert (by norm_for_bind) (s_bind _ _)
-              . apply convert
-                  (by
-                    funext
-                    simp_predicate
-                    split <;> aesop (add simp Option.bind_eq_some_iff))
-                  (s_pure _)
-              . intro
-                apply convert (by norm_for_pure) (s_pure _)
+      . cgenerator_search
+      . cgenerator_search
   let g : Gen (Term) := by
     optimize_gen cg.val
   have support_eq : support cg.val = support g := by
