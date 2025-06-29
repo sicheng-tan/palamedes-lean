@@ -91,17 +91,6 @@ macro "norm_for_Term_unfold" : tactic =>
       | rw [← Term.fold_accu_Option_function_Option] <;> (try aesop); done
       | rw [← Term.fold_accu_Option_basic]; (try aesop); done))
 
-macro "norm_for_any" : tactic =>
-  `(tactic|
-    first
-      | funext
-        simp_predicate
-        first
-          | exact Eq.comm
-          | apply exists_congr; intro; rw [true_and]
-          | rfl
-      | rfl)
-
 macro "norm_for_pure" : tactic =>
   `(tactic| (
     funext
