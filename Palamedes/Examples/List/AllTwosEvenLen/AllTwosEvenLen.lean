@@ -20,15 +20,7 @@ def genAllTwosEvenLen : Gen (List Nat) := by
   -- generator_search (fun xs => (recAllTwos xs && recEvenLen xs) = true)
   let cg : CorrectGen (fun (xs: List Nat) => (recAllTwos xs && recEvenLen xs) = true) := by
     -- NOTE: this is exactly the same as the fold version
-    apply convert (by
-      funext
-      simp [guard, *]
-      rw [← List.merge_accuM]
-      all_goals sorry
-      -- apply and_congr
-      -- . simp_list_predicate
-      -- . simp_list_predicate
-    ) (List.s_unfold _)
+    apply convert (by norm_for_List_unfold) (List.s_unfold _)
     sorry
     -- intros s b
     -- replace ⟨s1, s2⟩ := s

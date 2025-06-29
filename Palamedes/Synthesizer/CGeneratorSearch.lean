@@ -23,16 +23,19 @@ macro "norm_for_List_unfold" : tactic =>
   -- todo: the bool lemma below is overfitting to the evenLen example
     (funext
      simp_predicate
-     first
-      | conv => rhs; lhs; apply (List.coerce_to_fold (by rflm) (by intros; simp_all [- Bool.not_eq_eq_eq_not]; rflm))
-      | conv => rhs; lhs; apply congrFun; apply (List.coerce_to_fold (by rflm) (by intros; simp_all [- Bool.not_eq_eq_eq_not]; rflm))
-      | skip
-     first
-      | rw [← List.fold_accu_Option_true] <;> (try aesop); done
-      | rw [← List.fold_accu_Option_function]; (try aesop); done
-      | rw [← List.fold_accu_Option_function_true] <;>
-        (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]) <;> (try aesop); done
-      | rw [← List.fold_accu_Option_basic]; (try aesop); done))
+     repeat'
+      (first
+        | rw [← List.merge_accuM]; apply and_congr
+        | (first
+            | conv => rhs; lhs; apply (List.coerce_to_fold (by rflm) (by intros; simp_all [- Bool.not_eq_eq_eq_not]; rflm))
+            | conv => rhs; lhs; apply congrFun; apply (List.coerce_to_fold (by rflm) (by intros; simp_all [- Bool.not_eq_eq_eq_not]; rflm))
+            | skip
+           first
+            | rw [← List.fold_accu_Option_true] <;> (try aesop); done
+            | rw [← List.fold_accu_Option_function]; (try aesop); done
+            | rw [← List.fold_accu_Option_function_true] <;>
+              (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]) <;> (try aesop); done
+            | rw [← List.fold_accu_Option_basic]; (try aesop); done))))
 
 macro "norm_for_Tree_unfold" : tactic =>
   `(tactic|
