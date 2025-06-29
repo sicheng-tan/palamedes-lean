@@ -534,18 +534,21 @@ def s_arbTy : @CorrectGen Ty (λ _ => True) :=
 
 @[reducible]
 def s_caseTy
+    {Q : α → Prop}
+    {P : α → Ty → Prop}
     (τ : Ty)
-    (gu : (τ = Ty.unit) → @CorrectGen α P)
-    (ga : (τ₁ τ₂ : Ty) → (τ = Ty.arrow τ₁ τ₂) → @CorrectGen α P) :
-    @CorrectGen α P :=
+    (h : ∀ {a}, P a τ = Q a)
+    (gu : CorrectGen (fun a => P a .unit))
+    (ga : (τ₁ τ₂ : Ty) → CorrectGen (fun a => P a (.arrow τ₁ τ₂))) :
+    CorrectGen Q :=
     Subtype.mk
       (caseTy
         τ
-        (fun h => (gu h).val)
-        (fun τ₁ τ₂ h => (ga τ₁ τ₂ h).val)) <| by
+        (fun _ => gu.val)
+        (fun τ₁ τ₂ _ => (ga τ₁ τ₂).val)) <| by
     match τ with
-    | .unit => exact (gu _).property
-    | .arrow τ₁ τ₂ => exact (ga _ _ _).property
+    | .unit => simp [gu.property, h]
+    | .arrow τ₁ τ₂ => simp [(ga τ₁ τ₂).property, h, caseTy]
 
 end CorrectGen
 

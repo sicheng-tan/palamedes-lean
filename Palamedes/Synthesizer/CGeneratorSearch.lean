@@ -137,8 +137,8 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by apply convert (by norm_for_List_unfold) (List.s_unfold _)),
   (by apply convert (by norm_for_Tree_unfold) (Tree.s_unfold _)),
   (by apply convert (by norm_for_Stack_unfold) (Stack.s_unfold _)),
-  (by apply convert (by norm_for_Ty_unfold) (Ty.s_unfold _)),
   (by apply convert (by norm_for_Term_unfold) (Term.s_unfold _)),
+  (by apply convert (by norm_for_Ty_unfold) (Ty.s_unfold _)),
   (by apply s_arbUnit),
   (by apply s_arbBool),
   (by apply s_arbNat),
@@ -151,8 +151,10 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by apply (s_indicesOf _ _)), -- TODO Fix this
 ]
 
-add_aesop_rules 1% (rule_sets := [synthesis]) [
+add_aesop_rules 5% (rule_sets := [synthesis]) [
   (by apply caseBool (by assumption)),
+  (by guard_target = CorrectGen (fun _ => _ ∨ _); clear_unused_assumptions; apply s_caseTy (by nth_assumption 0) (by intros; rflm)),
+  (by guard_target = CorrectGen (fun _ => _ ∨ _); clear_unused_assumptions; apply s_caseTy (by nth_assumption 1) (by intros; rflm)),
   (by guard_target = CorrectGen (fun _ => _ ∨ _); clear_unused_assumptions; apply s_caseNat (by nth_assumption 0) (by intros; rflm)),
   (by guard_target = CorrectGen (fun _ => _ ∨ _); clear_unused_assumptions; apply s_caseNat (by nth_assumption 1) (by intros; rflm)),
 ]
