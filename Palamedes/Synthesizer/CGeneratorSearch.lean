@@ -163,6 +163,8 @@ add_aesop_rules 5% (rule_sets := [synthesis]) [
   (by apply caseBool (by assumption)),
   (by rename_i n; apply s_caseNat n),
   (by rename_i n _; apply s_caseNat n),
+  (by rename_i n _ _; apply s_caseNat n),
+  (by rename_i n _ _ _; apply s_caseNat n),
 ]
 
 macro "cgenerator_search" : tactic =>
