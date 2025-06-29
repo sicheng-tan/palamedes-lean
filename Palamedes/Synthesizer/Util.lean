@@ -53,3 +53,31 @@ let g ← popMainGoal
           Value:{indentExpr rhs'}"
     -- Given that that succeeded, now both sides are unified, so Eq.refl must work.
     g.assign (← mkEqRefl rhs)
+
+elab "nth_assumption " n:num : tactic => do
+  withMainContext do
+    let n := n.getNat
+    let goalType ← getMainTarget
+    let ctx ← getLCtx
+    let ms ← ctx.decls.toList.filterMapM fun decl: Option LocalDecl => do
+      let .some decl := decl | return none
+      let declExpr := decl.toExpr
+      let declType ← inferType declExpr
+      if ← isDefEq declType goalType then
+        return some declExpr
+      return none
+    if n >= ms.length then
+      throwError "no matching assumption with that index"
+    closeMainGoal `assumption_1 ms.reverse[n]!
+
+elab "clear_unused_assumptions" : tactic => do
+  withMainContext do
+    let g ← getMainGoal
+    let goalType ← getMainTarget
+    let ctx ← getLCtx
+    let g' ← ctx.foldrM (init := g) fun decl (g : MVarId) => do
+      if goalType.hasAnyFVar (· == decl.fvarId) then
+        pure g
+      else
+        g.clear decl.fvarId
+    replaceMainGoal [g']
