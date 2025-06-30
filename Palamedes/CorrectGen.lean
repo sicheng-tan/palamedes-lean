@@ -20,8 +20,8 @@ def s_bind
     {Q : α → β → Prop}
     (x : CorrectGen P)
     (f : (a : α) → CorrectGen (Q a)) :
-    CorrectGen (λ b => ∃ a, P a ∧ Q a b) :=
-  Subtype.mk (x.val >>= λ a => (f a).val) <| by
+    CorrectGen (fun b => ∃ a, P a ∧ Q a b) :=
+  Subtype.mk (x.val >>= fun a => (f a).val) <| by
     funext b
     simp
     apply Iff.intro <;>
@@ -34,7 +34,7 @@ def s_pick
     {P Q : α → Prop}
     (x : CorrectGen P)
     (y : CorrectGen Q) :
-    CorrectGen (λ a => P a ∨ Q a) :=
+    CorrectGen (fun a => P a ∨ Q a) :=
   Subtype.mk (pick x.val y.val) <| by
     simp [x.property, y.property]
 
@@ -45,6 +45,66 @@ def convert
     CorrectGen Q :=
   Subtype.mk g.val <| by
     simp [h, g.property]
+
+@[reducible]
+def s_assume_1
+    {P : Bool}
+    {Q : α → Prop}
+    (h : ∀ v, Q v → P)
+    (g : P → CorrectGen (fun v => Q v)):
+    CorrectGen (fun v => Q v) :=
+  Subtype.mk (assume P (fun hp => (g hp).val)) <| by
+    funext v
+    simp_all
+    apply Iff.intro
+    . intro ⟨ hp, hv ⟩
+      simp_all [(g hp).property]
+    . intro hq
+      exists (h v hq)
+      simp_all [(g (h v hq)).property]
+
+@[reducible]
+def s_assume_and_1
+    {P : Bool}
+    {Q : α → Prop}
+    (g : CorrectGen (fun v => Q v)) :
+    CorrectGen (fun v => P ∧ Q v) :=
+  s_assume_1 (by intros v h; replace ⟨ hp, h ⟩ := h; exact hp)
+    (by intro h; exact ⟨g.val, by aesop⟩)
+
+@[reducible]
+def s_assume_and_2
+    {P : Bool}
+    {Q : α → Prop}
+    (g : CorrectGen (fun v => Q v)) :
+    CorrectGen (fun v => P ∧ Q v) :=
+  Subtype.mk (assume P (fun h => g.val)) <| by
+    funext v
+    simp_all [g.property]
+
+@[reducible]
+def s_assume_2
+    {P : Bool}
+    {Q : α → Prop}
+    (h : ∀ v, Q v → P)
+    (g : P → CorrectGen (fun v => Q v)):
+    CorrectGen (fun v => Q v) := by
+  apply convert (by
+    funext x
+    replace h := @h x
+    replace h := @and_iff_right_of_imp (Q x) (P = true) h
+    rw [← h]) (s_assume_and_2 _)
+  sorry
+
+@[reducible]
+def s_assume
+    {P : Bool}
+    (x : α)
+    (g : α → CorrectGen (fun v => v = x)) :
+    CorrectGen (fun v => P ∧ v = x) :=
+  Subtype.mk (assume P (fun h => (g x).val)) <| by
+    funext v
+    simp_all [(g x).property]
 
 @[reducible]
 def duncurry
