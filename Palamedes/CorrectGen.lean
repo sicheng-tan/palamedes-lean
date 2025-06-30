@@ -47,7 +47,7 @@ def convert
     simp [h, g.property]
 
 @[reducible]
-def s_assume_1
+def s_assume_general
     {P : Bool}
     {Q : α → Prop}
     (h : ∀ v, Q v → P)
@@ -64,16 +64,7 @@ def s_assume_1
       simp_all [(g (h v hq)).property]
 
 @[reducible]
-def s_assume_and_1
-    {P : Bool}
-    {Q : α → Prop}
-    (g : CorrectGen (fun v => Q v)) :
-    CorrectGen (fun v => P ∧ Q v) :=
-  s_assume_1 (by intros v h; replace ⟨ hp, h ⟩ := h; exact hp)
-    (by intro h; exact ⟨g.val, by aesop⟩)
-
-@[reducible]
-def s_assume_and_2
+def s_assume_and
     {P : Bool}
     {Q : α → Prop}
     (g : CorrectGen (fun v => Q v)) :
@@ -81,20 +72,6 @@ def s_assume_and_2
   Subtype.mk (assume P (fun h => g.val)) <| by
     funext v
     simp_all [g.property]
-
-@[reducible]
-def s_assume_2
-    {P : Bool}
-    {Q : α → Prop}
-    (h : ∀ v, Q v → P)
-    (g : P → CorrectGen (fun v => Q v)):
-    CorrectGen (fun v => Q v) := by
-  apply convert (by
-    funext x
-    replace h := @h x
-    replace h := @and_iff_right_of_imp (Q x) (P = true) h
-    rw [← h]) (s_assume_and_2 _)
-  sorry
 
 @[reducible]
 def s_assume
