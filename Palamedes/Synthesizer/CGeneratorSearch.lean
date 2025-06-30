@@ -124,6 +124,15 @@ macro "norm_for_bind'" : tactic =>
       | rfl
       | apply exists_congr; intro; rw [true_and]))
 
+-- TODO: this is super overfit for GoodTree
+macro "norm_for_assume" : tactic =>
+  `(tactic| (
+    funext
+    simp_predicate
+    apply and_congr
+    . conv => rhs; try rw [← beq_iff_eq]
+    . rfl))
+
 add_aesop_rules safe (rule_sets := [synthesis]) [
   (by (repeat apply duncurry); intro),
   (by apply convert (by norm_for_pure) (s_pure _)),
@@ -134,6 +143,10 @@ macro "goal_is_eq_or_and" : tactic =>
     first
       | guard_target = CorrectGen (fun _ => _ = _)
       | guard_target = CorrectGen (fun _ => _ ∧ _))
+
+
+macro "goal_is_and_eq" : tactic =>
+  `(tactic| guard_target = CorrectGen (fun ?v => _ ∧ ?v = _))
 
 add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by assumption),
@@ -155,6 +168,7 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by apply s_between_partial),
   (by apply (s_between (by first | aesop | omega))),
   (by apply (s_indicesOf _ _)), -- TODO Fix this
+  (by goal_is_and_eq; apply convert (by norm_for_assume) (s_assume _))
 ]
 
 macro "goal_is_or" : tactic =>
