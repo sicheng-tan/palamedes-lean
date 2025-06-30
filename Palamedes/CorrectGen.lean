@@ -39,32 +39,7 @@ def s_pick
     simp [x.property, y.property]
 
 @[reducible]
-def convert
-    (h : P = Q)
-    (g : CorrectGen P) :
-    CorrectGen Q :=
-  Subtype.mk g.val <| by
-    simp [h, g.property]
-
-@[reducible]
-def s_assume_general
-    {P : Bool}
-    {Q : α → Prop}
-    (h : ∀ v, Q v → P)
-    (g : P → CorrectGen (fun v => Q v)):
-    CorrectGen (fun v => Q v) :=
-  Subtype.mk (assume P (fun hp => (g hp).val)) <| by
-    funext v
-    simp_all
-    apply Iff.intro
-    . intro ⟨ hp, hv ⟩
-      simp_all [(g hp).property]
-    . intro hq
-      exists (h v hq)
-      simp_all [(g (h v hq)).property]
-
-@[reducible]
-def s_assume_and
+def s_assume
     {P : Bool}
     {Q : α → Prop}
     (g : P → CorrectGen (fun v => Q v)) :
@@ -80,14 +55,12 @@ def s_assume_and
       simp_all [(g hp).property]
 
 @[reducible]
-def s_assume
-    {P : Bool}
-    (x : α)
-    (g : α → CorrectGen (fun v => v = x)) :
-    CorrectGen (fun v => P ∧ v = x) :=
-  Subtype.mk (assume P (fun h => (g x).val)) <| by
-    funext v
-    simp_all [(g x).property]
+def convert
+    (h : P = Q)
+    (g : CorrectGen P) :
+    CorrectGen Q :=
+  Subtype.mk g.val <| by
+    simp [h, g.property]
 
 @[reducible]
 def duncurry
