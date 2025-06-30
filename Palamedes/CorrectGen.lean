@@ -39,22 +39,6 @@ def s_pick
     simp [x.property, y.property]
 
 @[reducible]
-def s_assume
-    {P : Bool}
-    {Q : α → Prop}
-    (g : P → CorrectGen (fun v => Q v)) :
-    CorrectGen (fun v => P ∧ Q v) :=
-  Subtype.mk (assume P (fun h => (g h).val)) <| by
-    funext v
-    simp_all
-    apply Iff.intro
-    . intro ⟨ hp, h ⟩
-      simp_all [(g hp).property]
-    . intro ⟨ hp, hq ⟩
-      exists hp
-      simp_all [(g hp).property]
-
-@[reducible]
 def convert
     (h : P = Q)
     (g : CorrectGen P) :
