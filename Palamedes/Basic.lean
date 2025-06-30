@@ -34,6 +34,7 @@ import Palamedes.Examples.Tree.AllTwos.AllTwos
 import Palamedes.Examples.Tree.AVL.AVL
 import Palamedes.Examples.Tree.BST.BST
 import Palamedes.Examples.Tree.CompleteTree.CompleteTree
+import Palamedes.Examples.Tree.IncreasingByOne.IncreasingByOne
 import Palamedes.Examples.Tree.NETree.NETree
 import Palamedes.Examples.Tree.RBT.RBT
 
@@ -41,6 +42,7 @@ import Palamedes.Examples.Tree.AllTwos.Fold
 import Palamedes.Examples.Tree.AVL.Fold
 import Palamedes.Examples.Tree.BST.Fold
 import Palamedes.Examples.Tree.CompleteTree.Fold
+import Palamedes.Examples.Tree.IncreasingByOne.Fold
 import Palamedes.Examples.Tree.NETree.Fold
 import Palamedes.Examples.Tree.RBT.Fold
 
