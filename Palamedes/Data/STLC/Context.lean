@@ -34,39 +34,38 @@ def s_elements_partial [DecidableEq α] (xs : List α) : CorrectGen (λ v => Lis
     simp [support_elements]
     cases xs <;> simp_all
 
-@[reducible]
-def indicesOf [DecidableEq α] (xs : List α) (a : α) : Gen Nat :=
-  let inds := xs.indexesOf a
-  .assume (inds.length > 0)
-          (λ h => elements inds (by simp_all only [decide_eq_true_eq]))
-
--- example {xs : List α} : v ∈ xs → 0 < xs.length := by
---   exact fun a => List.length_pos_of_mem a
-
-@[reducible]
-def s_indicesOf [DecidableEq α] (xs : List α) (a : α) : CorrectGen (λ (n : Nat) => xs[n]? = some a) :=
-  Subtype.mk (indicesOf xs a) <| by
-    funext v
-    simp
-    have : (0 < (List.indexesOf a xs).length ∧ v ∈ List.indexesOf a xs) = Membership.mem (List.indexesOf a xs) v := by
-      simp
-      intro a
-      exact List.length_pos_of_mem a
-    rw [this]
-    clear this
-    induction xs generalizing a v with
-    | nil => simp [List.indexesOf_nil]
-    | cons x xs ih =>
-      simp [List.indexesOf_cons, List.getElem?_cons]
-      cases hxa : x == a
-      . simp [hxa]
-        cases v
-        . aesop
-        . simp [ih]
-      . simp [hxa]
-        cases v
-        . aesop
-        . simp [ih]
+theorem getElem?_eq_some_iff_indexesOf_getElem?_eq_some
+    [BEq α]
+    [LawfulBEq α]
+    {xs : List α}
+    {i : Nat}
+    {a : α} :
+    xs[i]? = some a ↔ i ∈ (xs.indexesOf a) := by
+  induction xs generalizing a i with
+  | nil => simp [List.indexesOf_nil]
+  | cons x xs ih =>
+    simp [List.indexesOf_cons, List.getElem?_cons]
+    apply Iff.intro
+    . intro h
+      match i with
+      | 0 => simp_all
+      | i' + 1 =>
+        simp_all
+        by_cases hxa : x == a
+        . simp_all
+        . have : (x == a) = false := by aesop
+          simpa [this]
+    . intro h
+      by_cases hxa : x == a
+      . simp_all
+        match h with
+        | .inl h => simp_all
+        | .inr h =>
+          simp_all
+          intro h'
+          aesop
+      . simp_all
+        aesop
 
 namespace Total
 

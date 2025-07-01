@@ -124,6 +124,14 @@ macro "norm_for_bind'" : tactic =>
       | rfl
       | apply exists_congr; intro; rw [true_and]))
 
+macro "norm_for_elements" : tactic =>
+  `(tactic|
+    (funext
+     simp_predicate
+     first
+       | rfl
+       | rw [getElem?_eq_some_iff_indexesOf_getElem?_eq_some]))
+
 add_aesop_rules safe (rule_sets := [synthesis]) [
   (by (repeat apply duncurry); intro),
   (by apply convert (by norm_for_pure) (s_pure _)),
@@ -154,7 +162,7 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by apply s_gt),
   (by apply s_between_partial),
   (by apply (s_between (by first | aesop | omega))),
-  (by apply (s_indicesOf _ _)), -- TODO Fix this
+  (by apply convert (by norm_for_elements) (s_elements_partial _)),
 ]
 
 macro "goal_is_or" : tactic =>
