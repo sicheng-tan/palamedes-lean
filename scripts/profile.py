@@ -17,12 +17,15 @@ FILES = [
     "Palamedes/Examples/Simple/Eq2Or5.lean",
     "Palamedes/Examples/Simple/Eq2Or5'.lean",
     "Palamedes/Examples/Simple/ThreePlusOne.lean",
+
     "Palamedes/Examples/Range/Between5And10.lean",
     "Palamedes/Examples/Range/BetweenLoAndHi.lean",
     "Palamedes/Examples/Range/Gt5.lean",
     "Palamedes/Examples/Range/OneOrInRange.lean",
+
     "Palamedes/Examples/Arbitrary.lean",
     "Palamedes/Examples/OptimizationTests.lean",
+
     "Palamedes/Examples/List/AllTwos/AllTwos.lean",
     "Palamedes/Examples/List/AllTwosEvenLen/AllTwosEvenLen.lean",
     "Palamedes/Examples/List/EvenLen/EvenLen.lean",
@@ -31,6 +34,7 @@ FILES = [
     "Palamedes/Examples/List/LengthKAllTwos/LengthKAllTwos.lean",
     "Palamedes/Examples/List/SortedBetween/SortedBetween.lean",
     "Palamedes/Examples/List/True/True.lean",
+
     "Palamedes/Examples/List/AllTwos/Fold.lean",
     "Palamedes/Examples/List/AllTwosEvenLen/Fold.lean",
     "Palamedes/Examples/List/EvenLen/Fold.lean",
@@ -39,18 +43,23 @@ FILES = [
     "Palamedes/Examples/List/LengthKAllTwos/Fold.lean",
     "Palamedes/Examples/List/SortedBetween/Fold.lean",
     "Palamedes/Examples/List/True/Fold.lean",
+
+    "Palamedes/Examples/Tree/AllTwos/AllTwos.lean"
     "Palamedes/Examples/Tree/AVL/AVL.lean",
     "Palamedes/Examples/Tree/BST/BST.lean",
     "Palamedes/Examples/Tree/CompleteTree/CompleteTree.lean",
+    "Palamedes/Examples/Tree/IncreasingByOne/IncreasingByOne.lean",
     "Palamedes/Examples/Tree/NETree/NETree.lean",
-    "Palamedes/Examples/Tree/RBT/RBT.lean",
+
+    "Palamedes/Examples/Tree/AllTwos/Fold.lean",
     "Palamedes/Examples/Tree/AVL/Fold.lean",
     "Palamedes/Examples/Tree/BST/Fold.lean",
     "Palamedes/Examples/Tree/CompleteTree/Fold.lean",
     "Palamedes/Examples/Tree/NETree/Fold.lean",
-    "Palamedes/Examples/Tree/RBT/Fold.lean",
+
     "Palamedes/Examples/Stack/GoodStack.lean",
     "Palamedes/Examples/Stack/Fold.lean",
+
     "Palamedes/Examples/STLC/WellTyped.lean",
     "Palamedes/Examples/STLC/Fold.lean",
 ]
