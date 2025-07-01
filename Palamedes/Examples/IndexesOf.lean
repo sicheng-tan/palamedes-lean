@@ -3,50 +3,9 @@ import Batteries.Data.List.Lemmas
 
 open Gen CorrectGen
 
-@[reducible]
-def elements (xs : List α) (h : xs.length > 0) : Gen α :=
-  match xs with
-  | x :: xs =>
-    match xs with
-    | [] => pure x
-    | x' :: xs => pick (pure x) (elements (x' :: xs) (by simp_all))
-
-def s_elements_partial {xs : List α} : CorrectGen (fun (a : α) => ∃ (i : Nat), xs[i]? = some a) :=
-  Subtype.mk (assume (xs.length > 0) (fun h => elements xs (by simp_all))) <| by
-    simp
-    funext
-    simp
-    induction xs with
-    | nil => simp_all
-    | cons x xs ih =>
-      match xs with
-      | [] =>
-        simp_all
-        apply Iff.intro
-        . intro h
-          subst h
-          exists 0
-        . intro ⟨i, h⟩
-          simp [List.getElem?_eq_some_iff] at h
-          simp_all
-      | x' :: xs =>
-        simp_all
-        apply Iff.intro
-        . intro h
-          match h with
-          | .inl h => subst h; exists 0
-          | .inr h => replace ⟨ i, h ⟩ := h; exists i + 1
-        . intro ⟨i, h⟩
-          match hi : i with
-          | 0 => simp_all
-          | n + 1 =>
-            simp_all
-            subst hi
-            right
-            exists n
-
 theorem getElem?_eq_some_iff_indexesOf_getElem?_eq_some
     [BEq α]
+    [LawfulBEq α]
     {xs : List α}
     {i : Nat}
     {a : α} :
@@ -57,8 +16,17 @@ theorem getElem?_eq_some_iff_indexesOf_getElem?_eq_some
     simp [List.indexesOf_cons, List.getElem?_cons]
     apply Iff.intro
     . intro h
-      sorry
+      match i with
+      | 0 => simp_all; exists 0
+      | i' + 1 =>
+        simp_all
+        replace ⟨j, h⟩ := h
+        by_cases hxa : x == a
+        . simp_all
+          exists j + 1
+          simpa
+        . have : (x == a) = false := by
+            exact Eq.symm ((fun {a b} => Bool.not_not_eq.mp) fun a_1 => hxa (id (Eq.symm a_1)))
+          simp [this]
+          exists j
     . sorry
-
-example {xs : List Nat} {a : Nat} : CorrectGen (fun (i : Nat) => xs[i]? = some a) := by
-  apply convert (by funext i; simp; apply (Iff.symm getElem?_eq_some_iff_indexesOf_getElem?_eq_some)) s_elements_partial
