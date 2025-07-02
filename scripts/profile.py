@@ -54,6 +54,7 @@ FILES = [
     "Palamedes/Examples/Tree/AVL/Fold.lean",
     "Palamedes/Examples/Tree/BST/Fold.lean",
     "Palamedes/Examples/Tree/CompleteTree/Fold.lean",
+    "Palamedes/Examples/Tree/IncreasingByOne/Fold.lean",
     "Palamedes/Examples/Tree/Nonempty/Fold.lean",
 
     "Palamedes/Examples/Stack/GoodStack.lean",
