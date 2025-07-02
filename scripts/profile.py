@@ -1,6 +1,5 @@
 import subprocess
 import re
-from collections import defaultdict
 import statistics
 from tqdm import tqdm
 
@@ -117,7 +116,7 @@ for label, numbers in [item for item in data.items()]:
 
     line = ("\\mintinline[mathescape=true,escapeinside=``]{text}|" + pred +
             "| & \\mintinline[mathescape=true,escapeinside=``]{text}|" + typ +
-            "| & " + f"${int(mean * 1000)}$ & (${stdev * 1000:.1f}$) \\\\")
+            "| & " + f"${mean:.2f}$ & (${stdev:.2f}$) \\\\")
 
     if total:
         total_lines.append(line)
