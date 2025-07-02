@@ -34,6 +34,7 @@ macro "totality" : tactic =>
         | apply total_arbNat
         | apply total_choose
         | apply total_gt
+        | apply total_lt
         | apply Tree.total_unfold
         | apply Stack.total_unfold
         | apply total_arbLabel

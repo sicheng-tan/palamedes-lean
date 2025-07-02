@@ -160,6 +160,7 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by apply s_arbLabel),
   (by apply s_arbAtom _),
   (by apply s_gt),
+  (by apply s_lt_partial),
   (by apply s_between_partial),
   (by apply (s_between (by first | aesop | omega))),
   (by apply convert (by norm_for_elements) (s_elements_partial _)),

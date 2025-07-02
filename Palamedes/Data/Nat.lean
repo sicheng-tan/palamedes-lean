@@ -16,6 +16,9 @@ def gt (lo : Nat) : Gen Nat := (lo + 1 + · ) <$> arbNat
 def choose (lo hi : Nat) (h : lo ≤ hi := by simp) : Gen Nat :=
   if h' : lo = hi then pure lo else pick (pure lo) (choose (lo + 1) hi (by omega))
 
+def lt (hi : Nat) (_ : hi > 0) : Gen Nat :=
+  choose 0 (hi - 1) (by simp)
+
 namespace Gen
 
 @[simp]
@@ -78,6 +81,18 @@ theorem support_choose :
         . right
           rw [ih _] <;> omega
 
+@[simp]
+theorem support_lt :
+    support (lt hi h) = fun a => a < hi := by
+  simp [lt]
+  funext a
+  simp
+  apply Iff.intro
+  . intro
+    omega
+  . intro
+    omega
+
 end Gen
 
 namespace CorrectGen
@@ -127,6 +142,16 @@ def s_gt
   Subtype.mk (gt lo) <| by
     simp
 
+@[reducible]
+def s_lt_partial
+    {hi : Nat} :
+    CorrectGen (λ v => v < hi) :=
+  Subtype.mk (assume (hi > 0) (fun h => lt hi (by aesop))) <| by
+    simp
+    funext
+    simp
+    exact fun a => Nat.zero_lt_of_lt a
+
 end CorrectGen
 
 namespace Total
@@ -157,6 +182,9 @@ theorem total_choose : total (choose lo hi h) := by
 
 @[simp, aesop safe (rule_sets := [totality])]
 theorem total_gt : total (gt lo) := by simp [gt]
+
+@[simp, aesop safe (rule_sets := [totality])]
+theorem total_lt : total (lt lo h) := by simp [lt]
 
 end Total
 
