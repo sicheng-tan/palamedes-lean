@@ -32,10 +32,10 @@ macro "norm_for_List_unfold" : tactic =>
             | conv => rhs; lhs; apply congrFun; apply (List.coerce_to_fold (by rflm) (by intros; simp_all [- Bool.not_eq_eq_eq_not]; rflm))
             | skip
            first
-            | rw [← List.fold_accu_Option_true] <;> (try aesop); done
-            | rw [← List.fold_accu_Option_function]; (try aesop); done
-            | rw [← List.fold_accu_Option_function_true] <;> simp_bexp <;> (try aesop); done
-            | rw [← List.fold_accu_Option_basic]; (try aesop); done))))
+            | rw [← List.fold_accu_Option_true] <;> (try library_search); done
+            | rw [← List.fold_accu_Option_function]; (try library_search); done
+            | rw [← List.fold_accu_Option_function_true] <;> simp_bexp <;> (try library_search); done
+            | rw [← List.fold_accu_Option_basic]; (try library_search); done))))
 
 macro "norm_for_Tree_unfold" : tactic =>
   `(tactic|
@@ -49,10 +49,10 @@ macro "norm_for_Tree_unfold" : tactic =>
             | conv => rhs; lhs; apply congrFun; apply (Tree.coerce_to_fold (by aesop) (by intros; simp_all; rflm))
             | skip
            first
-            | rw [← Tree.fold_accu_Option_true]; (try aesop); done
-            | rw [← Tree.fold_accu_Option_function]; (try aesop); done
-            | rw [← Tree.fold_accu_Option_function_true]; (try intros; simp_bexp; aesop); done
-            | rw [← Tree.fold_accu_Option_basic]; (try aesop); done))))
+            | rw [← Tree.fold_accu_Option_true]; (try library_search); done
+            | rw [← Tree.fold_accu_Option_function]; (try library_search); done
+            | rw [← Tree.fold_accu_Option_function_true]; (try intros; simp_bexp; library_search); done
+            | rw [← Tree.fold_accu_Option_basic]; (try library_search); done))))
 
 macro "norm_for_Stack_unfold" : tactic =>
   `(tactic|
