@@ -5,14 +5,16 @@ open Gen CorrectGen
 namespace AllTwosEvenLen
 
 @[simp]
-def recAllTwos : List Nat → Bool
+def allTwos : List Nat → Bool
   | [] => true
-  | x :: xs => x = 2 && recAllTwos xs
+  | x :: xs => x = 2 && allTwos xs
 
 @[simp]
-def recEvenLen : List α → Bool
+def evenLen : List α → Bool
   | [] => true
-  | _ :: xs => !(recEvenLen xs)
+  | _ :: xs => !(evenLen xs)
 
 def genAllTwosEvenLen : Gen (List Nat) := by
-  generator_search (fun xs => (recAllTwos xs && recEvenLen xs) = true)
+  generator_search (fun xs => allTwos xs && evenLen xs = true)
+
+end AllTwosEvenLen

@@ -2,6 +2,8 @@ import Palamedes.Synthesizer
 
 open Gen CorrectGen
 
+namespace WellTyped
+
 set_option maxHeartbeats 5000000
 
 @[simp]
@@ -28,3 +30,5 @@ def wellTyped (Γ : List Ty) (t : Term) : Prop :=
 attribute [local simp] Ty.as_or Ty.deforest_eq in
 def genWellTyped (Γ : List Ty) : Gen Term := by
   generator_search (fun t => wellTyped Γ t)
+
+end WellTyped

@@ -49,13 +49,13 @@ FILES = [
     "Palamedes/Examples/Tree/BST/BST.lean",
     "Palamedes/Examples/Tree/CompleteTree/CompleteTree.lean",
     "Palamedes/Examples/Tree/IncreasingByOne/IncreasingByOne.lean",
-    "Palamedes/Examples/Tree/NETree/NETree.lean",
+    "Palamedes/Examples/Tree/Nonempty/Nonempty.lean",
 
     "Palamedes/Examples/Tree/AllTwos/Fold.lean",
     "Palamedes/Examples/Tree/AVL/Fold.lean",
     "Palamedes/Examples/Tree/BST/Fold.lean",
     "Palamedes/Examples/Tree/CompleteTree/Fold.lean",
-    "Palamedes/Examples/Tree/NETree/Fold.lean",
+    "Palamedes/Examples/Tree/Nonempty/Fold.lean",
 
     "Palamedes/Examples/Stack/GoodStack.lean",
     "Palamedes/Examples/Stack/Fold.lean",

@@ -2,6 +2,8 @@ import Palamedes.Synthesizer
 
 open Gen CorrectGen
 
+namespace IncreasingByOneTree
+
 @[simp]
 def increasingByOneAux (t : Tree Nat) (prev : Nat) : Bool :=
   match t with
@@ -14,3 +16,5 @@ def increasingByOne (t : Tree Nat) : Bool :=
 
 def genIncreasingByOne : Gen (Tree Nat) := by
   generator_search (fun t => increasingByOne t = true)
+
+end IncreasingByOneTree

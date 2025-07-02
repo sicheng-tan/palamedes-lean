@@ -2,13 +2,14 @@ import Palamedes.Synthesizer
 
 open Gen CorrectGen
 
+namespace EvenLen
+
 @[simp]
-def recEvenLen : List α → Bool
+def evenLen : List α → Bool
   | [] => true
-  | _ :: xs => !(recEvenLen xs)
+  | _ :: xs => !(evenLen xs)
 
-def genEvenLenRec : Gen (List Nat) := by
-  generator_search (fun (xs : List Nat) => recEvenLen xs = true)
+def genEvenLen : Gen (List Nat) := by
+  generator_search (fun xs => evenLen xs = true)
 
--- def genEvenLen : Gen (List Nat) := by
---   generator_search (fun xs => Nat.mod (List.length xs) 2 == 0)
+end EvenLen

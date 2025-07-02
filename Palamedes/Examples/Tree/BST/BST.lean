@@ -2,8 +2,10 @@ import Palamedes.Synthesizer
 
 open Gen CorrectGen
 
+namespace BST
+
 @[simp]
-def isBST : Tree Nat → (Nat × Nat) → Bool := λ t ⟨lo, hi⟩ =>
+def isBST : Tree Nat → (Nat × Nat) → Bool := fun t ⟨lo, hi⟩ =>
   match t with
   | .leaf => true
   | .node l x r =>
@@ -13,3 +15,5 @@ def isBST : Tree Nat → (Nat × Nat) → Bool := λ t ⟨lo, hi⟩ =>
 
 def genBST (lo hi : Nat) : Gen (Tree Nat) := by
   generator_search (fun t => isBST t (lo, hi) = true)
+
+end BST

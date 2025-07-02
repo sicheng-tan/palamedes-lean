@@ -2,5 +2,13 @@ import Palamedes.Synthesizer
 
 open Gen CorrectGen
 
+namespace LengthKFold
+
+@[simp]
+def lengthFold (xs : List Nat) : Nat :=
+  List.fold (fun _ b => b + 1) 0 xs
+
 def genLengthKFold {k : Nat} : Gen (List Nat) := by
-  generator_search (fun xs => List.fold (fun x b => b + 1) 0 xs = k)
+  generator_search (fun xs => lengthFold xs = k)
+
+end LengthKFold

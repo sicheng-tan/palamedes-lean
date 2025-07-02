@@ -2,6 +2,8 @@ import Palamedes.Synthesizer
 
 open Gen CorrectGen
 
+namespace GoodStack
+
 @[simp]
 def isGoodNat (n : Nat) : Bool :=
   n == 0 || n == 1
@@ -18,4 +20,6 @@ def isGoodStack (s : Stack) (n : Nat) : Bool :=
   | .ret_cons pc s' => (n > 0 && isGoodAtom pc) && isGoodStack s' (n - 1)
 
 def genGoodStack (n : Nat) : Gen Stack := by
-  generator_search (λ s => isGoodStack s n = true)
+  generator_search (fun s => isGoodStack s n = true)
+
+end GoodStack

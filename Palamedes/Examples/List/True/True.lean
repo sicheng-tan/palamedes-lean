@@ -2,13 +2,14 @@ import Palamedes.Synthesizer
 
 open Gen CorrectGen
 
+namespace ConstTrue
+
 @[simp]
-def recTrue : List α → Bool
+def constTrue : List α → Bool
   | [] => true
-  | x :: xs => (fun _ => true) x && recTrue xs
+  | x :: xs => (fun _ => true) x && constTrue xs
 
-def genTrueRec : Gen (List Nat) := by
-  generator_search (fun xs => recTrue xs = true)
+def genTrue : Gen (List Nat) := by
+  generator_search (fun xs => constTrue xs = true)
 
--- def genTrue : Gen (List Nat) := by
---   generator_search (fun xs => recTrue xs = true)
+end ConstTrue
