@@ -49,3 +49,4 @@ import Palamedes.Examples.Stack.Fold
 
 import Palamedes.Examples.STLC.WellTyped
 import Palamedes.Examples.STLC.Fold
+import Palamedes.Examples.STLC.WellScoped

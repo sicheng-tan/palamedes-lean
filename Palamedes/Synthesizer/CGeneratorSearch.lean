@@ -86,8 +86,7 @@ macro "norm_for_Term_unfold" : tactic =>
      first
       | rw [← Term.fold_accu_Option_true]; (try aesop); done
       | rw [← Term.fold_accu_Option_function]; (try aesop); done
-      | rw [← Term.fold_accu_Option_function_true];
-        (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
+      | rw [← Term.fold_accu_Option_function_true] <;> (intros; simp_predicate; library_search)
       | rw [← Term.fold_accu_Option_function_Option] <;> (try aesop); done
       | rw [← Term.fold_accu_Option_basic]; (try aesop); done))
 

@@ -1,0 +1,14 @@
+import Palamedes.Synthesizer
+
+open Gen CorrectGen
+
+@[simp]
+def isWellScoped : Term → Nat → Bool := fun t varCap =>
+  match t with
+  | .unit => true
+  | .var n => n < varCap
+  | .abs _ t => isWellScoped t (varCap + 1)
+  | .app t₁ t₂ => isWellScoped t₁ varCap && isWellScoped t₂ varCap
+
+def genWellScoped : Gen Term := by
+  generator_search (fun t => isWellScoped t 0 = true)
