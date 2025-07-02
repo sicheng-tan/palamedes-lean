@@ -10,10 +10,6 @@ def allTwos : List Nat → Bool
   | x :: xs => x = 2 && allTwos xs
 
 @[simp]
-def lengthK (k : Nat) (xs : List Nat) : Bool :=
-  xs.length == k
-
-@[simp]
 def lengthKAllTwos (k : Nat) (xs : List Nat) : Bool :=
   xs.length == k && allTwos xs
 
