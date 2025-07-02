@@ -24,7 +24,6 @@ FILES = [
     "Palamedes/Examples/Range/OneOrInRange.lean",
 
     "Palamedes/Examples/Arbitrary.lean",
-    "Palamedes/Examples/OptimizationTests.lean",
 
     "Palamedes/Examples/List/AllTwos/AllTwos.lean",
     "Palamedes/Examples/List/AllTwosEvenLen/AllTwosEvenLen.lean",
