@@ -89,3 +89,13 @@ elab "unfold_matches" : tactic =>
     let ms := consts.filter (fun n => n.components.any (·.getString!.startsWith "match_"))
     for m in ms do
       unfoldTarget m
+
+open LibrarySearch
+elab "library_search" : tactic =>
+  withMainContext do
+    let g ← getMainGoal
+    let tactic := fun exfalso =>
+      solveByElim [] (exfalso := exfalso) (maxDepth := 6)
+    match ← librarySearch g tactic (fun _ => pure false) with
+    | none => pure ()
+    | some _ => throwError "library_search failed"
