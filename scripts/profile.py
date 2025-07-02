@@ -93,7 +93,7 @@ for file in iter:
                         total = False
                 data[label] = {"times": [float(numRepr)], "total": total}
     except subprocess.CalledProcessError as e:
-        print(f"Error running script: {e}")
+        print(f"\nError running script: {e} \n")
 
 label_pattern = re.compile(r"fun (.+) => (.+)")
 
