@@ -5,7 +5,7 @@ open Gen CorrectGen
 namespace TrueFold
 
 @[simp]
-def trueFold (xs : List Nat) : Bool :=
+def trueFold (xs : List α) : Bool :=
   List.fold (fun _ b => b) true xs
 
 def genTrueFold : Gen (List Nat) := by

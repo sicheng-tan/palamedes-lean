@@ -4,7 +4,7 @@ open Gen CorrectGen
 
 namespace NonemptyFold
 
-def nonemptyFold (t : Tree Nat) : Bool :=
+def nonemptyFold (t : Tree α) : Bool :=
   Tree.fold (fun _ _ _ => true) false t
 
 def genNonemptyFold : Gen (Tree Nat) := by
