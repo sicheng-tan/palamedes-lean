@@ -44,7 +44,7 @@ FILES = [
     "Palamedes/Examples/List/SortedBetween/Fold.lean",
     "Palamedes/Examples/List/True/Fold.lean",
 
-    "Palamedes/Examples/Tree/AllTwos/AllTwos.lean"
+    "Palamedes/Examples/Tree/AllTwos/AllTwos.lean",
     "Palamedes/Examples/Tree/AVL/AVL.lean",
     "Palamedes/Examples/Tree/BST/BST.lean",
     "Palamedes/Examples/Tree/CompleteTree/CompleteTree.lean",
