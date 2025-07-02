@@ -2,6 +2,8 @@ import Palamedes.Synthesizer
 
 open Gen CorrectGen
 
+namespace AllTwos
+
 @[simp]
 def allTwos : List Nat → Bool
   | [] => true
@@ -9,3 +11,5 @@ def allTwos : List Nat → Bool
 
 def genAllTwos : Gen (List Nat) := by
   generator_search (fun xs => allTwos xs)
+
+end AllTwos
