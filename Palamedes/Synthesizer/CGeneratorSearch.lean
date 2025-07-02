@@ -17,6 +17,8 @@ open Gen CorrectGen
 
 macro "simp_predicate" : tactic => `(tactic| try simp [guard, Option.bind_eq_some_iff, *])
 
+macro "simp_bexp" : tactic => `(tactic| try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff])
+
 macro "norm_for_List_unfold" : tactic =>
   `(tactic|
   -- todo: the bool lemma below is overfitting to the evenLen example
@@ -32,8 +34,7 @@ macro "norm_for_List_unfold" : tactic =>
            first
             | rw [← List.fold_accu_Option_true] <;> (try aesop); done
             | rw [← List.fold_accu_Option_function]; (try aesop); done
-            | rw [← List.fold_accu_Option_function_true] <;>
-              (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]) <;> (try aesop); done
+            | rw [← List.fold_accu_Option_function_true] <;> simp_bexp <;> (try aesop); done
             | rw [← List.fold_accu_Option_basic]; (try aesop); done))))
 
 macro "norm_for_Tree_unfold" : tactic =>
@@ -50,8 +51,7 @@ macro "norm_for_Tree_unfold" : tactic =>
            first
             | rw [← Tree.fold_accu_Option_true]; (try aesop); done
             | rw [← Tree.fold_accu_Option_function]; (try aesop); done
-            | rw [← Tree.fold_accu_Option_function_true];
-              (try intros; simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
+            | rw [← Tree.fold_accu_Option_function_true]; (try intros; simp_bexp; aesop); done
             | rw [← Tree.fold_accu_Option_basic]; (try aesop); done))))
 
 macro "norm_for_Stack_unfold" : tactic =>
@@ -62,8 +62,7 @@ macro "norm_for_Stack_unfold" : tactic =>
      first
       | rw [← Stack.fold_accu_Option_true]; (try aesop); done
       | rw [← Stack.fold_accu_Option_function]; (try aesop); done
-      | rw [← Stack.fold_accu_Option_function_true] <;>
-        (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
+      | rw [← Stack.fold_accu_Option_function_true] <;> (simp_bexp; aesop); done
       | rw [← Stack.fold_accu_Option_basic]; (try aesop); done))
 
 macro "norm_for_Ty_unfold" : tactic =>
@@ -74,8 +73,7 @@ macro "norm_for_Ty_unfold" : tactic =>
      first
       | rw [← Ty.fold_accu_Option_true] <;> (try aesop); done
       | rw [← Ty.fold_accu_Option_function]; (try aesop); done
-      | rw [← Ty.fold_accu_Option_function_true];
-        (try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff]; aesop); done
+      | rw [← Ty.fold_accu_Option_function_true]; (simp_bexp; aesop); done
       | rw [← Ty.fold_accu_Option_basic]; (try aesop); done))
 
 macro "norm_for_Term_unfold" : tactic =>
@@ -86,7 +84,7 @@ macro "norm_for_Term_unfold" : tactic =>
      first
       | rw [← Term.fold_accu_Option_true]; (try aesop); done
       | rw [← Term.fold_accu_Option_function]; (try aesop); done
-      | rw [← Term.fold_accu_Option_function_true] <;> (intros; simp_predicate; library_search)
+      | rw [← Term.fold_accu_Option_function_true] <;> (intros; simp_bexp; library_search); done
       | rw [← Term.fold_accu_Option_function_Option] <;> (try aesop); done
       | rw [← Term.fold_accu_Option_basic]; (try aesop); done))
 

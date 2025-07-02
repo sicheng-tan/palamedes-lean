@@ -53,6 +53,7 @@ FILES = [
     "Palamedes/Examples/Stack/GoodStack.lean",
     "Palamedes/Examples/Stack/Fold.lean",
     "Palamedes/Examples/STLC/WellTyped.lean",
+    "Palamedes/Examples/STLC/WellScoped.lean",
     "Palamedes/Examples/STLC/Fold.lean",
 ]
 
