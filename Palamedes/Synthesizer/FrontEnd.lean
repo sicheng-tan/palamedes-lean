@@ -71,7 +71,7 @@ def generatorSearchElab
     catch _ =>
       pure mpred
 
-  withTraceNode `palamedes.trace (fun _ => pure m!"⟪{prettyPred}⟫") do
+  withTraceNode `palamedes.trace (fun _ => pure m!"⟪{α}⟫⟪{prettyPred}⟫") do
 
   -- Synthesize a correct generator by solving `CorrectGen P` and projecting the `.val`.
   let gen ← do

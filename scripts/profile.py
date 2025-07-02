@@ -17,14 +17,11 @@ FILES = [
     "Palamedes/Examples/Simple/Eq2Or5.lean",
     "Palamedes/Examples/Simple/Eq2Or5'.lean",
     "Palamedes/Examples/Simple/ThreePlusOne.lean",
-
     "Palamedes/Examples/Range/Between5And10.lean",
     "Palamedes/Examples/Range/BetweenLoAndHi.lean",
     "Palamedes/Examples/Range/Gt5.lean",
     "Palamedes/Examples/Range/OneOrInRange.lean",
-
     "Palamedes/Examples/Arbitrary.lean",
-
     "Palamedes/Examples/List/AllTwos/AllTwos.lean",
     "Palamedes/Examples/List/AllTwosEvenLen/AllTwosEvenLen.lean",
     "Palamedes/Examples/List/EvenLen/EvenLen.lean",
@@ -33,7 +30,6 @@ FILES = [
     "Palamedes/Examples/List/LengthKAllTwos/LengthKAllTwos.lean",
     "Palamedes/Examples/List/SortedBetween/SortedBetween.lean",
     "Palamedes/Examples/List/True/True.lean",
-
     "Palamedes/Examples/List/AllTwos/Fold.lean",
     "Palamedes/Examples/List/AllTwosEvenLen/Fold.lean",
     "Palamedes/Examples/List/EvenLen/Fold.lean",
@@ -42,30 +38,26 @@ FILES = [
     "Palamedes/Examples/List/LengthKAllTwos/Fold.lean",
     "Palamedes/Examples/List/SortedBetween/Fold.lean",
     "Palamedes/Examples/List/True/Fold.lean",
-
     "Palamedes/Examples/Tree/AllTwos/AllTwos.lean",
     "Palamedes/Examples/Tree/AVL/AVL.lean",
     "Palamedes/Examples/Tree/BST/BST.lean",
     "Palamedes/Examples/Tree/CompleteTree/CompleteTree.lean",
     "Palamedes/Examples/Tree/IncreasingByOne/IncreasingByOne.lean",
     "Palamedes/Examples/Tree/Nonempty/Nonempty.lean",
-
     "Palamedes/Examples/Tree/AllTwos/Fold.lean",
     "Palamedes/Examples/Tree/AVL/Fold.lean",
     "Palamedes/Examples/Tree/BST/Fold.lean",
     "Palamedes/Examples/Tree/CompleteTree/Fold.lean",
     "Palamedes/Examples/Tree/IncreasingByOne/Fold.lean",
     "Palamedes/Examples/Tree/Nonempty/Fold.lean",
-
     "Palamedes/Examples/Stack/GoodStack.lean",
     "Palamedes/Examples/Stack/Fold.lean",
-
     "Palamedes/Examples/STLC/WellTyped.lean",
     "Palamedes/Examples/STLC/Fold.lean",
 ]
 
 # Regular expression to match the desired output
-pattern = re.compile(r'\[palamedes\.trace\] \[(\d+(?:\.\d+)?)\] ⟪(.+)⟫')
+pattern = re.compile(r'\[palamedes\.trace\] \[(\d+(?:\.\d+)?)\] ⟪(.+)⟫⟪(.+)⟫')
 
 # Dictionary to store extracted numbers by string
 data = dict()
@@ -81,7 +73,8 @@ for file in iter:
                                 check=True)
         output = result.stdout
         matches = pattern.findall(output)
-        for (numRepr, label) in matches:
+        for (numRepr, typ, pred) in matches:
+            label = (typ, pred)
             if label in data:
                 data[label]["times"].append(float(numRepr))
             else:
@@ -97,23 +90,43 @@ for file in iter:
 
 label_pattern = re.compile(r"fun (.+) => (.+)")
 
+print(data)
+
+total_lines = []
+partial_lines = []
+
 # Compute and print mean and standard deviation
-for label, numbers in data.items():
+for label, numbers in [item for item in data.items()]:
     mean = statistics.mean(numbers["times"])
     stdev = statistics.stdev(numbers["times"])
     total = numbers["total"]
 
-    label = label.replace("∃", "`$\\exists$`")
-    label = label.replace("∨", "`$\\lor$`")
-    label = label.replace("∧", "`$\\land$`")
-    label = label.replace("Γ", "`$\\Gamma$`")
-    label = label.replace("τ", "`$\\tau$`")
-    label = label.replace("≤", "<=")
+    (typ, pred) = label
 
-    label = label.replace("TARGET", "`\\textbf{v}`")
+    pred = pred.replace("∃", "`$\\exists$`")
+    pred = pred.replace("∨", "`$\\lor$`")
+    pred = pred.replace("∧", "`$\\land$`")
+    pred = pred.replace("Γ", "`$\\Gamma$`")
+    pred = pred.replace("τ", "`$\\tau$`")
+    pred = pred.replace("≤", "<=")
 
-    total_label = "\\checkmark" if total else "\\times"
-    print(
-        "\\mintinline[mathescape=true,escapeinside=``]{text}" +
-        f"|{label}| & ${total_label}$ & ${int(mean * 1000)}$ & (${stdev * 1000:.1f}$) \\\\"
-    )
+    typ = typ.replace("ℕ", "Nat")
+
+    pred = pred.replace("TARGET", "`\\textbf{v}`")
+
+    line = ("\\mintinline[mathescape=true,escapeinside=``]{text}|" + pred +
+            "| & \\mintinline[mathescape=true,escapeinside=``]{text}|" + typ +
+            "| & " + f"${int(mean * 1000)}$ & (${stdev * 1000:.1f}$) \\\\")
+
+    if total:
+        total_lines.append(line)
+    else:
+        partial_lines.append(line)
+
+print("Total:")
+for line in total_lines:
+    print(line)
+
+print("\nPartial:")
+for line in partial_lines:
+    print(line)
