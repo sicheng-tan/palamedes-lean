@@ -169,7 +169,7 @@ theorem Term.unfold_aux_monotonic :
 
 @[irreducible]
 def Term.unfold (f : α → Gen (TermF α)) (x : α) : Gen Term :=
-  .indexed (λ n => Term.unfold_aux n f x)
+  .indexed (fun n => Term.unfold_aux n f x)
 
 @[simp]
 def Term.unfold_support (P : α → TermF α → Prop) (x : α) (t : Term) : Prop :=
@@ -186,7 +186,7 @@ def Term.unfold_support (P : α → TermF α → Prop) (x : α) (t : Term) : Pro
 
 @[simp]
 theorem Term.support_unfold :
-    support (Term.unfold f x) = Term.unfold_support (λ x' => support (f x')) x := by
+    support (Term.unfold f x) = Term.unfold_support (fun x' => support (f x')) x := by
   funext t
   simp_all
   induction t generalizing x
@@ -451,7 +451,7 @@ theorem Term.fold_accu_Option_function_true
       f_app acc₁ acc₂ s = true ↔
       (do (return (← acc₁ (st_app₁ s)) && (← acc₂ (st_app₂ s)))) = some true)
     :
-    Term.fold (λ _ => true) f_var f_abs f_app t i = true ↔
+    Term.fold (fun _ => true) f_var f_abs f_app t i = true ↔
     Term.accuM
       st_abs
       (fun s => (st_app₁ s, st_app₂ s))
@@ -537,12 +537,12 @@ theorem Term.merge_accu_Option
       ∧ t.accuM st_abs₂ st_app₂ z₂ zn₂ f_abs₂ f_app₂ i₂ = some x₂)
     ↔
     (t.accuM
-      (λ τ (s₁, s₂) => (st_abs₁ τ s₁, st_abs₂ τ s₂))
-      (λ (s₁, s₂) => (((st_app₁ s₁).1, (st_app₂ s₂).1), ((st_app₁ s₁).2, (st_app₂ s₂).2)))
-      (λ (s₁, s₂) => do (← z₁ s₁, ← z₂ s₂))
-      (λ n (s₁, s₂) => do (← zn₁ n s₁, ← zn₂ n s₂))
-      (λ τ (x₁, x₂) (s₁, s₂) => do (← f_abs₁ τ x₁ s₁, ← f_abs₂ τ x₂ s₂ ))
-      (λ (x₁₁, x₁₂) (x₂₁, x₂₂) (s₁, s₂) => do (← f_app₁ x₁₁ x₂₁ s₁, ← f_app₂ x₁₂ x₂₂ s₂))
+      (fun τ (s₁, s₂) => (st_abs₁ τ s₁, st_abs₂ τ s₂))
+      (fun (s₁, s₂) => (((st_app₁ s₁).1, (st_app₂ s₂).1), ((st_app₁ s₁).2, (st_app₂ s₂).2)))
+      (fun (s₁, s₂) => do (← z₁ s₁, ← z₂ s₂))
+      (fun n (s₁, s₂) => do (← zn₁ n s₁, ← zn₂ n s₂))
+      (fun τ (x₁, x₂) (s₁, s₂) => do (← f_abs₁ τ x₁ s₁, ← f_abs₂ τ x₂ s₂ ))
+      (fun (x₁₁, x₁₂) (x₂₁, x₂₂) (s₁, s₂) => do (← f_app₁ x₁₁ x₂₁ s₁, ← f_app₂ x₁₂ x₂₂ s₂))
       (i₁, i₂) = some (x₁, x₂)) := by
     induction t generalizing i₁ i₂ x₁ x₂ <;> simp_all
     case unit =>
@@ -626,9 +626,9 @@ def Term.s_unfold
         (∃ n, zn n s = some b ∧ t = .var n) ∨
         (∃ τ b', f_abs τ b' s = some b ∧ t = .abs τ b') ∨
         (∃ b₁ b₂, f_app b₁ b₂ s = some b ∧ t = .app b₁ b₂))) :
-    CorrectGen (λ v => Term.accuM st_abs st_app z zn f_abs f_app v s = some b) :=
+    CorrectGen (fun v => Term.accuM st_abs st_app z zn f_abs f_app v s = some b) :=
   Subtype.mk
-    (Term.unfold (λ (b, s) => do
+    (Term.unfold (fun (b, s) => do
       match (← (g b s).val) with
       | .unit => pure .unit
       | .var n => pure (.var n)

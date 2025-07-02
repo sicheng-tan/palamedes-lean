@@ -61,11 +61,11 @@ partial def backtrackLoop
   match remaining with
   | 0 => failWith "backtracked too many times"
   | remaining' + 1 =>
-    let x' := IO.lazyPure (λ () => sampleRand cfg x)
-    let y' := IO.lazyPure (λ () => sampleRand cfg y)
+    let x' := IO.lazyPure (fun () => sampleRand cfg x)
+    let y' := IO.lazyPure (fun () => sampleRand cfg y)
     ExceptT.tryCatch
       (weightedChoice x' y')
-      (λ () => backtrackLoop cfg x y remaining')
+      (fun () => backtrackLoop cfg x y remaining')
 
 partial def sampleRand (cfg : SampleConfig) : Gen α → SampleM α
   | .ret v' => pure v'

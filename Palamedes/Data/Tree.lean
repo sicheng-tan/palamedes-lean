@@ -114,7 +114,7 @@ theorem Tree.unfold_aux_monotonic :
 
 @[irreducible]
 def Tree.unfold (f : β → Gen (TreeF α β)) (v : β) : Gen (Tree α) :=
-  .indexed (λ n => Tree.unfold_aux n f v)
+  .indexed (fun n => Tree.unfold_aux n f v)
 
 @[simp]
 def Tree.unfold_support (P : β → TreeF α β → Prop) (b : β) (t : Tree α) : Prop :=
@@ -127,7 +127,7 @@ def Tree.unfold_support (P : β → TreeF α β → Prop) (b : β) (t : Tree α)
 
 @[simp]
 theorem Tree.support_unfold :
-    support (Tree.unfold f b) = Tree.unfold_support (λ b' => support (f b')) b := by
+    support (Tree.unfold f b) = Tree.unfold_support (fun b' => support (f b')) b := by
   funext s
   simp_all
   induction s generalizing b with
@@ -328,9 +328,9 @@ theorem Tree.merge_accuM
     (t.accuM st₁ f₁ z₁ s₁ = some b₁ ∧ t.accuM st₂ f₂ z₂ s₂ = some b₂)
     ↔
     (t.accuM
-      (λ x (s₁, s₂) => (((st₁ x s₁).1, (st₂ x s₂).1), ((st₁ x s₁).2, (st₂ x s₂).2)))
-      (λ (bl₁, bl₂) x (br₁, br₂) (s₁, s₂) => do (← f₁ bl₁ x br₁ s₁, ← f₂ bl₂ x br₂ s₂))
-      (λ (s₁, s₂) => do (← z₁ s₁, ← z₂ s₂))
+      (fun x (s₁, s₂) => (((st₁ x s₁).1, (st₂ x s₂).1), ((st₁ x s₁).2, (st₂ x s₂).2)))
+      (fun (bl₁, bl₂) x (br₁, br₂) (s₁, s₂) => do (← f₁ bl₁ x br₁ s₁, ← f₂ bl₂ x br₂ s₂))
+      (fun (s₁, s₂) => do (← z₁ s₁, ← z₂ s₂))
       (s₁, s₂) = some (b₁, b₂)) := by
   induction t generalizing st₁ st₂ f₁ f₂ s₁ s₂ z₁ z₂ b₁ b₂
   case leaf =>
@@ -392,9 +392,9 @@ def Tree.s_unfold
       (fun (t : TreeF α β) =>
         (z s = some b ∧ t = .leaf) ∨
         (∃ a bl br, f bl a br s = some b ∧ t = .node bl a br))) :
-    CorrectGen (λ v => Tree.accuM st f z v s = some b) :=
+    CorrectGen (fun v => Tree.accuM st f z v s = some b) :=
   Subtype.mk
-    (Tree.unfold (λ (b, s) => do
+    (Tree.unfold (fun (b, s) => do
       match (← (g b s).val) with
       | .leaf => pure .leaf
       | .node bl x br => pure (.node (bl, (st x s).1) x (br, (st x s).2))) (b, s)) <| by

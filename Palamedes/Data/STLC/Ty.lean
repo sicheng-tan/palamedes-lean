@@ -116,7 +116,7 @@ theorem Ty.unfold_aux_monotonic :
 
 @[irreducible]
 def Ty.unfold (f : α → Gen (TyF α)) (x : α) : Gen Ty :=
-  .indexed (λ n => Ty.unfold_aux n f x)
+  .indexed (fun n => Ty.unfold_aux n f x)
 
 @[simp]
 def Ty.unfold_support (P : α → TyF α → Prop) (x : α) (τ : Ty) : Prop :=
@@ -129,7 +129,7 @@ def Ty.unfold_support (P : α → TyF α → Prop) (x : α) (τ : Ty) : Prop :=
 
 @[simp]
 theorem Ty.support_unfold :
-    support (Ty.unfold f x) = Ty.unfold_support (λ x' => support (f x')) x := by
+    support (Ty.unfold f x) = Ty.unfold_support (fun x' => support (f x')) x := by
   funext τ
   simp_all
   induction τ generalizing x with
@@ -284,7 +284,7 @@ theorem Ty.fold_accu_Option_function_true
     (h : ∀ acc₁ acc₂ s,
       f acc₁ acc₂ s = true ↔ (do (return (g s) && (← acc₁ (st₁ s)) && (← acc₂ (st₂ s)))) = some true)
     :
-    Ty.fold f (λ _ => true) τ i = true ↔
+    Ty.fold f (fun _ => true) τ i = true ↔
     Ty.accuM
       (fun s => (st₁ s, st₂ s))
       (fun _ _ s => guard $ g s)
@@ -354,9 +354,9 @@ theorem Ty.merge_accuM
     (τ.accuM st₁ f₁ z₁ i₁ = some x₁ ∧ τ.accuM st₂ f₂ z₂ i₂ = some x₂)
     ↔
     (τ.accuM
-      (λ (s₁, s₂) => (((st₁ s₁).1, (st₂ s₂).1), ((st₁ s₁).2, (st₂ s₂).2)))
-      (λ (x₁₁, x₁₂) (x₂₁, x₂₂) (s₁, s₂) => do (← f₁ x₁₁ x₂₁ s₁, ← f₂ x₁₂ x₂₂ s₂))
-      (λ (s₁, s₂) => do (← z₁ s₁, ← z₂ s₂))
+      (fun (s₁, s₂) => (((st₁ s₁).1, (st₂ s₂).1), ((st₁ s₁).2, (st₂ s₂).2)))
+      (fun (x₁₁, x₁₂) (x₂₁, x₂₂) (s₁, s₂) => do (← f₁ x₁₁ x₂₁ s₁, ← f₂ x₁₂ x₂₂ s₂))
+      (fun (s₁, s₂) => do (← z₁ s₁, ← z₂ s₂))
       (i₁, i₂) = some (x₁, x₂)) := by
   induction τ generalizing i₁ i₂ x₁ x₂ <;> simp_all
   case unit =>
@@ -413,9 +413,9 @@ def Ty.s_unfold
       (fun (τ : TyF α) =>
         (z s = some b ∧ τ = .unit) ∨
         (∃ b₁ b₂, f b₁ b₂ s = some b ∧ τ = .arrow b₁ b₂))) :
-    CorrectGen (λ v => Ty.accuM st f z v s = some b) :=
+    CorrectGen (fun v => Ty.accuM st f z v s = some b) :=
   Subtype.mk
-    (Ty.unfold (λ (b, s) => do
+    (Ty.unfold (fun (b, s) => do
       match (← (g b s).val) with
       | .unit => pure .unit
       | .arrow b₁ b₂ => pure (.arrow (b₁, (st s).1) (b₂, (st s).2))) (b, s)) <| by
@@ -527,7 +527,7 @@ theorem support_caseTy_congr
 namespace CorrectGen
 
 @[reducible]
-def s_arbTy : @CorrectGen Ty (λ _ => True) :=
+def s_arbTy : @CorrectGen Ty (fun _ => True) :=
   Subtype.mk arbTy <| by
     funext v
     simp
@@ -576,13 +576,13 @@ end Total
 theorem Ty.deforest_eq
     {b b_unit : β}
     {b_arrow : Ty → Ty → β} :
-    Ty.rec b_unit (λ τ₁ τ₂ _ _ => b_arrow τ₁ τ₂) τ = b ↔
-    Ty.rec (b_unit = b) (λ τ₁ τ₂ _ _ => b_arrow τ₁ τ₂ = b) τ := by
+    Ty.rec b_unit (fun τ₁ τ₂ _ _ => b_arrow τ₁ τ₂) τ = b ↔
+    Ty.rec (b_unit = b) (fun τ₁ τ₂ _ _ => b_arrow τ₁ τ₂ = b) τ := by
   induction τ <;> aesop
 
 theorem Ty.as_or
   {P_unit : Prop}
   {P_arrow : Ty → Ty → Prop} :
-  Ty.rec P_unit (λ τ₁ τ₂ _ _ => P_arrow τ₁ τ₂) τ ↔
+  Ty.rec P_unit (fun τ₁ τ₂ _ _ => P_arrow τ₁ τ₂) τ ↔
   (τ = .unit ∧ P_unit) ∨ (∃ τ₁ τ₂, τ = .arrow τ₁ τ₂ ∧ P_arrow τ₁ τ₂) := by
   induction τ <;> aesop

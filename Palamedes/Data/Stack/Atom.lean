@@ -46,7 +46,7 @@ theorem support_arbLabel : support arbLabel = fun _ => True := by
 namespace CorrectGen
 
 @[reducible]
-def s_arbLabel : @CorrectGen Label (λ _ => True) :=
+def s_arbLabel : @CorrectGen Label (fun _ => True) :=
   Subtype.mk arbLabel <| by
     funext v
     simp

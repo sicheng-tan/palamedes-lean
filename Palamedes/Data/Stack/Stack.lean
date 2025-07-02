@@ -134,7 +134,7 @@ theorem Stack.unfold_aux_monotonic :
 
 @[irreducible]
 def Stack.unfold (f : α → Gen (StackF α)) (x : α) : Gen Stack :=
-  .indexed (λ n => Stack.unfold_aux n f x)
+  .indexed (fun n => Stack.unfold_aux n f x)
 
 @[simp]
 def Stack.unfold_support (P : α → StackF α → Prop) (v : α) (s : Stack) : Prop :=
@@ -145,7 +145,7 @@ def Stack.unfold_support (P : α → StackF α → Prop) (v : α) (s : Stack) : 
 
 @[simp]
 theorem Stack.support_unfold :
-    support (Stack.unfold f b) = Stack.unfold_support (λ b' => support (f b')) b := by
+    support (Stack.unfold f b) = Stack.unfold_support (fun b' => support (f b')) b := by
   funext s
   simp_all
   induction s generalizing b with
@@ -412,11 +412,11 @@ theorem Stack.merge_accuM
       ∧ s.accuM st_c₂ st_rc₂ z₂ f_c₂ f_rc₂ s₂ = some v₂)
     ↔
     (s.accuM
-      (λ x (s₁, s₂) => (st_c₁ x s₁, st_c₂ x s₂))
-      (λ pc (s₁, s₂) => (st_rc₁ pc s₁, st_rc₂ pc s₂))
-      (λ (s₁, s₂) => do (← z₁ s₁, ← z₂ s₂))
-      (λ x (v₁, v₂) (s₁, s₂) => do (← f_c₁ x v₁ s₁, ← f_c₂ x v₂ s₂))
-      (λ pc (v₁, v₂) (s₁, s₂) => do (← f_rc₁ pc v₁ s₁, ← f_rc₂ pc v₂ s₂))
+      (fun x (s₁, s₂) => (st_c₁ x s₁, st_c₂ x s₂))
+      (fun pc (s₁, s₂) => (st_rc₁ pc s₁, st_rc₂ pc s₂))
+      (fun (s₁, s₂) => do (← z₁ s₁, ← z₂ s₂))
+      (fun x (v₁, v₂) (s₁, s₂) => do (← f_c₁ x v₁ s₁, ← f_c₂ x v₂ s₂))
+      (fun pc (v₁, v₂) (s₁, s₂) => do (← f_rc₁ pc v₁ s₁, ← f_rc₂ pc v₂ s₂))
       (s₁, s₂) = some (v₁, v₂)) := by
     induction s generalizing s₁ s₂ v₁ v₂
     case mty => simp_all [Stack.accuM, Option.bind_eq_some_iff]
@@ -474,9 +474,9 @@ def Stack.s_unfold
         (z s = some b ∧ x = .mty) ∨
         (∃ a b', f_c a b' s = some b ∧ x = .cons a b') ∨
         (∃ pc b', f_rc pc b' s = some b ∧ x = .ret_cons pc b'))) :
-    CorrectGen (λ v => Stack.accuM st_c st_rc z f_c f_rc v s = some b) :=
+    CorrectGen (fun v => Stack.accuM st_c st_rc z f_c f_rc v s = some b) :=
   Subtype.mk
-    (Stack.unfold (λ (b, s) => do
+    (Stack.unfold (fun (b, s) => do
       match (← (g b s).val) with
       | .mty => pure .mty
       | .cons a b' => pure (.cons a (b', (st_c a s)))

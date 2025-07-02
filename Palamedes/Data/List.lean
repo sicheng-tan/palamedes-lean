@@ -107,7 +107,7 @@ theorem List.unfold_aux_monotonic :
 
 @[irreducible]
 def List.unfold (f : β → Gen (ListF α β)) (b : β) : Gen (List α) :=
-  indexed (λ n => List.unfold_aux n f b)
+  indexed (fun n => List.unfold_aux n f b)
 
 -- TODO: I wish I had a better naming convention for this.
 @[simp]
@@ -118,7 +118,7 @@ def List.unfold_support (P : β → ListF α β → Prop) (b : β) (xs : List α
 
 @[simp]
 theorem List.support_unfold :
-    support (List.unfold f b) = List.unfold_support (λ b' => support (f b')) b := by
+    support (List.unfold f b) = List.unfold_support (fun b' => support (f b')) b := by
   unfold List.unfold
   funext xs
   simp_all
@@ -246,7 +246,7 @@ theorem List.fold_accu_Option_function_true
     (h : ∀ x acc s,
       f x acc s = true ↔ (do (return (g x s) && (← acc (st x s)))) = some true)
     :
-    List.fold f (λ _ => true) xs i = true ↔
+    List.fold f (fun _ => true) xs i = true ↔
     List.accuM
       st
       (fun x _ s => guard $ g x s)
@@ -288,9 +288,9 @@ theorem List.merge_accuM
     (xs.accuM st₁ f₁ z₁ s₁ = some b₁ ∧ xs.accuM st₂ f₂ z₂ s₂ = some b₂)
     ↔
     (xs.accuM
-      (λ x (s₁, s₂) => (st₁ x s₁, st₂ x s₂))
-      (λ x (b₁, b₂) (s₁, s₂) => do (← f₁ x b₁ s₁, ← f₂ x b₂ s₂))
-      (λ (s₁, s₂) => do (← z₁ s₁, ← z₂ s₂))
+      (fun x (s₁, s₂) => (st₁ x s₁, st₂ x s₂))
+      (fun x (b₁, b₂) (s₁, s₂) => do (← f₁ x b₁ s₁, ← f₂ x b₂ s₂))
+      (fun (s₁, s₂) => do (← z₁ s₁, ← z₂ s₂))
       (s₁, s₂) = some (b₁, b₂)) := by
   induction xs generalizing st₁ st₂ f₁ f₂ s₁ s₂ z₁ z₂ b₁ b₂
   case nil => simp_all [List.accuM, Option.bind_eq_some_iff]
@@ -329,9 +329,9 @@ def List.s_unfold
       (fun (t : ListF α β) =>
         (z s = some b ∧ t = .nil) ∨
         (∃ a b', f a b' s = some b ∧ t = .cons a b'))) :
-    CorrectGen (λ v => List.accuM st f z v s = some b) :=
+    CorrectGen (fun v => List.accuM st f z v s = some b) :=
   Subtype.mk
-    (List.unfold (λ (b, s) => do
+    (List.unfold (fun (b, s) => do
       match (← (g b s).val) with
       | .nil => pure .nil
       | .cons x b' => pure (.cons x (b', st x s))) (b, s)) <| by

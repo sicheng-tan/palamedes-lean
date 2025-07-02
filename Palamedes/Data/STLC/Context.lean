@@ -28,8 +28,8 @@ theorem support_elements
       simp_all [support]
 
 @[reducible]
-def s_elements_partial [DecidableEq α] (xs : List α) : CorrectGen (λ v => List.elem v xs) :=
-  Subtype.mk (assume (xs.length > 0) (λ h => elements xs (by aesop))) <| by
+def s_elements_partial [DecidableEq α] (xs : List α) : CorrectGen (fun v => List.elem v xs) :=
+  Subtype.mk (assume (xs.length > 0) (fun h => elements xs (by aesop))) <| by
     funext v
     simp [support_elements]
     cases xs <;> simp_all

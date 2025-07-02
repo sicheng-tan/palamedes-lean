@@ -83,7 +83,7 @@ end Gen
 namespace CorrectGen
 
 @[reducible]
-def s_arbNat : @CorrectGen Nat (λ _ => True) :=
+def s_arbNat : @CorrectGen Nat (fun _ => True) :=
   Subtype.mk arbNat <| by
     funext v
     simp
@@ -106,7 +106,7 @@ def s_caseNat
 def s_between
     {lo hi : Nat}
     (h : lo ≤ hi) :
-    CorrectGen (λ v => lo ≤ v ∧ v ≤ hi) :=
+    CorrectGen (fun v => lo ≤ v ∧ v ≤ hi) :=
   Subtype.mk (choose lo hi h) <| by
     funext v
     simp
@@ -114,8 +114,8 @@ def s_between
 @[reducible]
 def s_between_partial
     {lo hi : Nat} :
-    CorrectGen (λ v => lo ≤ v ∧ v ≤ hi) :=
-  Subtype.mk (assume (lo ≤ hi) (λ h => choose lo hi (by simp_all only [decide_eq_true_eq]))) <| by
+    CorrectGen (fun v => lo ≤ v ∧ v ≤ hi) :=
+  Subtype.mk (assume (lo ≤ hi) (fun h => choose lo hi (by simp_all only [decide_eq_true_eq]))) <| by
     funext v
     simp
     exact Nat.le_trans
@@ -123,7 +123,7 @@ def s_between_partial
 @[reducible]
 def s_gt
     {lo : Nat} :
-    CorrectGen (λ v => lo < v) :=
+    CorrectGen (fun v => lo < v) :=
   Subtype.mk (gt lo) <| by
     simp
 
