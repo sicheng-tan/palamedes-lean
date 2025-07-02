@@ -17,8 +17,6 @@ macro "optimality" : tactic =>
         | rw [support_assume_bind]
         | rw [support_pure_bind]
         | rw [support_bind_bind]
-        | rw [← support_pick_bind]
-        | rw [← support_if_bind]
         | apply Term.support_unfold_congr
         | apply Tree.support_unfold_congr
         | apply List.support_unfold_congr
@@ -30,4 +28,6 @@ macro "optimality" : tactic =>
         | apply support_pick_congr
         | apply support_if_congr
         | simp only [dite_true, dite_false, *]
+        | rw [← support_pick_bind]
+        | rw [← support_if_bind]
         | split)
