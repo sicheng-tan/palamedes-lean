@@ -7,7 +7,7 @@ import Palamedes.Examples.Simple.ThreePlusOne
 import Palamedes.Examples.Range.Between5And10
 import Palamedes.Examples.Range.BetweenLoAndHi
 import Palamedes.Examples.Range.Gt5
-import Palamedes.Examples.Range.OneOrInRange
+import Palamedes.Examples.Range.ZeroOrInRange
 
 import Palamedes.Examples.Arbitrary
 import Palamedes.Examples.OptimizationTests

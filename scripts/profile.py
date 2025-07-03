@@ -19,7 +19,7 @@ FILES = [
     "Palamedes/Examples/Range/Between5And10.lean",
     "Palamedes/Examples/Range/BetweenLoAndHi.lean",
     "Palamedes/Examples/Range/Gt5.lean",
-    "Palamedes/Examples/Range/OneOrInRange.lean",
+    "Palamedes/Examples/Range/ZeroOrInRange.lean",
     "Palamedes/Examples/Arbitrary.lean",
     "Palamedes/Examples/List/AllTwos/AllTwos.lean",
     "Palamedes/Examples/List/AllTwosEvenLen/AllTwosEvenLen.lean",
