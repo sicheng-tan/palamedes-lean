@@ -167,7 +167,8 @@ macro "goal_is_or" : tactic =>
   `(tactic| guard_target = CorrectGen (fun _ => _ ∨ _))
 
 add_aesop_rules 5% (rule_sets := [synthesis]) [
-  (by apply caseBool (by assumption)),
+  (by goal_is_or; clear_unused_assumptions; apply s_caseBool (by nth_assumption 0) (by intros; rflm)),
+  (by goal_is_or; clear_unused_assumptions; apply s_caseBool (by nth_assumption 1) (by intros; rflm)),
   (by goal_is_or; clear_unused_assumptions; apply s_caseTy (by nth_assumption 0) (by intros; rflm)),
   (by goal_is_or; clear_unused_assumptions; apply s_caseTy (by nth_assumption 1) (by intros; rflm)),
   (by goal_is_or; clear_unused_assumptions; apply s_caseNat (by nth_assumption 0) (by intros; rflm)),

@@ -13,15 +13,18 @@ def s_arbBool : @CorrectGen Bool (fun _ => True) :=
   Subtype.mk arbBool (by simp [arbBool])
 
 @[reducible]
-def caseBool
+def s_caseBool
+    {Q : α → Prop}
+    {P : α → Bool → Prop}
     (b : Bool)
-    (gt : (b = true) → @CorrectGen α P)
-    (gf : (¬b = true) → @CorrectGen α P) :
-    @CorrectGen α P :=
-  Subtype.mk (if h : b then (gt h).val else (gf h).val) <| by
-    split <;> rename_i h
-    . simp [(gt h).property]
-    . simp [(gf _).property]
+    (h : ∀ {a}, P a b = Q a)
+    (gt : CorrectGen (fun a => P a true))
+    (gf : CorrectGen (fun a => P a false)) :
+    CorrectGen Q :=
+  Subtype.mk (if h : b then gt.val else gf.val) <| by
+    match b with
+    | true => simp [gt.property, h]
+    | false => simp [gf.property, h]
 
 end CorrectGen
 
