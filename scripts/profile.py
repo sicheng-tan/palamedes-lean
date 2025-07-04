@@ -90,8 +90,6 @@ for file in iter:
 
 label_pattern = re.compile(r"fun (.+) => (.+)")
 
-print(data)
-
 total_lines = []
 partial_lines = []
 
