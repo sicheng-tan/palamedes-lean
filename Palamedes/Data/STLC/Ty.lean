@@ -321,23 +321,6 @@ theorem Ty.coerce_match
   f τ = Ty.rec z (fun τ₁ τ₂ _ _ => g τ₁ τ₂) τ := by
   induction τ <;> simp_all
 
-/-
-getTypeFold.match_1 (fun τ₄ => Option Ty) b₁ (fun τ₁ τ₂ => (if τ₁ = b₂ then some () else failure).bind fun x => some τ₂)
-  fun x => none : Option Ty
-
-theorem List.coerce_match
-    {xs : List α}
-    {f : List α → β}
-    {z : β}
-    {g : α → List α → β}
-    (h1 : f [] = z)
-    (h2 : ∀ x xs, f (x :: xs) = g x xs) :
-    f xs = List.rec z (fun x xs _ => g x xs) xs := by
-  induction xs <;> simp_all
-
-getType.match_1 (fun τ₁ => Option Ty) b₁
-  (fun τarg τres => (if τarg = b₂ then some () else failure).bind fun x => some τres) fun _ => failure : Option Ty-/
-
 end FoldCoercion
 
 section FoldMerging
