@@ -1,4 +1,5 @@
 import Lean
+import Aesop
 
 open Lean Tactic Elab Meta Tactic
 
@@ -99,3 +100,92 @@ elab "library_search" : tactic =>
     match ← librarySearch g tactic (fun _ => pure false) with
     | none => pure ()
     | some _ => throwError "library_search failed"
+
+/-- Extracts the conjuncts of an ∧-expression.
+
+    NOTE: This needs to be in `MetaM`, although I'm not 100% sure why. I think it may have
+    something to do with how `match_expr` works under the hood? -/
+partial def getConjuncts (e : Expr) : MetaM (List Expr) := do
+  match_expr e with
+  | And p q => return (← getConjuncts p) ++ (← getConjuncts q)
+  | _ => return [e]
+
+/-- Proves a goal of the form `?a ∧ ?b = e` by partitioning the conjuncts in `e` based on whether or
+  not they contain `v`.
+
+  E.g., the goal `?a ∧ ?b = v < 3 ∧ x = 5 ∧ 1 < v` is solved with
+  ```
+  ?a = (x = 5)
+  ?b = (v < 3 ∧ 1 < v)
+  ```
+  -/
+elab "partition_conjuncts " v:ident : tactic =>
+  withMainContext do
+    let g ← getMainGoal
+    let goalDecl ← g.getDecl
+    let goalTy := goalDecl.type
+    let var ← elabAsFVar v
+    match_expr goalTy with
+    | Eq _α _lhs rhs =>
+      -- Get and partition the conjuncts
+      let conjuncts ← getConjuncts rhs
+      let (varIn, varNotIn) := conjuncts.partition (·.containsFVar var)
+
+      -- Create a new `rhs` with the appropriate grouping of conjuncts
+      let rhs' := mkAppN (.const ``And []) #[
+          varNotIn.foldr (fun a b => mkAppN (.const ``And []) #[a, b]) (.const ``True []),
+          varIn.foldr (fun a b => mkAppN (.const ``And []) #[a, b]) (.const ``True []),
+        ]
+
+      -- Assert that our goal's type is actually `rhs' = rhs` and prove the equality with aesop
+      let goalTy' ← mkAppM ``Eq #[rhs', rhs]
+      if ← isDefEq goalTy goalTy' then
+        let ([], _) ← runTactic g (← `(tactic| aesop))
+          | throwError "aesop could not prove {← instantiateMVars goalTy'}"
+
+    | _ => pure ()
+
+
+theorem exists_swap_2nd' {α β : Type}(P : α → β → Prop) : (∃ x: α, ∃ y: β, P x y) = (∃ y: β, ∃ x: α, P x y) := by
+ simp_all only [eq_iff_iff]
+ apply Iff.intro
+ · intro a
+   obtain ⟨w, h⟩ := a
+   obtain ⟨w_1, h⟩ := h
+   apply Exists.intro
+   · apply Exists.intro
+     · exact h
+ · intro a
+   obtain ⟨w, h⟩ := a
+   obtain ⟨w_1, h⟩ := h
+   apply Exists.intro
+   · apply Exists.intro
+     · exact h
+
+syntax "exists_swap_2nd" : tactic
+macro_rules
+| `(tactic| exists_swap_2nd) => `(tactic| conv => congr; intro v; rw[exists_swap_2nd'])
+
+theorem exists_swap_3rd' {α β γ : Type}(P : α → β → γ → Prop) : (∃ x: α, ∃ y : β, ∃ z : γ,  P x y z) = (∃ z : γ, ∃ x: α, ∃ y: β,  P x y z) := by
+  simp_all only [eq_iff_iff]
+  apply Iff.intro
+  · intro a
+    obtain ⟨w, h⟩ := a
+    obtain ⟨w_1, h⟩ := h
+    obtain ⟨w_2, h⟩ := h
+    apply Exists.intro
+    · apply Exists.intro
+      · apply Exists.intro
+        · exact h
+  · intro a
+    obtain ⟨w, h⟩ := a
+    obtain ⟨w_1, h⟩ := h
+    obtain ⟨w_2, h⟩ := h
+    apply Exists.intro
+    · apply Exists.intro
+      · apply Exists.intro
+        · exact h
+
+syntax "exists_swap_3rd" : tactic
+macro_rules
+| `(tactic| exists_swap_3rd) => `(tactic| conv => congr; intro v; rw[exists_swap_3rd'])

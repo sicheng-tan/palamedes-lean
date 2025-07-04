@@ -2,7 +2,7 @@ import Palamedes.Gen
 import Palamedes.CorrectGen
 import Palamedes.Total
 import Palamedes.Data.STLC.Ty
--- import Mathlib.Tactic.CasesM
+import Palamedes.Util
 
 section TypeDef
 
@@ -511,10 +511,10 @@ theorem Term.coerce_to_fold
     {zn : Nat → α}
     {g_abs : Ty → α → α}
     {g_app : α → α → α}
-    (h_unit : f .unit = z)
-    (h_var : ∀ n, f (.var n) = zn n)
-    (h_abs : ∀ τ t', f (.abs τ t') = g_abs τ (f t'))
-    (h_app : ∀ t₁ t₂, f (.app t₁ t₂) = g_app (f t₁) (f t₂)) :
+    (h_unit : f .unit = z := by rflm)
+    (h_var : ∀ n, f (.var n) = zn n := by rflm)
+    (h_abs : ∀ τ t', f (.abs τ t') = g_abs τ (f t') := by intros; simp_all; rflm)
+    (h_app : ∀ t₁ t₂, f (.app t₁ t₂) = g_app (f t₁) (f t₂) := by intros; simp_all; rflm) :
     f t = t.fold z zn g_abs g_app := by
   induction t <;> simp_all
 

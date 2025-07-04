@@ -4,6 +4,7 @@ open Gen CorrectGen
 
 namespace EvenLenFold
 
+@[simp]
 def evenLenFold (xs : List α) : Bool :=
   List.fold (fun _ b => !b) true xs
 

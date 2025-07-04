@@ -1,6 +1,7 @@
 import Palamedes.Gen
 import Palamedes.CorrectGen
 import Palamedes.Total
+import Palamedes.Util
 
 section TypeDef
 
@@ -305,8 +306,8 @@ theorem Ty.coerce_to_fold
     {f : Ty → α} -- function to be coerced
     {z : α}
     {g : α → α → α}
-    (h₁ : f .unit = z)
-    (h₂ : ∀ τ₁ τ₂, f (.arrow τ₁ τ₂) = g (f τ₁) (f τ₂)) :
+    (h₁ : f .unit = z := by rflm)
+    (h₂ : ∀ τ₁ τ₂, f (.arrow τ₁ τ₂) = g (f τ₁) (f τ₂) := by intros; simp_all; rflm) :
     f τ = τ.fold g z := by
   induction τ <;> simp_all
 

@@ -1,6 +1,7 @@
 import Palamedes.Gen
 import Palamedes.CorrectGen
 import Palamedes.Total
+import Palamedes.Util
 
 section BaseFunctor
 
@@ -267,8 +268,9 @@ theorem List.coerce_to_fold
     {f : List α → β}
     {z : β}
     {g : α → β → β}
-    (h1 : f [] = z)
-    (h2 : ∀ x xs, f (x :: xs) = g x (f xs)) :
+    (h1 : f [] = z := by rflm)
+    (h2 : ∀ x xs, f (x :: xs) = g x (f xs)
+      := by intros; simp_all [- Bool.not_eq_eq_eq_not]; rflm) :
     f xs = xs.fold g z := by
   induction xs <;> simp_all
 

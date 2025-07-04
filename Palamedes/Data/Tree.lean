@@ -1,6 +1,7 @@
 import Palamedes.Gen
 import Palamedes.CorrectGen
 import Palamedes.Total
+import Palamedes.Util
 
 section TypeDef
 
@@ -306,8 +307,9 @@ theorem Tree.coerce_to_fold
     {f : Tree α → β} -- function to be coerced
     {z : β}
     {g : β → α → β → β}
-    (h1 : f .leaf = z)
-    (h2 : ∀ l x r, f (.node l x r) = g (f l) x (f r)) :
+    (h1 : f .leaf = z := by aesop)
+    (h2 : ∀ l x r, f (.node l x r) = g (f l) x (f r)
+      := by intros; simp_all; rflm) :
     f t = t.fold g z := by
   induction t <;> simp_all
 

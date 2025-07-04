@@ -1,5 +1,4 @@
 import Palamedes.Synthesizer
-import Palamedes.Synthesizer.Util
 
 open Gen CorrectGen
 
