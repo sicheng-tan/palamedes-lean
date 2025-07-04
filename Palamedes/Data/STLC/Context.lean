@@ -4,7 +4,7 @@ import Palamedes.Total
 import Batteries.Data.List.Lemmas
 import Mathlib.Data.List.Basic
 
-open Gen CorrectGen
+namespace Gen
 
 def elements (xs : List α) (h : xs.length > 0) : Gen α :=
   match xs with
@@ -27,12 +27,28 @@ theorem support_elements
       simp [elements] at ih |-
       simp_all [support]
 
+namespace CorrectGen
+
 @[reducible]
 def s_elements_partial [DecidableEq α] (xs : List α) : CorrectGen (fun v => List.elem v xs) :=
   Subtype.mk (assume (xs.length > 0) (fun h => elements xs (by aesop))) <| by
     funext v
     simp [support_elements]
     cases xs <;> simp_all
+
+end CorrectGen
+
+namespace Total
+
+@[simp, aesop safe (rule_sets := [totality])]
+theorem total_elements :
+    (Gen.total (elements xs h)) := by
+  induction xs <;> simp [List.length_pos_iff_exists_cons] at h
+  case cons x xs' ih _ =>
+    simp [elements]
+    cases xs' <;> simp_all
+
+end Total
 
 theorem getElem?_eq_some_iff_indexesOf_getElem?_eq_some
     [BEq α]
@@ -67,14 +83,4 @@ theorem getElem?_eq_some_iff_indexesOf_getElem?_eq_some
       . simp_all
         aesop
 
-namespace Total
-
-@[simp, aesop safe (rule_sets := [totality])]
-theorem total_elements :
-    (Gen.total (elements xs h)) := by
-  induction xs <;> simp [List.length_pos_iff_exists_cons] at h
-  case cons x xs' ih _ =>
-    simp [elements]
-    cases xs' <;> simp_all
-
-end Total
+end Gen

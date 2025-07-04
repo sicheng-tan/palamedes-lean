@@ -19,8 +19,6 @@ def choose (lo hi : Nat) (h : lo ≤ hi := by simp) : Gen Nat :=
 def lt (hi : Nat) (_ : hi > 0) : Gen Nat :=
   choose 0 (hi - 1) (by simp)
 
-namespace Gen
-
 @[simp]
 theorem support_arbNat :
     support arbNat = fun _ => True := by
@@ -92,8 +90,6 @@ theorem support_lt :
     omega
   . intro
     omega
-
-end Gen
 
 namespace CorrectGen
 

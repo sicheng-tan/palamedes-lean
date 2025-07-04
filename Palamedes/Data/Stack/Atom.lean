@@ -15,23 +15,6 @@ inductive Atom where
 
 end TypeDef
 
-namespace PrettyPrint
-
-def Label.toString : Label → String
-  | .low => "low"
-  | .high => "high"
-
-instance : ToString Label where
-  toString := Label.toString
-
-def Atom.toString : Atom → String
-  | .atm n l => s!"({n} {l})"
-
-instance : ToString Atom where
-  toString := Atom.toString
-
-end PrettyPrint
-
 namespace Gen
 
 @[irreducible]
@@ -62,7 +45,6 @@ def s_arbAtom
 
 end CorrectGen
 
-
 namespace Total
 
 @[simp, aesop safe (rule_sets := [totality])]
@@ -72,3 +54,20 @@ theorem total_arbLabel : total arbLabel := by
 end Total
 
 end Gen
+
+namespace PrettyPrint
+
+def Label.toString : Label → String
+  | .low => "low"
+  | .high => "high"
+
+instance : ToString Label where
+  toString := Label.toString
+
+def Atom.toString : Atom → String
+  | .atm n l => s!"({n} {l})"
+
+instance : ToString Atom where
+  toString := Atom.toString
+
+end PrettyPrint

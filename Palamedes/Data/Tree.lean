@@ -446,6 +446,8 @@ def Tree.total_unfold
 
 end Total
 
+end Gen
+
 namespace PrettyPrint
 
 def Tree.toString [ToString α] : Tree α → String
@@ -456,5 +458,3 @@ instance [ToString α] : ToString (Tree α) where
   toString := Tree.toString
 
 end PrettyPrint
-
-end Gen

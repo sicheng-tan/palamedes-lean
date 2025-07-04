@@ -534,16 +534,16 @@ def Stack.total_unfold
 
 end Total
 
+end Gen
+
 namespace PrettyPrint
 
 def Stack.toString : Stack → String
   | .mty => "(empty)"
-  | .cons a s  => s!"(cons {a} {Stack.toString s})"
-  | .ret_cons pc s => s!"(ret_cons {pc} {Stack.toString s})"
+  | .cons a s  => s!"(cons {Atom.toString a} {Stack.toString s})"
+  | .ret_cons pc s => s!"(ret_cons {Atom.toString pc} {Stack.toString s})"
 
 instance : ToString Stack where
   toString := Stack.toString
 
 end PrettyPrint
-
-end Gen

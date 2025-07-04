@@ -444,7 +444,6 @@ def Ty.s_unfold
 
 end CorrectGen
 
-
 namespace Total
 
 @[simp]
@@ -464,16 +463,9 @@ def Ty.total_unfold
 
 end Total
 
-namespace PrettyPrint
+end Gen
 
-def Ty.toString : Ty → String
-  | .unit => "()"
-  | .arrow τ₁ τ₂ => s!"({Ty.toString τ₁} → {Ty.toString τ₂})"
-
-instance : ToString Ty where
-  toString := Ty.toString
-
-end PrettyPrint
+namespace Gen
 
 @[irreducible]
 def arbTy : Gen Ty := Ty.unfold
@@ -552,7 +544,6 @@ def s_caseTy
 
 end CorrectGen
 
-
 namespace Total
 
 @[simp, aesop safe (rule_sets := [totality])]
@@ -572,6 +563,19 @@ theorem total_Ty_caseTy
   case arrow τ₁ τ₂ => simp_all only [Gen.caseTy]
 
 end Total
+
+end Gen
+
+namespace PrettyPrint
+
+def Ty.toString : Ty → String
+  | .unit => "()"
+  | .arrow τ₁ τ₂ => s!"({Ty.toString τ₁} → {Ty.toString τ₂})"
+
+instance : ToString Ty where
+  toString := Ty.toString
+
+end PrettyPrint
 
 theorem Ty.deforest_eq
     {b b_unit : β}

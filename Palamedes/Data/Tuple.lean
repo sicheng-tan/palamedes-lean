@@ -8,7 +8,7 @@ namespace Gen
 namespace CorrectGen
 
 @[reducible]
-def s_tuple
+def s_arbTuple
     {P : α × β → Prop}
     (g : CorrectGen (fun (p : α × β) => ∃ (a : α) (b : β), P (a, b) ∧ p = (a, b))) :
     CorrectGen (fun (p : α × β) => P p) :=

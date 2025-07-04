@@ -695,6 +695,8 @@ def Term.total_unfold
 
 end Total
 
+end Gen
+
 namespace PrettyPrint
 
 def Term.toString : Term → String
@@ -707,5 +709,3 @@ instance : ToString Term where
   toString := Term.toString
 
 end PrettyPrint
-
-end Gen
