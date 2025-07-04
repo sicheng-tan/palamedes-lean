@@ -192,47 +192,27 @@ end ConvertToAccuM
 macro "norm_for_List_unfold" : tactic =>
   `(tactic|
     (preprocess
-     repeat'
-      (first
-        | rw_list_merge
-        | (list_coerce_fold
-           list_convert_to_accuM))))
+     (repeat' rw_list_merge) <;> (list_coerce_fold; list_convert_to_accuM)))
 
 macro "norm_for_Tree_unfold" : tactic =>
   `(tactic|
     (preprocess
-     repeat'
-      (first
-        | rw_tree_merge
-        | (tree_coerce_fold
-           tree_convert_to_accuM))))
+     (repeat' rw_tree_merge) <;> (tree_coerce_fold; tree_convert_to_accuM)))
 
 macro "norm_for_Stack_unfold" : tactic =>
   `(tactic|
     (preprocess
-     repeat'
-      (first
-        | rw_stack_merge
-        | (stack_coerce_fold
-           stack_convert_to_accuM))))
+     (repeat' rw_stack_merge) <;> (stack_coerce_fold; stack_convert_to_accuM)))
 
 macro "norm_for_Ty_unfold" : tactic =>
   `(tactic|
     (preprocess
-     repeat'
-      (first
-        | rw_ty_merge
-        | (ty_coerce_fold
-           ty_convert_to_accuM))))
+     (repeat' rw_ty_merge) <;> (ty_coerce_fold; ty_convert_to_accuM)))
 
 macro "norm_for_Term_unfold" : tactic =>
   `(tactic|
     (preprocess
-     repeat'
-      (first
-        | rw_term_merge
-        | (term_coerce_fold
-           term_convert_to_accuM))))
+     (repeat' rw_term_merge) <;> (term_coerce_fold; term_convert_to_accuM)))
 
 macro "norm_for_pure" : tactic =>
   `(tactic| (
