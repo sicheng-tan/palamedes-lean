@@ -5,16 +5,16 @@ open Gen CorrectGen
 namespace LengthKAllTwos
 
 @[simp]
-def allTwos : List Nat → Bool
+def isAllTwos : List Nat → Bool
   | [] => true
-  | x :: xs => x = 2 && allTwos xs
+  | x :: xs => x = 2 && isAllTwos xs
 
 @[simp]
-def lengthKAllTwos (k : Nat) (xs : List Nat) : Bool :=
-  xs.length == k && allTwos xs
+def isLengthKAllTwos (k : Nat) (xs : List Nat) : Bool :=
+  xs.length == k && isAllTwos xs
 
 @[simp]
 def genLengthKAllTwos (k : Nat): Gen (List Nat) := by
-  generator_search (fun xs => lengthKAllTwos k xs = true)
+  generator_search (fun xs => isLengthKAllTwos k xs = true)
 
 end LengthKAllTwos

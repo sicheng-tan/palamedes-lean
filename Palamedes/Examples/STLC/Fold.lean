@@ -24,11 +24,11 @@ def getTypeFold : Term → List Ty → Option Ty :=
       | _ => none)
 
 @[simp]
-def wellTypedFold (Γ : List Ty) (t : Term) : Prop :=
+def isWellTypedFold (Γ : List Ty) (t : Term) : Prop :=
   ∃ τ, getTypeFold t Γ = some τ
 
 attribute [local simp] Ty.as_or Ty.deforest_eq in
 def genWellTypedFold (Γ : List Ty) : Gen Term := by
-  generator_search (fun t => wellTypedFold Γ t)
+  generator_search (fun t => isWellTypedFold Γ t)
 
 end WellTypedFold

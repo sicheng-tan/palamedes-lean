@@ -2,18 +2,18 @@ import Palamedes.Synthesizer
 
 open Gen CorrectGen
 
-namespace CompleteTree
+namespace Complete
 
 @[simp]
-def isCompleteTree : Tree α → Nat → Bool := fun t n =>
+def isComplete : Tree α → Nat → Bool := fun t n =>
   match t with
   | .leaf => n == 0
   | .node l _ r =>
     n > 0 &&
-    isCompleteTree l (n - 1) &&
-    isCompleteTree r (n - 1)
+    isComplete l (n - 1) &&
+    isComplete r (n - 1)
 
-def genCompleteTree (n : Nat) : Gen (Tree Nat) := by
-  generator_search (fun t => isCompleteTree t n = true)
+def genComplete (n : Nat) : Gen (Tree Nat) := by
+  generator_search (fun t => isComplete t n = true)
 
-end CompleteTree
+end Complete

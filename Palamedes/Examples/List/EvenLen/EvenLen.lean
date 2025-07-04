@@ -5,11 +5,11 @@ open Gen CorrectGen
 namespace EvenLen
 
 @[simp]
-def evenLen : List α → Bool
+def isEvenLen : List α → Bool
   | [] => true
-  | _ :: xs => !(evenLen xs)
+  | _ :: xs => !(isEvenLen xs)
 
 def genEvenLen : Gen (List Nat) := by
-  generator_search (fun xs => evenLen xs = true)
+  generator_search (fun xs => isEvenLen xs = true)
 
 end EvenLen

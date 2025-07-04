@@ -5,11 +5,11 @@ open Gen CorrectGen
 namespace Nonempty
 
 @[simp]
-def nonempty : Tree α → Bool
+def isNonempty : Tree α → Bool
   | .leaf => false
-  | .node l _ r => true && nonempty l && nonempty r
+  | .node l _ r => true && isNonempty l && isNonempty r
 
 def genNonempty : Gen (Tree Nat) := by
-  generator_search (fun t => nonempty t = true)
+  generator_search (fun t => isNonempty t = true)
 
 end Nonempty
