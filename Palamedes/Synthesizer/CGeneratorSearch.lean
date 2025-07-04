@@ -25,23 +25,38 @@ macro "goal_is_mergeable" : tactic =>
 
 macro "goal_is_not_fold_list" : tactic =>
   `(tactic|
-    (fail_if_success (guard_target = _ ↔ List.fold _ _ _ = _)))
+    (fail_if_success
+      (first
+        | guard_target = _ ↔ List.fold _ _ _ = _
+        | guard_target = _ ↔ List.fold _ _ _ _ = _)))
 
 macro "goal_is_not_fold_tree" : tactic =>
   `(tactic|
-    (fail_if_success (guard_target = _ ↔ Tree.fold _ _ _ = _)))
+    (fail_if_success
+      (first
+        | guard_target = _ ↔ Tree.fold _ _ _ = _
+        | guard_target = _ ↔ Tree.fold _ _ _ _ = _)))
 
 macro "goal_is_not_fold_stack" : tactic =>
   `(tactic|
-    (fail_if_success (guard_target = _ ↔ Stack.fold _ _ _ _ = _)))
+    (fail_if_success
+      (first
+        | guard_target = _ ↔ Stack.fold _ _ _ _ = _
+        | guard_target = _ ↔ Stack.fold _ _ _ _ _ = _)))
 
 macro "goal_is_not_fold_ty" : tactic =>
   `(tactic|
-    (fail_if_success (guard_target = _ ↔ Ty.fold _ _ _ = _)))
+    (fail_if_success
+      (first
+        | guard_target = _ ↔ Ty.fold _ _ _ = _
+        | guard_target = _ ↔ Ty.fold _ _ _ _ = _)))
 
 macro "goal_is_not_fold_term" : tactic =>
   `(tactic|
-    (fail_if_success (guard_target = _ ↔ Term.fold _ _ _ _ _ = _)))
+    (fail_if_success
+      (first
+        | guard_target = _ ↔ Term.fold _ _ _ _ _ = _
+        | guard_target = _ ↔ Term.fold _ _ _ _ _ _ = _)))
 
 macro "goal_is_eq_or_and" : tactic =>
   `(tactic|
