@@ -15,13 +15,13 @@ def getTypeFold : Term → List Ty → Option Ty :=
       let τ₂ ← b (τ₁ :: Γ')
       pure (.arrow τ₁ τ₂))
     (fun b₁ b₂ Γ' => do
-      let τ₄ ← b₁ Γ'
-      let τ₃ ← b₂ Γ'
-      match τ₄ with
-      | .arrow τ₁ τ₂ => do
-        guard (τ₁ == τ₃)
-        pure τ₂
-      | _ => none)
+      let τ₁ ← b₁ Γ'
+      let τ₂ ← b₂ Γ'
+      match τ₁ with
+      | .arrow τarg τres => do
+        guard (τarg == τ₂)
+        pure τres
+      | Ty.unit => failure)
 
 @[simp]
 def isWellTypedFold (Γ : List Ty) (t : Term) : Prop :=
