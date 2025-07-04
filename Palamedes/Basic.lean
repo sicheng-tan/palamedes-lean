@@ -47,6 +47,8 @@ import Palamedes.Examples.Tree.Nonempty.Fold
 import Palamedes.Examples.Stack.GoodStack
 import Palamedes.Examples.Stack.Fold
 
-import Palamedes.Examples.STLC.WellTyped
-import Palamedes.Examples.STLC.Fold
-import Palamedes.Examples.STLC.WellScoped
+import Palamedes.Examples.STLC.WellTyped.WellTyped
+import Palamedes.Examples.STLC.WellScoped.WellScoped
+
+import Palamedes.Examples.STLC.WellTyped.Fold
+import Palamedes.Examples.STLC.WellScoped.Fold

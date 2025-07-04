@@ -51,9 +51,10 @@ FILES = [
     "Palamedes/Examples/Tree/Nonempty/Fold.lean",
     "Palamedes/Examples/Stack/GoodStack.lean",
     "Palamedes/Examples/Stack/Fold.lean",
-    "Palamedes/Examples/STLC/WellTyped.lean",
-    "Palamedes/Examples/STLC/WellScoped.lean",
-    "Palamedes/Examples/STLC/Fold.lean",
+    "Palamedes/Examples/STLC/WellScoped/WellScoped.lean",
+    "Palamedes/Examples/STLC/WellTyped/WellTyped.lean",
+    "Palamedes/Examples/STLC/WellTyped/Fold.lean",
+    "Palamedes/Examples/STLC/WellScoped/Fold.lean",
 ]
 
 # Regular expression to match the desired output

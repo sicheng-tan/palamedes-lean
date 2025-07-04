@@ -2,6 +2,8 @@ import Palamedes.Synthesizer
 
 open Gen CorrectGen
 
+namespace WellScoped
+
 @[simp]
 def isWellScoped : Term → Nat → Bool := fun t varCap =>
   match t with
@@ -12,3 +14,5 @@ def isWellScoped : Term → Nat → Bool := fun t varCap =>
 
 def genWellScoped : Gen Term := by
   generator_search (fun t => isWellScoped t 0 = true)
+
+end WellScoped
