@@ -21,7 +21,7 @@ macro "goal_is_mergeable" : tactic =>
   `(tactic|
     first
       | guard_target = _ ↔ _ ∧ _
-      | guard_target = _ ↔ _ && _ = true)
+      | guard_target = _ ↔ (_ && _) = true)
 
 macro "goal_is_not_fold_list" : tactic =>
   `(tactic|
