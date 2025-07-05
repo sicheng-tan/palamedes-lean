@@ -288,7 +288,6 @@ add_aesop_rules unsafe (rule_sets := [synthesis]) [
   (by goal_is_eq_or_and; apply convert (by norm_for_Tree_unfold) (Tree.s_unfold _)),
   (by goal_is_eq_or_and; apply convert (by norm_for_Stack_unfold) (Stack.s_unfold _)),
   (by goal_is_eq_or_and; apply convert (by norm_for_Term_unfold) (Term.s_unfold _)),
-  (by goal_is_eq_or_and; apply convert (by norm_for_Ty_unfold) (Ty.s_unfold _)),
   (by apply s_arbUnit),
   (by apply s_arbBool),
   (by apply s_arbNat),
