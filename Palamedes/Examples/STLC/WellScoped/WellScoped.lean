@@ -5,7 +5,7 @@ open Gen CorrectGen
 namespace WellScoped
 
 @[simp]
-def isWellScoped : Term → Nat → Bool := fun t varCap =>
+def isWellScoped (t : Term) (varCap : Nat) : Bool :=
   match t with
   | .unit => true
   | .var n => n < varCap

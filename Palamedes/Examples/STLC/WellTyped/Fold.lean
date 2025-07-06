@@ -7,7 +7,7 @@ set_option maxHeartbeats 1000000
 namespace WellTypedFold
 
 @[simp]
-def getTypeFold : Term → List Ty → Option Ty :=
+def getTypeFold (t : Term) (Γ : List Ty) : Option Ty :=
   Term.fold
     (fun _ => pure .unit)
     (fun n Γ' => Γ'[n]?)
@@ -21,7 +21,7 @@ def getTypeFold : Term → List Ty → Option Ty :=
       | .arrow τarg τres => do
         guard (τarg == τ₂)
         pure τres
-      | Ty.unit => failure)
+      | Ty.unit => failure) t Γ
 
 @[simp]
 def isWellTypedFold (Γ : List Ty) (t : Term) : Prop :=

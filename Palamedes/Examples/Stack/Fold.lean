@@ -13,7 +13,7 @@ def isGoodAtom : Atom → Bool
   | .atm n _ => isGoodNat n
 
 def isGoodStackFold (s : Stack) (n : Nat) : Bool :=
-  Stack.fold (fun s => s == 0) (fun x acc s => isGoodAtom x && acc (s - 1)) (fun pc acc s => isGoodAtom pc && acc (s - 1)) s n
+  Stack.fold (fun i => i == 0) (fun x acc i => isGoodAtom x && acc (i - 1)) (fun pc acc i => isGoodAtom pc && acc (i - 1)) s n
 
 def genGoodStackFold (n : Nat) : Gen Stack := by
   generator_search (fun s => isGoodStackFold s n = true)

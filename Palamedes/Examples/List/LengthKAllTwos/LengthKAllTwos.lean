@@ -14,7 +14,7 @@ def isLengthKAllTwos (k : Nat) (xs : List Nat) : Bool :=
   xs.length == k && isAllTwos xs
 
 @[simp]
-def genLengthKAllTwos (k : Nat): Gen (List Nat) := by
+def genLengthKAllTwos (k : Nat) : Gen (List Nat) := by
   generator_search (fun xs => isLengthKAllTwos k xs = true)
 
 end LengthKAllTwos

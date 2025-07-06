@@ -5,7 +5,7 @@ open Gen CorrectGen
 namespace Complete
 
 @[simp]
-def isComplete : Tree α → Nat → Bool := fun t n =>
+def isComplete (t : Tree α) (n : Nat) : Bool :=
   match t with
   | .leaf => n == 0
   | .node l _ r =>

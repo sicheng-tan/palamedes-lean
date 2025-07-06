@@ -5,7 +5,7 @@ open Gen CorrectGen
 namespace AVL
 
 @[simp]
-def isBST : Tree Nat → (Nat × Nat) → Bool := fun t ⟨lo, hi⟩ =>
+def isBST (t : Tree Nat) : Nat × Nat →  Bool := fun (lo, hi) =>
   match t with
   | .leaf => true
   | .node l x r =>
@@ -14,7 +14,7 @@ def isBST : Tree Nat → (Nat × Nat) → Bool := fun t ⟨lo, hi⟩ =>
     isBST r ⟨x + 1, hi⟩
 
 @[simp]
-def isBalanced : Tree Nat → Nat → Bool := fun t height =>
+def isBalanced (t : Tree Nat) (height : Nat) : Bool :=
   match t with
   | .leaf => height <= 1
   | .node l _ r =>
