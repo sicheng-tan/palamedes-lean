@@ -1,11 +1,8 @@
 import Palamedes.Synthesizer
-import Palamedes.Examples.Tree.BST.BST
 
 open Gen CorrectGen
 
 namespace AVLFold
-
-set_option maxHeartbeats 1000000
 
 @[simp]
 def isAVLFold (height lo hi : Nat) (t : Tree Nat) : Bool :=
@@ -20,6 +17,7 @@ def isAVLFold (height lo hi : Nat) (t : Tree Nat) : Bool :=
       (fun bl _ br h => decide (h > 0) && bl (h - 1) && br (h - 1))
       (fun h => decide (h ≤ 1)) t height
 
+set_option maxHeartbeats 1000000
 
 def genAVLFold (height lo hi : Nat) : Gen (Tree Nat) := by
   generator_search (fun t => isAVLFold height lo hi t = true) allow_partial
