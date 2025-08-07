@@ -27,7 +27,10 @@ macro "optimality" : tactic =>
         | apply support_bind_congr
         | apply support_pick_congr
         | apply support_if_congr
+        | apply support_assume_congr
         | simp only [dite_true, dite_false, *]
         | rw [← support_pick_bind]
         | rw [← support_if_bind]
-        | split)
+        | split
+        | simp_all
+        | aesop)

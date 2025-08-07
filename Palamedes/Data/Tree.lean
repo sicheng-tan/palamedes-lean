@@ -297,6 +297,30 @@ theorem Tree.fold_accu_Option_function_true
       apply Iff.intro <;> intro hg <;> simp_all
       replace ⟨⟨ vl, hl ⟩, ⟨ vr, hr ⟩ , hg⟩ := hg <;> simp_all
 
+theorem Tree.fold_accu_cond
+  {α σ : Type}
+  {i : σ}
+  {stTrue stFalse : α -> σ -> σ}
+  {condTrue condFalse initCond : σ -> Bool}
+  {t : Tree α}
+  {condGuard : α -> σ -> Bool} :
+  Tree.fold
+    (fun accL x accR s => if condGuard x s then
+                      condTrue s && accL (stTrue x s) && accR (stTrue x s) else
+                      condFalse s && accL (stFalse x s) && accR (stFalse x s))
+    (fun s => initCond s)
+    t
+    i = true ↔
+  Tree.accuM
+    (fun x s => if condGuard x s then (stTrue x s, stTrue x s) else (stFalse x s, stFalse x s))
+    (fun _ x _ s =>
+      if condGuard x s then guard $ condTrue s else guard $ condFalse s)
+    (fun s => guard $ initCond s)
+    t
+    i = some () := by
+    induction t generalizing i <;> simp_all [Tree.fold, Tree.accuM, Option.bind_eq_some_iff, guard]
+    case node l v r ihl ihr =>
+      cases (condGuard v i) <;> aesop
 
 end FoldConversions
 

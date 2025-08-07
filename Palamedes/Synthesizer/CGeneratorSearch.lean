@@ -11,6 +11,7 @@ import Palamedes.Data.Tree
 import Palamedes.Data.Unit
 import Palamedes.Data.Nat
 import Palamedes.Data.Bool
+import Palamedes.Data.Color
 import Palamedes.Util
 
 open Gen CorrectGen
@@ -58,20 +59,22 @@ macro "goal_is_not_fold_term" : tactic =>
         | change _ ↔ Term.fold _ _ _ _ _ = _
         | change _ ↔ @Term.fold (_ → _ : Type) _ _ _ _ _ _ = _)))
 
+macro "goal_is_or" : tactic =>
+  `(tactic| guard_target = CorrectGen (fun _ => _ ∨ _))
+
+macro "goal_is_eq" : tactic =>
+  `(tactic| guard_target = CorrectGen (fun _ => _ = _))
+
 macro "goal_is_eq_or_and" : tactic =>
   `(tactic|
     first
-      | guard_target = CorrectGen (fun _ => _ = _)
+      | goal_is_eq
       | guard_target = CorrectGen (fun _ => _ ∧ _))
 
-macro "goal_is_or" : tactic =>
-  `(tactic| guard_target = CorrectGen (fun _ => _ ∨ _))
 
 end Guards
 
 section Simplifiers
-
-macro "simp_predicate" : tactic => `(tactic| try simp [guard, Option.bind_eq_some_iff, *])
 
 macro "simp_bexp" : tactic => `(tactic|
   try simp only [bind, Option.bind, pure, Option.some_inj, ← Bool.eq_iff_iff])
@@ -83,7 +86,7 @@ section Normalizers
 macro "preprocess" : tactic =>
   `(tactic|
     (funext
-     simp_predicate))
+     try simp only [eq_iff_iff]))
 
 section Merges
 
@@ -117,6 +120,32 @@ macro "rw_term_merge" : tactic =>
      rw [← Term.merge_accuM]
      apply and_congr))
 
+/-
+  The fold_accu_cond lemmas expect the bodies of the folds they operate on to be
+  in a particular normal form, i.e. `condition && acc` for lists and `condition && accL && accR`
+  for trees, in both arms of the conditional. Sometimes, however, the arm of the conditional
+  will just look like `acc`, and not be obviously in this normal form. We can
+  massage it into the normal form to apply the lemma however by converting
+  the `acc` into `true && acc`, which is what these rewrite macros do.
+-/
+macro "rw_true_and_list" : tactic =>
+  `(tactic| conv =>
+        pattern fun _ => _
+        repeat intro
+        try conv =>
+          arg 2; fail_if_success {guard_target = _ && _}; refine (Bool.and_true ..).symm.trans (Bool.and_comm ..)
+        try conv =>
+          arg 3; fail_if_success {guard_target = _ && _}; refine (Bool.and_true ..).symm.trans (Bool.and_comm ..))
+
+macro "rw_true_and_tree" : tactic =>
+  `(tactic| conv =>
+        pattern fun _ => _
+        intro accL _ accR _
+        try conv =>
+          arg 2; fail_if_success {guard_target = _ && _ && _}; apply (Bool.and_true ..).symm.trans ((Bool.and_comm ..).symm.trans (Bool.and_assoc ..).symm)
+        try conv =>
+          arg 3; fail_if_success {guard_target = _ && _ && _}; apply (Bool.and_true ..).symm.trans ((Bool.and_comm ..).symm.trans (Bool.and_assoc ..).symm))
+
 end Merges
 
 section Coercions
@@ -125,15 +154,15 @@ macro "list_coerce_fold" : tactic =>
   `(tactic|
     -- todo: the bool lemma in List.coerce_to_fold (in Data.List) is overfitting to the evenLen example
     (first
-      | goal_is_not_fold_list; conv => rhs; lhs; apply List.coerce_to_fold (by rflm) (by intros; simp_all [- Bool.not_eq_eq_eq_not]; rflm)
-      | goal_is_not_fold_list; conv => rhs; lhs; apply congrFun; apply List.coerce_to_fold (by rflm) (by intros; simp_all [- Bool.not_eq_eq_eq_not]; rflm)
+      | goal_is_not_fold_list; conv => rhs; lhs; apply List.coerce_to_fold (by rflm) (by intros; simp_all [- Bool.not_eq_eq_eq_not, -beq_iff_eq]; rflm)
+      | goal_is_not_fold_list; conv => rhs; lhs; apply congrFun; apply List.coerce_to_fold (by rflm) (by intros; simp_all [- Bool.not_eq_eq_eq_not, -beq_iff_eq]; rflm)
       | skip))
 
 macro "tree_coerce_fold" : tactic =>
   `(tactic|
     (first
-      | goal_is_not_fold_tree; conv => rhs; lhs; apply (Tree.coerce_to_fold (by aesop) (by intros; simp_all; rflm))
-      | goal_is_not_fold_tree; conv => rhs; lhs; apply congrFun; apply (Tree.coerce_to_fold (by aesop) (by intros; simp_all; rflm))
+      | goal_is_not_fold_tree; conv => rhs; lhs; apply (Tree.coerce_to_fold (by rflm) (by intros; simp_all [-beq_iff_eq]; rflm))
+      | goal_is_not_fold_tree; conv => rhs; lhs; apply congrFun; apply (Tree.coerce_to_fold (by rflm) (by intros; simp_all [-beq_iff_eq]; rflm))
       | skip))
 
 macro "stack_coerce_fold" : tactic =>
@@ -167,7 +196,8 @@ macro "list_convert_to_accuM" : tactic =>
       | rw [← List.fold_accu_Option_true] <;> (try library_search); done
       | rw [← List.fold_accu_Option_function]; (try library_search); done
       | rw [← List.fold_accu_Option_function_true] <;> simp_bexp <;> (try library_search); done
-      | rw [← List.fold_accu_Option_basic]; done))
+      | rw [← List.fold_accu_Option_basic]; done
+      | rw_true_and_list; rw [← List.fold_accu_cond]; (try aesop); done))
 
 macro "tree_convert_to_accuM" : tactic =>
   `(tactic|
@@ -175,7 +205,8 @@ macro "tree_convert_to_accuM" : tactic =>
       | rw [← Tree.fold_accu_Option_true]; (try library_search); done
       | rw [← Tree.fold_accu_Option_function]; (try library_search); done
       | rw [← Tree.fold_accu_Option_function_true]; (try intros; simp_bexp; library_search); done
-      | rw [← Tree.fold_accu_Option_basic]; (try library_search); done))
+      | rw [← Tree.fold_accu_Option_basic]; (try library_search); done
+      | rw_true_and_tree; rw [← Tree.fold_accu_cond]; (try aesop); done))
 
 macro "stack_convert_to_accuM" : tactic =>
   `(tactic|
@@ -207,12 +238,16 @@ end ConvertToAccuM
 macro "norm_for_List_unfold" : tactic =>
   `(tactic|
     (preprocess
-     (repeat' rw_list_merge) <;> (list_coerce_fold; list_convert_to_accuM)))
+     (repeat' rw_list_merge) <;> (first
+                                  | list_coerce_fold; list_convert_to_accuM
+                                  | simp; list_coerce_fold; list_convert_to_accuM)))
 
 macro "norm_for_Tree_unfold" : tactic =>
   `(tactic|
     (preprocess
-     (repeat' rw_tree_merge) <;> (tree_coerce_fold; tree_convert_to_accuM)))
+     (repeat' rw_tree_merge) <;> (first
+                                  | tree_coerce_fold; tree_convert_to_accuM
+                                  | simp; tree_coerce_fold; tree_convert_to_accuM)))
 
 macro "norm_for_Stack_unfold" : tactic =>
   `(tactic|
@@ -231,9 +266,7 @@ macro "norm_for_Term_unfold" : tactic =>
 
 macro "norm_for_pure" : tactic =>
   `(tactic| (
-    funext
-    unfold_matches
-    simp_predicate
+    preprocess
     first
       | rfl
       | exact Eq.comm))
@@ -241,22 +274,19 @@ macro "norm_for_pure" : tactic =>
 macro "norm_for_pick" : tactic =>
   `(tactic| (
     funext
-    simp_predicate
-    try simp [← Decidable.or_iff_not_imp_left]
+    try simp only [eq_iff_iff, ← Decidable.or_iff_not_imp_left]
     rfl))
 
 macro "norm_for_bind" : tactic =>
   `(tactic| (
-    funext
-    simp_predicate
+    preprocess
     first
       | rfl
       | apply exists_congr; intro; rw [true_and]))
 
 macro "norm_for_bind'" : tactic =>
   `(tactic| (
-    funext
-    simp_predicate
+    preprocess
     rw [exists_comm]
     first
       | rfl
@@ -264,50 +294,94 @@ macro "norm_for_bind'" : tactic =>
 
 macro "norm_for_elements" : tactic =>
   `(tactic|
-    (funext
-     simp_predicate
+    (preprocess
+     simp [guard, Option.bind_eq_some_iff, -beq_iff_eq, -Bool.true_and, *]
      first
        | rfl
        | rw [getElem?_eq_some_iff_indexesOf_getElem?_eq_some]))
+
+macro "normalize_and_apply" : tactic =>
+   `(tactic| (
+      apply convert ?pf ?arg
+      /- simplify the predicate before attempting to normalize it.
+         this way we don't repeat simplification for each different normalization strategy -/
+      case' pf => unfold_matches; try simp [guard, Option.bind_eq_some_iff, -beq_iff_eq, -Bool.true_and, *]
+      first
+      | case' arg => apply s_pure _
+        case pf => norm_for_pure
+      | case' arg => apply s_bind _ _
+        first
+        | case pf => norm_for_bind' -- TODO Fix this
+        | case pf => norm_for_bind
+      | case' arg => apply s_pick _ _
+        case pf => norm_for_pick
+    ))
+
+macro "normalize_and_apply_unfold" : tactic =>
+   `(tactic| (
+      goal_is_eq_or_and
+      apply convert ?pf ?arg
+      case' pf => try simp [guard, Option.bind_eq_some_iff, -beq_iff_eq, -Bool.true_and, *]
+      first
+      | case' arg => apply List.s_unfold _
+        case pf => norm_for_List_unfold
+      | case' arg => apply Tree.s_unfold _
+        case pf => norm_for_Tree_unfold
+      | case' arg => apply Stack.s_unfold _
+        case pf => norm_for_Stack_unfold
+      | case' arg => apply Term.s_unfold _
+        case pf => norm_for_Term_unfold
+    ))
 
 end Normalizers
 
 section AesopRules
 
+/-
+
+For performance, we want to abide by two heuristics:
+1) `simp` as infrequently as possible, and
+2) prune the search tree as often as possible.
+
+We accomplish goal 1 by factoring out the `simp` steps in the normalization
+tactics above, and we accomplish goal 2 here by trying every `arb` lemma
+that can close a goal before trying any lemmas that generate new subgoals.
+
+-/
 add_aesop_rules safe (rule_sets := [synthesis]) [
   (by (repeat apply duncurry); intro),
-  (by apply convert (by norm_for_pure) (s_pure _)),
-]
-
-add_aesop_rules unsafe (rule_sets := [synthesis]) [
-  (by assumption),
-  (by apply convert (by norm_for_pick) (s_pick _ _)),
-  (by apply convert (by norm_for_bind) (s_bind _ _)),
-  (by apply convert (by norm_for_bind') (s_bind _ _)), -- TODO Fix this
-  (by goal_is_eq_or_and; apply convert (by norm_for_List_unfold) (List.s_unfold _)),
-  (by goal_is_eq_or_and; apply convert (by norm_for_Tree_unfold) (Tree.s_unfold _)),
-  (by goal_is_eq_or_and; apply convert (by norm_for_Stack_unfold) (Stack.s_unfold _)),
-  (by goal_is_eq_or_and; apply convert (by norm_for_Term_unfold) (Term.s_unfold _)),
   (by apply s_arbUnit),
   (by apply s_arbBool),
+  (by apply s_arbTuple),
+  (by apply s_arbColor),
   (by apply s_arbNat),
   (by apply s_arbTy),
   (by apply s_arbLabel),
+]
+
+add_aesop_rules 99% (rule_sets := [synthesis]) [
+  (by assumption),
+  (by normalize_and_apply),
+  (by normalize_and_apply_unfold),
   (by apply s_arbAtom _),
   (by apply s_gt),
   (by apply s_lt_partial),
   (by apply s_between_partial),
   (by apply (s_between (by first | aesop | omega))),
-  (by apply convert (by norm_for_elements) (s_elements_partial _)),
+  (by goal_is_eq; apply convert (by norm_for_elements) (s_elements_partial _)),
 ]
 
 add_aesop_rules 5% (rule_sets := [synthesis]) [
   (by goal_is_or; clear_unused_assumptions; apply s_caseBool (by nth_assumption 0) (by intros; rflm)),
   (by goal_is_or; clear_unused_assumptions; apply s_caseBool (by nth_assumption 1) (by intros; rflm)),
+  (by goal_is_or; clear_unused_assumptions; apply s_caseColor (by nth_assumption 0) (by intros; rflm)),
+  (by goal_is_or; clear_unused_assumptions; apply s_caseColor (by nth_assumption 1) (by intros; rflm)),
   (by goal_is_or; clear_unused_assumptions; apply s_caseTy (by nth_assumption 0) (by intros; rflm)),
   (by goal_is_or; clear_unused_assumptions; apply s_caseTy (by nth_assumption 1) (by intros; rflm)),
   (by goal_is_or; clear_unused_assumptions; apply s_caseNat (by nth_assumption 0) (by intros; rflm)),
   (by goal_is_or; clear_unused_assumptions; apply s_caseNat (by nth_assumption 1) (by intros; rflm)),
+  (by goal_is_or; clear_unused_assumptions; apply s_caseNat (by nth_assumption 2) (by intros; rflm)),
+  (by goal_is_or; clear_unused_assumptions; apply s_caseNat (by nth_assumption 3) (by intros; rflm)),
 ]
 
 end AesopRules
