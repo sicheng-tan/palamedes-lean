@@ -150,16 +150,12 @@ theorem Stack.support_unfold :
     support (Stack.unfold f b) = Stack.unfold_support (fun b' => support (f b')) b := by
   funext s
   simp_all
-  have hm :
-        (∀ b v n m,
-          some v ∈ 〚Stack.unfold_aux n f b〛
-          → some v ∈ 〚Stack.unfold_aux (n + m) f b〛) := by simp_all
   induction s generalizing b with
   | mty =>
     apply Iff.intro
     . intro h
       simp [unfold] at h
-      replace ⟨n, h⟩ := @h (hm b)
+      replace ⟨hm, n, h⟩ := h
       cases n <;> simp_all [Stack.unfold_aux]
       case succ n' =>
         have ⟨v', hv'1, hv'2⟩ := h
@@ -175,7 +171,7 @@ theorem Stack.support_unfold :
     apply Iff.intro
     . intro h
       simp [unfold] at h
-      replace ⟨n, h⟩ := @h (hm b)
+      replace ⟨hm, n, h⟩ := h
       cases n <;> simp_all [Stack.unfold_aux]
       case succ n =>
         have ⟨v', hv'1, hv'2⟩ := h; clear h
@@ -188,7 +184,7 @@ theorem Stack.support_unfold :
           apply And.intro hv'1
           apply (@ih b'').mp
           simp [unfold]
-          intros
+          simp_all
           exists n
         case ret_cons _ b'' =>
           have ⟨v'', hv''⟩ := hv'2
@@ -204,7 +200,7 @@ theorem Stack.support_unfold :
     apply Iff.intro
     . intro h
       simp [unfold] at h
-      replace ⟨n, h⟩ := @h (hm b)
+      replace ⟨hm, n, h⟩ := h
       cases n <;> simp_all [Stack.unfold_aux]
       case succ n =>
         replace ⟨v', hv', h⟩ := h
@@ -220,7 +216,7 @@ theorem Stack.support_unfold :
           apply And.intro hv'
           apply (@ih b'').mp
           simp [unfold]
-          intros
+          simp_all
           exists n
     . intro ⟨b', hx, hs⟩
       simp_all [unfold]

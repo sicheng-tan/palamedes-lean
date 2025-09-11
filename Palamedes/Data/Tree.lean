@@ -169,20 +169,15 @@ theorem Tree.support_unfold :
             rw [← @ihl bl, ← @ihr br]
             apply And.intro <;> exists n
     . intro ⟨bl, br, hx, hl, hr⟩
-      have hm :
-        (∀ b v n m,
-          some v ∈ 〚Tree.unfold_aux n f b〛
-          → some v ∈ 〚Tree.unfold_aux (n + m) f b〛) := by simp_all
       rw [← @ihl bl] at hl
       simp [Tree.unfold] at hl
-      replace ⟨nl, hl⟩ := @hl (hm bl)
+      replace ⟨hml, nl, hl⟩ := hl
       rw [← @ihr br] at hr
       simp [Tree.unfold] at hr
-      replace ⟨nr, hr⟩ := @hr (hm br)
+      replace ⟨hmr, nr, hr⟩ := hr
       simp [Tree.unfold]
-      intros
-      exists (nl + nr + 1)
       simp_all
+      exists (nl + nr + 1)
       exists TreeF.node bl x br
       simp_all
       exists (some l)

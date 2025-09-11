@@ -190,10 +190,6 @@ theorem Term.support_unfold :
     support (Term.unfold f x) = Term.unfold_support (fun x' => support (f x')) x := by
   funext t
   simp_all
-  have hm :
-        (∀ b v n m,
-          some v ∈ 〚Term.unfold_aux n f b〛
-          → some v ∈ 〚Term.unfold_aux (n + m) f b〛) := by simp_all
   induction t generalizing x
   case unit =>
     apply Iff.intro
@@ -235,7 +231,7 @@ theorem Term.support_unfold :
     . --(<-)
       intro h
       simp [unfold]
-      intros
+      simp_all
       exists 1
       exists TermF.var n
   case abs τ t' ih =>
@@ -268,9 +264,10 @@ theorem Term.support_unfold :
       rw [Iff.comm] at ih
       rw [ih] at h
       simp [unfold, unfold_support] at h |-
-      replace ⟨n, h⟩ := @h (hm b')
+      replace ⟨hm, n, h⟩ := h
       intros
-      exists n + 1 <;> simp_all
+      simp_all
+      exists n + 1
       exists TermF.abs τ b' <;> simp_all
       exists some t'
   case app t₁ t₂ ih₁ ih₂ =>
@@ -303,15 +300,15 @@ theorem Term.support_unfold :
       rw [Iff.comm] at ih₁
       rw [ih₁] at h₁
       simp [unfold] at h₁ |-
-      replace ⟨n₁, h₁⟩ := @h₁ (hm b₁)
+      replace ⟨hm₁, n₁, h₁⟩ := h₁
       replace ih₂ := @ih₂ b₂
       rw [Iff.comm] at ih₂
       rw [ih₂] at h₂
       simp [unfold] at h₂
-      replace ⟨n₂, h₂⟩ := @h₂ (hm b₂)
+      replace ⟨hm₂, n₂, h₂⟩ := h₂
       intros
-      exists n₁ + n₂ + 1
       simp_all
+      exists n₁ + n₂ + 1
       exists TermF.app b₁ b₂
       simp_all
       exists some t₁

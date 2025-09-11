@@ -50,7 +50,7 @@ def support : Gen α → α → Prop
   | .pick x y => fun a => support x a ∨ support y a
   | .indexed f => fun a =>
     (∀ v n m, support (f n) (some v) → support (f (n + m)) (some v))
-      → ∃ n, support (f n) (some a)
+      ∧  ∃ n, support (f n) (some a)
   | .bind x f => fun b => ∃ a, support x a ∧ support (f a) b
   | .assume b f => fun a => ∃ h : b, support (f h) a
 
@@ -80,7 +80,7 @@ theorem support_assume :
 theorem support_indexed :
     support (indexed f) = fun a =>
       (∀ v n m, support (f n) (some v) → support (f (n + m)) (some v))
-        → ∃ n, support (f n) (some a) := by
+        ∧ ∃ n, support (f n) (some a) := by
   simp [support, indexed]
 
 @[simp]

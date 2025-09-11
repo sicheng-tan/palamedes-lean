@@ -174,17 +174,12 @@ theorem Ty.support_unfold :
     . intro ⟨b₁, b₂, hx, h₁, h₂⟩
       rw [← @ih₁ b₁] at h₁
       simp [unfold] at h₁ ⊢
-      have hm :
-        (∀ b v n m,
-          some v ∈ 〚Ty.unfold_aux n f b〛
-          → some v ∈ 〚Ty.unfold_aux (n + m) f b〛) := by simp_all
-      replace ⟨n₁, h₁⟩ := @h₁ (hm b₁)
+      replace ⟨hm₁, n₁, h₁⟩ := h₁
       rw [← @ih₂ b₂] at h₂
       simp [unfold] at h₂
-      replace ⟨n₂, h₂⟩ := @h₂ (hm b₂)
-      intros
-      exists (n₁ + n₂ + 1)
+      replace ⟨hm₂, n₂, h₂⟩ := h₂
       simp_all
+      exists (n₁ + n₂ + 1)
       exists TyF.arrow b₁ b₂
       simp_all
       exists (some τ₁)

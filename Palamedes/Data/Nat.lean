@@ -42,7 +42,7 @@ theorem support_arbNat :
   simp [arbNat, arbNatAux]
   funext v
   induction v with
-  | zero => simp; intros; exists 1; simp [arbNat, arbNatAux]
+  | zero => simp_all; intros; exists 1; simp [arbNat, arbNatAux]
   | succ n ih =>
     simp_all
     have ⟨n', hn'⟩ := ih
