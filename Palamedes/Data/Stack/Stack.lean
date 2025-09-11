@@ -113,9 +113,10 @@ private def Stack.unfold_aux (n : Nat) (f : α → Gen (StackF α)) (x : α)
       let s ← Stack.unfold_aux n' f vs
       pure (do pure (.ret_cons pc (← s)))
 
+@[simp]
 theorem Stack.unfold_aux_monotonic :
     some v ∈ 〚Stack.unfold_aux n f b〛 →
-    some v ∈ 〚Stack.unfold_aux (n + 1) f b〛 := by
+    some v ∈ 〚Stack.unfold_aux (n + m) f b〛 := by
   induction n generalizing v f b
   case zero =>
     simp [Stack.unfold_aux]
@@ -124,6 +125,7 @@ theorem Stack.unfold_aux_monotonic :
     simp [bind]
     intro h
     replace ⟨ s, hs, h ⟩ := h
+    simp_all [Nat.add_assoc, Nat.add_comm]
     exists s
     apply And.intro hs
     cases s <;> simp_all [Functor.map, bind, Option.map]
@@ -148,12 +150,16 @@ theorem Stack.support_unfold :
     support (Stack.unfold f b) = Stack.unfold_support (fun b' => support (f b')) b := by
   funext s
   simp_all
+  have hm :
+        (∀ b v n m,
+          some v ∈ 〚Stack.unfold_aux n f b〛
+          → some v ∈ 〚Stack.unfold_aux (n + m) f b〛) := by simp_all
   induction s generalizing b with
   | mty =>
     apply Iff.intro
     . intro h
       simp [unfold] at h
-      replace ⟨n, h⟩ := h
+      replace ⟨n, h⟩ := @h (hm b)
       cases n <;> simp_all [Stack.unfold_aux]
       case succ n' =>
         have ⟨v', hv'1, hv'2⟩ := h
@@ -169,7 +175,7 @@ theorem Stack.support_unfold :
     apply Iff.intro
     . intro h
       simp [unfold] at h
-      replace ⟨n, h⟩ := h
+      replace ⟨n, h⟩ := @h (hm b)
       cases n <;> simp_all [Stack.unfold_aux]
       case succ n =>
         have ⟨v', hv'1, hv'2⟩ := h; clear h
@@ -182,6 +188,7 @@ theorem Stack.support_unfold :
           apply And.intro hv'1
           apply (@ih b'').mp
           simp [unfold]
+          intros
           exists n
         case ret_cons _ b'' =>
           have ⟨v'', hv''⟩ := hv'2
@@ -197,7 +204,7 @@ theorem Stack.support_unfold :
     apply Iff.intro
     . intro h
       simp [unfold] at h
-      replace ⟨n, h⟩ := h
+      replace ⟨n, h⟩ := @h (hm b)
       cases n <;> simp_all [Stack.unfold_aux]
       case succ n =>
         replace ⟨v', hv', h⟩ := h
@@ -213,6 +220,7 @@ theorem Stack.support_unfold :
           apply And.intro hv'
           apply (@ih b'').mp
           simp [unfold]
+          intros
           exists n
     . intro ⟨b', hx, hs⟩
       simp_all [unfold]

@@ -87,6 +87,7 @@ private def Tree.unfold_aux (n : Nat) (f : β → Gen (TreeF α β)) (b : β) : 
       let r ← Tree.unfold_aux n f br
       pure (do pure (.node (← l) x (← r)))
 
+@[simp]
 theorem Tree.unfold_aux_monotonic :
     some v ∈ 〚Tree.unfold_aux n f b〛 →
     some v ∈ 〚Tree.unfold_aux (n + m) f b〛 := by
@@ -146,6 +147,7 @@ theorem Tree.support_unfold :
           cases ovr <;> simp_all
     . intros h
       simp_all [Tree.unfold]
+      intros
       exists 1
       simp [Tree.unfold_aux]
       exists .leaf
@@ -167,13 +169,18 @@ theorem Tree.support_unfold :
             rw [← @ihl bl, ← @ihr br]
             apply And.intro <;> exists n
     . intro ⟨bl, br, hx, hl, hr⟩
+      have hm :
+        (∀ b v n m,
+          some v ∈ 〚Tree.unfold_aux n f b〛
+          → some v ∈ 〚Tree.unfold_aux (n + m) f b〛) := by simp_all
       rw [← @ihl bl] at hl
       simp [Tree.unfold] at hl
-      replace ⟨nl, hl⟩ := hl
+      replace ⟨nl, hl⟩ := @hl (hm bl)
       rw [← @ihr br] at hr
       simp [Tree.unfold] at hr
-      replace ⟨nr, hr⟩ := hr
+      replace ⟨nr, hr⟩ := @hr (hm br)
       simp [Tree.unfold]
+      intros
       exists (nl + nr + 1)
       simp_all
       exists TreeF.node bl x br

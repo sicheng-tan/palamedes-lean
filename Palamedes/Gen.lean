@@ -48,7 +48,9 @@ def indexed (f : Nat → Gen (Option α)) : Gen α := Raw.Gen.indexed f
 def support : Gen α → α → Prop
   | .ret a => (. = a)
   | .pick x y => fun a => support x a ∨ support y a
-  | .indexed f => fun a => ∃ n, support (f n) (some a)
+  | .indexed f => fun a =>
+    (∀ v n m, support (f n) (some v) → support (f (n + m)) (some v))
+      → ∃ n, support (f n) (some a)
   | .bind x f => fun b => ∃ a, support x a ∧ support (f a) b
   | .assume b f => fun a => ∃ h : b, support (f h) a
 
@@ -76,7 +78,9 @@ theorem support_assume :
 
 @[simp]
 theorem support_indexed :
-    support (indexed f) = fun a => ∃ n, support (f n) (some a) := by
+    support (indexed f) = fun a =>
+      (∀ v n m, support (f n) (some v) → support (f (n + m)) (some v))
+        → ∃ n, support (f n) (some a) := by
   simp [support, indexed]
 
 @[simp]

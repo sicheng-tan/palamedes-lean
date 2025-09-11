@@ -89,10 +89,11 @@ private def Ty.unfold_aux (n : Nat) (f : α → Gen (TyF α)) (x : α) : Gen (Op
       let τ₂ ← Ty.unfold_aux n f b₂
       pure (do pure (.arrow (← τ₁) (← τ₂)))
 
+@[simp]
 theorem Ty.unfold_aux_monotonic :
-    some v ∈ 〚Ty.unfold_aux n f x〛 →
-    some v ∈ 〚Ty.unfold_aux (n + m) f x〛 := by
-  induction n generalizing v f x
+    some v ∈ 〚Ty.unfold_aux n f b〛 →
+    some v ∈ 〚Ty.unfold_aux (n + m) f b〛 := by
+  induction n generalizing v f b
   case zero =>
     simp [Ty.unfold_aux]
   case succ n' ih =>
@@ -173,10 +174,15 @@ theorem Ty.support_unfold :
     . intro ⟨b₁, b₂, hx, h₁, h₂⟩
       rw [← @ih₁ b₁] at h₁
       simp [unfold] at h₁ ⊢
-      replace ⟨n₁, h₁⟩ := h₁
+      have hm :
+        (∀ b v n m,
+          some v ∈ 〚Ty.unfold_aux n f b〛
+          → some v ∈ 〚Ty.unfold_aux (n + m) f b〛) := by simp_all
+      replace ⟨n₁, h₁⟩ := @h₁ (hm b₁)
       rw [← @ih₂ b₂] at h₂
       simp [unfold] at h₂
-      replace ⟨n₂, h₂⟩ := h₂
+      replace ⟨n₂, h₂⟩ := @h₂ (hm b₂)
+      intros
       exists (n₁ + n₂ + 1)
       simp_all
       exists TyF.arrow b₁ b₂

@@ -89,9 +89,10 @@ private def List.unfold_aux (n : Nat) (f : β → Gen (ListF α β)) (b : β) : 
       let xs ← List.unfold_aux n f b'
       pure (do x :: (← xs))
 
+@[simp]
 theorem List.unfold_aux_monotonic :
     some v ∈ 〚List.unfold_aux n f b〛 →
-    some v ∈ 〚List.unfold_aux (n + 1) f b〛 := by
+    some v ∈ 〚List.unfold_aux (n + m) f b〛 := by
   induction n generalizing v f b
   case zero =>
     simp [List.unfold_aux]
@@ -99,8 +100,8 @@ theorem List.unfold_aux_monotonic :
     unfold List.unfold_aux
     simp
     intro l hl hv
+    simp_all [Nat.add_assoc, Nat.add_comm]
     exists l
-    apply And.intro hl
     cases l <;> simp_all
     have ⟨w, ⟨hl, hr⟩⟩ := hv
     exists w
@@ -123,6 +124,10 @@ theorem List.support_unfold :
   unfold List.unfold
   funext xs
   simp_all
+  have hm : ∀ b v (n m : Nat),
+    some v ∈ 〚List.unfold_aux n f b〛
+    → some v ∈ 〚List.unfold_aux (n + m) f b〛 := by
+    simp_all
   induction xs generalizing b with
   | nil =>
     apply Iff.intro

@@ -137,6 +137,7 @@ private def Term.unfold_aux (n : Nat) (f : α → Gen (TermF α)) (x : α) : Gen
       let t₂ ← Term.unfold_aux n f x₂
       pure (do pure (.app (← t₁) (← t₂)))
 
+@[simp]
 theorem Term.unfold_aux_monotonic :
     some v ∈ 〚Term.unfold_aux n f x〛 →
     some v ∈ 〚Term.unfold_aux (n + m) f x〛 := by
@@ -189,6 +190,10 @@ theorem Term.support_unfold :
     support (Term.unfold f x) = Term.unfold_support (fun x' => support (f x')) x := by
   funext t
   simp_all
+  have hm :
+        (∀ b v n m,
+          some v ∈ 〚Term.unfold_aux n f b〛
+          → some v ∈ 〚Term.unfold_aux (n + m) f b〛) := by simp_all
   induction t generalizing x
   case unit =>
     apply Iff.intro
@@ -230,6 +235,7 @@ theorem Term.support_unfold :
     . --(<-)
       intro h
       simp [unfold]
+      intros
       exists 1
       exists TermF.var n
   case abs τ t' ih =>
@@ -248,7 +254,9 @@ theorem Term.support_unfold :
           case some v' =>
             exists b'
             apply And.intro hvf
-            rw [← ih]
+            replace ih := @ih b'
+            rw [Iff.comm] at ih
+            rw [ih]
             exists n'
         case app t₁ t₂ =>
           replace ⟨ov₁, h₁, ov₂, h₂, h⟩ := h
@@ -256,9 +264,12 @@ theorem Term.support_unfold :
           cases ov₂ <;> simp_all
     . -- (<-)
       intro ⟨b', hb', h⟩
-      rw [← @ih b'] at h
+      replace ih := @ih b'
+      rw [Iff.comm] at ih
+      rw [ih] at h
       simp [unfold, unfold_support] at h |-
-      replace ⟨n, h⟩ := h
+      replace ⟨n, h⟩ := @h (hm b')
+      intros
       exists n + 1 <;> simp_all
       exists TermF.abs τ b' <;> simp_all
       exists some t'
@@ -282,15 +293,23 @@ theorem Term.support_unfold :
             case some v₂ =>
               exists b₁, b₂
               apply And.intro hvf
-              rw [← @ih₁ b₁, ← @ih₂ b₂]
+              replace ih₁ := @ih₁ b₁
+              replace ih₂ := @ih₂ b₂
+              rw [Iff.comm] at ih₁ ih₂
+              rw [ih₁, ih₂]
               apply And.intro <;> exists n
     . intro ⟨b₁, b₂, hb, h₁, h₂⟩
-      rw [← @ih₁ b₁] at h₁
+      replace ih₁ := @ih₁ b₁
+      rw [Iff.comm] at ih₁
+      rw [ih₁] at h₁
       simp [unfold] at h₁ |-
-      replace ⟨n₁, h₁⟩ := h₁
-      rw [← @ih₂ b₂] at h₂
+      replace ⟨n₁, h₁⟩ := @h₁ (hm b₁)
+      replace ih₂ := @ih₂ b₂
+      rw [Iff.comm] at ih₂
+      rw [ih₂] at h₂
       simp [unfold] at h₂
-      replace ⟨n₂, h₂⟩ := h₂
+      replace ⟨n₂, h₂⟩ := @h₂ (hm b₂)
+      intros
       exists n₁ + n₂ + 1
       simp_all
       exists TermF.app b₁ b₂

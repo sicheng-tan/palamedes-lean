@@ -4,12 +4,29 @@ import Palamedes.Total
 
 namespace Gen
 
+@[reducible]
+def arbNatAux : Nat → Gen (Option Nat)
+  | 0 => pure none
+  | n + 1 => pick (pure (some 0)) (.map (1 + .) <$> arbNatAux n)
+
+@[simp]
+theorem arbNatAux_monotonic :
+  some v ∈ 〚arbNatAux n〛
+  → some v ∈ 〚arbNatAux (n + m)〛 := by
+  induction n generalizing v <;> intro h <;> simp_all [Nat.add_comm, arbNatAux]
+  cases h
+  case succ.inl hv h => aesop
+  case succ.inr hv h =>
+    replace ⟨ox, hx, h⟩ := h
+    cases ox
+    case none => simp_all
+    case some v' =>
+      simp_all
+      exists v'
+      simp_all
+
 @[irreducible]
-def arbNat : Gen Nat := indexed go
-  where
-    go : Nat → Gen (Option Nat)
-      | 0 => pure none
-      | n + 1 => pick (pure (some 0)) (.map (1 + .) <$> go n)
+def arbNat : Gen Nat := indexed arbNatAux
 
 def gt (lo : Nat) : Gen Nat := (lo + 1 + · ) <$> arbNat
 
@@ -22,15 +39,15 @@ def lt (hi : Nat) (_ : hi > 0) : Gen Nat :=
 @[simp]
 theorem support_arbNat :
     support arbNat = fun _ => True := by
-  simp [arbNat, arbNat.go]
+  simp [arbNat, arbNatAux]
   funext v
   induction v with
-  | zero => simp; exists 1; simp [arbNat, arbNat.go]
+  | zero => simp; intros; exists 1; simp [arbNat, arbNatAux]
   | succ n ih =>
     simp_all
     have ⟨n', hn'⟩ := ih
     exists n' + 1
-    simp [arbNat, arbNat.go]
+    simp [arbNat, arbNatAux]
     exists some n
     simp +arith [hn']
 
@@ -157,7 +174,7 @@ theorem total_arbNat : total arbNat := by
   simp [arbNat]
   apply total_indexed
   intro n
-  induction n <;> simp [arbNat.go, *]
+  induction n <;> simp [arbNatAux, *]
 
 @[simp, aesop safe (rule_sets := [totality])]
 theorem total_choose : total (choose lo hi h) := by
