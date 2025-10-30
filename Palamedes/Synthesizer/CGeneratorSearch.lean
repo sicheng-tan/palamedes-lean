@@ -365,6 +365,7 @@ add_aesop_rules 99% (rule_sets := [synthesis]) [
   (by normalize_and_apply_unfold),
   (by apply s_arbAtom _),
   (by apply s_gt),
+  (by apply s_mod2_partial),
   (by apply s_lt_partial),
   (by apply s_between_partial),
   (by apply (s_between (by first | aesop | omega))),

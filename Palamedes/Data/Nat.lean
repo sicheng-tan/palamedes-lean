@@ -30,6 +30,8 @@ def arbNat : Gen Nat := indexed arbNatAux
 
 def gt (lo : Nat) : Gen Nat := (lo + 1 + · ) <$> arbNat
 
+def mod2 (r : Nat) (_ : r < 2) : Gen Nat := (2 * · + r) <$> arbNat
+
 def choose (lo hi : Nat) (h : lo ≤ hi := by simp) : Gen Nat :=
   if h' : lo = hi then pure lo else pick (pure lo) (choose (lo + 1) hi (by omega))
 
@@ -66,6 +68,18 @@ theorem support_gt :
       have ⟨x, hx⟩ := ih
       exists x + 1
       omega
+
+@[simp]
+theorem support_mod2 :
+    support (mod2 r h) = fun a => a % 2 = r := by
+  simp [mod2]
+  funext a
+  simp
+  apply Iff.intro
+  . omega
+  . intro h1
+    exists (a/2)
+    rw [←h1, Nat.div_add_mod]
 
 @[simp]
 theorem support_choose :
@@ -164,6 +178,16 @@ def s_lt_partial
     funext
     simp
     exact fun a => Nat.zero_lt_of_lt a
+
+@[reducible]
+def s_mod2_partial
+    {r : Nat} :
+    CorrectGen (λ v => v % 2 = r) :=
+  Subtype.mk (assume (r < 2) (fun h => mod2 r (by aesop))) <| by
+    simp
+    funext x
+    simp
+    omega
 
 end CorrectGen
 
