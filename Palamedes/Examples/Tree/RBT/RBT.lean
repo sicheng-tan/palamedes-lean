@@ -29,16 +29,11 @@ def isBST : Tree (α × Nat) → (Nat × Nat) → Bool := λ t ⟨lo, hi⟩ =>
 set_option maxHeartbeats 2000000
 set_option maxRecDepth 2000
 
-def genRR : Gen (Tree (Color × Nat)) := by
-  generator_search (fun t => isRR t = true)
-
-def genBH (height : Nat) : Gen (Tree (Color × Nat)) := by
-  generator_search (fun t => isBH t height = true)
-
-def genIsBST (lo hi : Nat) : Gen (Tree (Color × Nat)) := by
-  generator_search (fun t => isBST t (lo, hi) = true) allow_partial
+@[simp]
+def isRBT : Tree (Color × Nat) → Nat → Nat → Nat → Bool := λ t height lo hi =>
+  isRR t = true ∧ isBST t (lo, hi) = true ∧ isBH t height = true
 
 def genRBT (height lo hi : Nat) : Gen (Tree (Color × Nat)) := by
-  generator_search (fun t => isRR t = true ∧ isBST t (lo, hi) = true ∧ isBH t height = true) allow_partial
+  generator_search (fun t => isRBT t height lo hi) allow_partial
 
 end RBT
