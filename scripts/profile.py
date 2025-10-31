@@ -61,6 +61,8 @@ FILES = [
     "Palamedes/Examples/STLC/WellTyped/WellTyped.lean",
     "Palamedes/Examples/STLC/WellTyped/Fold.lean",
     "Palamedes/Examples/STLC/WellScoped/Fold.lean",
+    "Palamedes/Examples/Tree/MaxDepth/MaxDepth.lean",
+    "Palamedes/Examples/Tree/MaxDepth/Fold.lean",
 ]
 
 # Regular expression to match the desired output
