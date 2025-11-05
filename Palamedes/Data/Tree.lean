@@ -110,9 +110,9 @@ theorem Tree.unfold_aux_monotonic :
         exists (TreeF.node l x r)
         simp_all
         exists vl
-        simp_all [ih]
+        simp_all
         exists vr
-        simp_all [ih]
+        simp_all
 
 @[irreducible]
 def Tree.unfold (f : β → Gen (TreeF α β)) (v : β) : Gen (Tree α) :=
@@ -212,7 +212,7 @@ theorem Tree.fold_accu_Option_basic
     case node l x r ihl ihr =>
         replace ihl := @ihl (Tree.fold f z l)
         replace ihr := @ihr (Tree.fold f z r)
-        simp_all [Tree.fold, Tree.accuM]
+        simp_all
 
 theorem Tree.fold_accu_Option_true
     {α : Type}
@@ -234,13 +234,13 @@ theorem Tree.fold_accu_Option_true
           generalize hvl : fold f true l = vl
           generalize hvr : fold f true r = vr
           cases vl <;> cases vr <;>
-            simp_all [Tree.fold, Tree.accuM, guard]
+            simp_all [guard]
         . -- (<-)
           rw [Option.bind_eq_some_iff] at hf
           replace ⟨ vl, hf ⟩ := hf
           rw [Option.bind_eq_some_iff] at hf
           replace ⟨ h1, ⟨ v, h2 ⟩ ⟩ := hf
-          simp_all [Tree.fold, Tree.accuM, guard]
+          simp_all [guard]
 
 theorem Tree.fold_accu_Option_function
     {α β σ : Type}
@@ -266,9 +266,11 @@ theorem Tree.fold_accu_Option_function
       apply Iff.intro <;> intro hg
       . -- (->)
         exists (Tree.fold f z l (stl x i))
-        rw [← ihl] <;> simp_all
+        rw [← ihl]
+        simp_all
         exists (Tree.fold f z r (str x i))
-        rw [← ihr] <;> simp_all
+        rw [← ihr]
+        simp_all
       . -- (<-)
         replace ⟨ vl, hl, vR, hr, hg ⟩ := hg
         rw [← ihl] at hl
@@ -297,7 +299,7 @@ theorem Tree.fold_accu_Option_function_true
     induction t generalizing i <;> simp_all [Tree.fold, Tree.accuM, Option.bind_eq_some_iff, guard]
     case node l x r ihl ihr =>
       apply Iff.intro <;> intro hg <;> simp_all
-      replace ⟨⟨ vl, hl ⟩, ⟨ vr, hr ⟩ , hg⟩ := hg <;> simp_all
+      replace ⟨⟨ vl, hl ⟩, ⟨ vr, hr ⟩ , hg⟩ := hg; simp_all
 
 theorem Tree.fold_accu_cond
   {α σ : Type}
@@ -451,7 +453,7 @@ def Tree.s_unfold
         . exists TreeF.node bl x br
           simp_all [(g b s).property]
           exists x, bl, br
-        . simp_all [(g b s).property]
+        . simp_all
 
 end CorrectGen
 

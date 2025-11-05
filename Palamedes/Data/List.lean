@@ -100,7 +100,7 @@ theorem List.unfold_aux_monotonic :
     unfold List.unfold_aux
     simp
     intro l hl hv
-    simp_all [Nat.add_assoc, Nat.add_comm]
+    simp_all [Nat.add_comm]
     exists l
     cases l <;> simp_all
     have ⟨w, ⟨hl, hr⟩⟩ := hv
@@ -134,7 +134,7 @@ theorem List.support_unfold :
     . intro ⟨n, h⟩
       cases n <;> simp_all [List.unfold_aux]
       have ⟨v', hv'1, hv'2⟩ := h
-      cases v' <;> simp_all [List.unfold_aux]
+      cases v' <;> simp_all
       have ⟨v'', hv''⟩ := hv'2
       cases v'' <;> simp_all
     . simp
@@ -189,7 +189,7 @@ theorem List.fold_accu_Option_basic
   induction xs generalizing v <;> simp_all [List.fold, List.accuM]
   case cons x xs' ih =>
     replace ih := @ih (List.fold f z xs')
-    simp_all [List.fold, List.accuM]
+    simp_all [List.fold]
 
 theorem List.fold_accu_Option_true
     {α : Type}
@@ -209,10 +209,10 @@ theorem List.fold_accu_Option_true
     apply Iff.intro <;> intro hf
     . generalize hv : fold f true xs' = v
       cases v <;>
-        simp_all [List.fold, List.accuM, guard]
+        simp_all [List.fold, guard]
     . rw [Option.bind_eq_some_iff] at hf
       replace ⟨ v, hf ⟩ := hf
-      simp_all [List.fold, List.accuM, guard]
+      simp_all [guard]
 
 theorem List.fold_accu_Option_function
     {α β σ : Type}
@@ -262,7 +262,7 @@ theorem List.fold_accu_Option_function_true
     induction xs generalizing i <;> simp_all [List.fold, List.accuM, Option.bind_eq_some_iff, guard]
     case cons x xs' ih =>
       apply Iff.intro <;> intro hg <;> simp_all
-      replace ⟨⟨v, hv ⟩ , hg⟩ := hg <;> simp_all
+      replace ⟨⟨v, hv ⟩ , hg⟩ := hg; simp_all
 
 theorem List.fold_accu_cond
   {α σ : Type}
@@ -333,15 +333,15 @@ theorem List.merge_accuM
       intro ⟨ ⟨ v₁, ⟨ hv1h, hv1tl ⟩ ⟩ , ⟨ v₂, ⟨ hv2h, hv2tl ⟩ ⟩ ⟩
       exists v₁, v₂
       replace ih := @ih st₁ st₂ f₁ f₂ (st₁ y s₁) (st₂ y s₂) z₁ z₂ v₁ v₂
-      simp_all [List.accuM, Option.bind_eq_some_iff]
+      simp_all
     . -- (<-)
       intro ⟨ v₁, v₂, h, h1, h2 ⟩
       replace ih := @ih st₁ st₂ f₁ f₂ (st₁ y s₁) (st₂ y s₂) z₁ z₂ v₁ v₂
       apply And.intro
       . exists v₁
-        simp_all [List.accuM, Option.bind_eq_some_iff]
+        simp_all
       . exists v₂
-        simp_all [List.accuM, Option.bind_eq_some_iff]
+        simp_all
 
 end FoldMerging
 

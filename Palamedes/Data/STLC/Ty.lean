@@ -112,9 +112,9 @@ theorem Ty.unfold_aux_monotonic :
         exists (TyF.arrow τ₁ τ₂)
         simp_all
         exists v₁
-        simp_all [ih]
+        simp_all
         exists v₂
-        simp_all [ih]
+        simp_all
 
 @[irreducible]
 def Ty.unfold (f : α → Gen (TyF α)) (x : α) : Gen Ty :=
@@ -214,7 +214,7 @@ theorem Ty.fold_accu_Option_basic
     case arrow τ₁ τ₂ ih₁ ih₂ =>
         replace ih₁ := @ih₁ (Ty.fold f z τ₁)
         replace ih₂ := @ih₂ (Ty.fold f z τ₂)
-        simp_all [Ty.fold, Ty.accuM]
+        simp_all
 
 theorem Ty.fold_accu_Option_true
     {τ : Ty}
@@ -234,13 +234,13 @@ theorem Ty.fold_accu_Option_true
           generalize hv₁ : fold f true τ₁ = v₁
           generalize hv₂ : fold f true τ₂ = v₂
           cases v₁ <;> cases v₂ <;>
-            simp_all [Ty.fold, Ty.accuM, guard]
+            simp_all
         . -- (<-)
           rw [Option.bind_eq_some_iff] at hf
           replace ⟨ v₁, hf ⟩ := hf
           rw [Option.bind_eq_some_iff] at hf
           replace ⟨ h₁, ⟨ v₂, h₂ ⟩ ⟩ := hf
-          simp_all [Ty.fold, Ty.accuM, guard]
+          simp_all
 
 theorem Ty.fold_accu_Option_function
     {α σ : Type}
@@ -266,9 +266,9 @@ theorem Ty.fold_accu_Option_function
       apply Iff.intro <;> intro hg
       . -- (->)
         exists (Ty.fold f z τ₁ (st₁ i))
-        rw [← ih₁] <;> simp_all
+        rw [← ih₁]; simp_all
         exists (Ty.fold f z τ₂ (st₂ i))
-        rw [← ih₂] <;> simp_all
+        rw [← ih₂]; simp_all
       . -- (<-)
         replace ⟨ v₁, h₁, v₂, h₂, hg ⟩ := hg
         rw [← ih₁] at h₁
@@ -296,7 +296,7 @@ theorem Ty.fold_accu_Option_function_true
     induction τ generalizing i <;> simp_all [Ty.fold, Ty.accuM, Option.bind_eq_some_iff, guard]
     case arrow τ₁ τ₂ ih₁ ih₂ =>
       apply Iff.intro <;> intro hg <;> simp_all
-      replace ⟨⟨ v₁, h₁ ⟩, ⟨ v₂, h₂ ⟩ , hg⟩ := hg <;> simp_all
+      replace ⟨⟨ v₁, h₁ ⟩, ⟨ v₂, h₂ ⟩ , hg⟩ := hg; simp_all
 
 end FoldConversions
 
@@ -425,7 +425,7 @@ def Ty.s_unfold
         apply And.intro
         . exists TyF.arrow b₁ b₂
           simp_all [(g b s).property]
-        . simp_all [(g b s).property]
+        . simp_all
 
 end CorrectGen
 

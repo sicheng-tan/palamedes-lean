@@ -25,7 +25,7 @@ theorem support_elements
       simp_all [elements]
     | _ :: _ =>
       simp [elements] at ih |-
-      simp_all [support]
+      simp_all
 
 namespace CorrectGen
 
@@ -43,7 +43,7 @@ namespace Total
 @[simp, aesop safe (rule_sets := [totality])]
 theorem total_elements :
     (Gen.total (elements xs h)) := by
-  induction xs <;> simp [List.length_pos_iff_exists_cons] at h
+  induction xs <;> simp at h
   case cons x xs' ih _ =>
     simp [elements]
     cases xs' <;> simp_all

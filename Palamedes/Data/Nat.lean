@@ -41,15 +41,15 @@ def lt (hi : Nat) (_ : hi > 0) : Gen Nat :=
 @[simp]
 theorem support_arbNat :
     support arbNat = fun _ => True := by
-  simp [arbNat, arbNatAux]
+  simp [arbNat]
   funext v
   induction v with
-  | zero => simp_all; intros; exists 1; simp [arbNat, arbNatAux]
+  | zero => simp_all; intros; exists 1; simp [arbNatAux]
   | succ n ih =>
     simp_all
     have ⟨n', hn'⟩ := ih
     exists n' + 1
-    simp [arbNat, arbNatAux]
+    simp [arbNatAux]
     exists some n
     simp +arith [hn']
 

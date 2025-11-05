@@ -125,13 +125,13 @@ theorem Stack.unfold_aux_monotonic :
     simp [bind]
     intro h
     replace ⟨ s, hs, h ⟩ := h
-    simp_all [Nat.add_assoc, Nat.add_comm]
+    simp_all [Nat.add_comm]
     exists s
     apply And.intro hs
-    cases s <;> simp_all [Functor.map, bind, Option.map]
+    cases s <;> simp_all
     all_goals
-      replace ⟨ v', h ⟩ := h <;>
-      exists v' <;>
+      replace ⟨ v', h ⟩ := h
+      exists v'
       cases v' <;> simp_all
 
 @[irreducible]
@@ -254,10 +254,10 @@ theorem Stack.fold_accu_Option_basic
     induction s generalizing v <;> simp_all [Stack.fold, Stack.accuM]
     case cons x s' ih =>
       replace ih := @ih (Stack.fold z f_c f_rc s')
-      simp_all [Stack.fold, Stack.accuM]
+      simp_all
     case ret_cons pc s' ih =>
       replace ih := @ih (Stack.fold z f_c f_rc s')
-      simp_all [Stack.fold, Stack.accuM]
+      simp_all
 
 theorem Stack.fold_accu_Option_true
     {f_c : Atom → Bool → Bool}
@@ -281,21 +281,21 @@ theorem Stack.fold_accu_Option_true
         . -- (->)
           generalize hv : Stack.fold true f_c f_rc s' = v
           cases v <;>
-            simp_all [Stack.fold, Stack.accuM, guard]
+            simp_all [guard]
         . -- (<-)
           rw [Option.bind_eq_some_iff] at hf
           replace ⟨ v, hf ⟩ := hf
-          simp_all [Stack.fold, Stack.accuM, guard]
+          simp_all [guard]
     case ret_cons pc s' ih =>
         apply Iff.intro <;> intro hf
         . -- (->)
           generalize hv : Stack.fold true f_c f_rc s' = v
           cases v <;>
-            simp_all [Stack.fold, Stack.accuM, guard]
+            simp_all [guard]
         . -- (<-)
           rw [Option.bind_eq_some_iff] at hf
           replace ⟨ v, hf ⟩ := hf
-          simp_all [Stack.fold, Stack.accuM, guard]
+          simp_all [guard]
 
 theorem Stack.fold_accu_Option_function
     {β σ : Type}
@@ -374,8 +374,9 @@ theorem Stack.fold_accu_Option_function_true
       i = some () := by
     induction s generalizing i <;> simp_all [Stack.fold, Stack.accuM, Option.bind_eq_some_iff, guard]
     all_goals
-      (apply Iff.intro <;> intro hg <;> simp_all <;>
-      replace ⟨ ⟨ v, hv ⟩ , hg⟩ := hg <;> simp_all)
+      (apply Iff.intro <;> intro hg <;> simp_all
+       replace ⟨ ⟨ v, hv ⟩ , hg⟩ := hg
+       simp_all)
 
 
 end FoldConversions
@@ -431,15 +432,15 @@ theorem Stack.merge_accuM
         intro ⟨ ⟨ v₁', ⟨ hv1h, hv1tl ⟩ ⟩ , ⟨ v₂', ⟨ hv2h, hv2tl ⟩ ⟩ ⟩
         exists v₁', v₂'
         replace ih := @ih (st_c₁ y s₁) (st_c₂ y s₂) v₁' v₂'
-        simp_all [Stack.accuM, Option.bind_eq_some_iff]
+        simp_all
       . -- (<-)
         intro ⟨ v₁', v₂', h, h1, h2 ⟩
         replace ih := @ih (st_c₁ y s₁) (st_c₂ y s₂) v₁' v₂'
         apply And.intro
         . exists v₁'
-          simp_all [Stack.accuM, Option.bind_eq_some_iff]
+          simp_all
         . exists v₂'
-          simp_all [Stack.accuM, Option.bind_eq_some_iff]
+          simp_all
     case ret_cons pc s' ih =>
       simp_all [Stack.accuM, Option.bind_eq_some_iff]
       apply Iff.intro
@@ -447,15 +448,15 @@ theorem Stack.merge_accuM
         intro ⟨ ⟨ v₁', ⟨ hv1h, hv1tl ⟩ ⟩ , ⟨ v₂', ⟨ hv2h, hv2tl ⟩ ⟩ ⟩
         exists v₁', v₂'
         replace ih := @ih (st_rc₁ pc s₁) (st_rc₂ pc s₂) v₁' v₂'
-        simp_all [Stack.accuM, Option.bind_eq_some_iff]
+        simp_all
       . -- (<-)
         intro ⟨ v₁', v₂', h, h1, h2 ⟩
         replace ih := @ih (st_rc₁ pc s₁) (st_rc₂ pc s₂) v₁' v₂'
         apply And.intro
         . exists v₁'
-          simp_all [Stack.accuM, Option.bind_eq_some_iff]
+          simp_all
         . exists v₂'
-          simp_all [Stack.accuM, Option.bind_eq_some_iff]
+          simp_all
 
 end FoldMerging
 
@@ -504,7 +505,7 @@ def Stack.s_unfold
         apply And.intro
         . exists StackF.cons a b'
           simp_all [(g b s).property]
-        . simp_all [(g b s).property]
+        . simp_all
     case ret_cons pc s' ih =>
       apply Iff.intro <;> intro h
       . replace ⟨ b', s', ⟨ ⟨ x'', ⟨ hx'', h ⟩ ⟩ , hx'⟩ ⟩ := h
@@ -515,7 +516,7 @@ def Stack.s_unfold
         apply And.intro
         . exists StackF.ret_cons pc b'
           simp_all [(g b s).property]
-        . simp_all [(g b s).property]
+        . simp_all
 
 end CorrectGen
 

@@ -156,17 +156,17 @@ theorem Term.unfold_aux_monotonic :
       replace ⟨ ov', hv', hv ⟩ := h
       cases ov' <;> simp_all
       case some v' =>
-        exists TermF.abs τ t' <;> simp_all
-        exists v' <;> simp_all
+        exists TermF.abs τ t'; simp_all
+        exists v'; simp_all
     case app t₁ t₂ =>
       replace ⟨ ov₁, h₁, ov₂, h₂, h ⟩ := h
       cases ov₁ <;> simp_all
       case some v₁ =>
         cases ov₂ <;> simp_all
         case some v₂ =>
-          exists TermF.app t₁ t₂ <;> simp_all
-          exists v₁ <;> simp_all
-          exists v₂ <;> simp_all
+          exists TermF.app t₁ t₂; simp_all
+          exists v₁; simp_all
+          exists v₂; simp_all
 
 @[irreducible]
 def Term.unfold (f : α → Gen (TermF α)) (x : α) : Gen Term :=
@@ -263,12 +263,12 @@ theorem Term.support_unfold :
       replace ih := @ih b'
       rw [Iff.comm] at ih
       rw [ih] at h
-      simp [unfold, unfold_support] at h |-
+      simp [unfold] at h |-
       replace ⟨hm, n, h⟩ := h
       intros
       simp_all
       exists n + 1
-      exists TermF.abs τ b' <;> simp_all
+      exists TermF.abs τ b'; simp_all
       exists some t'
   case app t₁ t₂ ih₁ ih₂ =>
     apply Iff.intro
@@ -347,11 +347,11 @@ theorem Term.fold_accu_Option_basic
     induction t generalizing v <;> simp_all [Term.fold, Term.accuM]
     case abs τ t' ih =>
       replace ih := @ih (Term.fold z zn f_abs f_app t')
-      simp_all [Term.fold, Term.accuM]
+      simp_all
     case app t₁ t₂ ih₁ ih₂ =>
       replace ih₁ := @ih₁ (Term.fold z zn f_abs f_app t₁)
       replace ih₂ := @ih₂ (Term.fold z zn f_abs f_app t₂)
-      simp_all [Term.fold, Term.accuM]
+      simp_all
 
 theorem Term.fold_accu_Option_true
     {t : Term}
@@ -377,24 +377,24 @@ theorem Term.fold_accu_Option_true
       . -- (->)
         generalize hv' : fold true f_var f_abs f_app t' = v'
         cases v' <;>
-          simp_all [Term.fold, Term.accuM, guard]
+          simp_all
       . -- (<-)
         rw [Option.bind_eq_some_iff] at hf
         replace ⟨ v₁, hf ⟩ := hf
-        simp_all [Term.fold, Term.accuM, guard]
+        simp_all
     case app t₁ t₂ ih₁ ih₂ =>
       apply Iff.intro <;> intro hf
       . -- (->)
         generalize hv₁ : fold true f_var f_abs f_app  t₁ = v₁
         generalize hv₂ : fold true f_var f_abs f_app  t₂ = v₂
         cases v₁ <;> cases v₂ <;>
-          simp_all [Term.fold, Term.accuM, guard]
+          simp_all
       . -- (<-)
         rw [Option.bind_eq_some_iff] at hf
         replace ⟨ v₁, hf ⟩ := hf
         rw [Option.bind_eq_some_iff] at hf
         replace ⟨ h₁, ⟨ v₂, h₂ ⟩ ⟩ := hf
-        simp_all [Term.fold, Term.accuM, guard]
+        simp_all
 
 theorem Term.fold_accu_Option_function
     {α σ : Type}
@@ -430,7 +430,8 @@ theorem Term.fold_accu_Option_function
       apply Iff.intro <;> intro hg
       . -- (->)
         exists Term.fold z zn f_abs f_app t' (st_abs τ i)
-        rw [← ih] <;> simp_all
+        rw [← ih]
+        simp_all
       . -- (<-)
         replace ⟨ v', h', hg ⟩ := hg
         rw [← ih] at h'
@@ -440,9 +441,9 @@ theorem Term.fold_accu_Option_function
       apply Iff.intro <;> intro hg
       . -- (->)
         exists Term.fold z zn f_abs f_app t₁ (st_app₁ i)
-        rw [← ih₁] <;> simp_all
+        rw [← ih₁]; simp_all
         exists Term.fold z zn f_abs f_app t₂ (st_app₂ i)
-        rw [← ih₂] <;> simp_all
+        rw [← ih₂]; simp_all
       . -- (<-)
         replace ⟨ v₁, h₁, v₂, h₂, hg ⟩ := hg
         rw [← ih₁] at h₁
@@ -480,10 +481,10 @@ theorem Term.fold_accu_Option_function_true
     induction t generalizing i <;> simp_all [Term.fold, Term.accuM, Option.bind_eq_some_iff, guard]
     case abs τ t' ih =>
       apply Iff.intro <;> intro hg <;> simp_all
-      replace ⟨⟨ v', h' ⟩ , hg⟩ := hg <;> simp_all
+      replace ⟨⟨ v', h' ⟩ , hg⟩ := hg; simp_all
     case app t₁ t₂ ih₁ ih₂ =>
       apply Iff.intro <;> intro hg <;> try simp_all
-      replace ⟨ ⟨ v₁, h₁ ⟩ , ⟨ v₂, h₂ ⟩  ⟩ := hg; clear hg <;> simp_all
+      replace ⟨ ⟨ v₁, h₁ ⟩ , ⟨ v₂, h₂ ⟩  ⟩ := hg; clear hg; simp_all
 
 theorem Term.fold_accu_Option_function_Option
     {α σ : Type}
@@ -587,9 +588,9 @@ theorem Term.merge_accu_Option
         rw [Option.bind_eq_some_iff] at h
         replace ⟨ ⟨ v₁, v₂ ⟩ , ⟨ hv, h ⟩ ⟩ := h
         rw [Option.bind_eq_some_iff] at h
-        replace ⟨ v₁', ⟨ hv₁' , h ⟩ ⟩ := h <;> simp_all
+        replace ⟨ v₁', ⟨ hv₁' , h ⟩ ⟩ := h; simp_all
         rw [Option.bind_eq_some_iff] at h
-        replace ⟨ v₂', ⟨ hv₂' , h ⟩ ⟩ := h <;> simp_all
+        replace ⟨ v₂', ⟨ hv₂' , h ⟩ ⟩ := h; simp_all
         replace ih := @ih (st_abs₁ τ i₁) (st_abs₂ τ i₂) v₁ v₂
         simp_all
     case app t₁ t₂ ih₁ ih₂ =>
@@ -612,9 +613,9 @@ theorem Term.merge_accu_Option
         rw [Option.bind_eq_some_iff] at h
         replace ⟨ ⟨ v₂₁, v₂₂ ⟩ , ⟨ h₂, h ⟩ ⟩ := @h
         rw [Option.bind_eq_some_iff] at h
-        replace ⟨ v₁, ⟨ hv₁ , h ⟩ ⟩ := @h <;> simp_all
+        replace ⟨ v₁, ⟨ hv₁ , h ⟩ ⟩ := h; simp_all
         rw [Option.bind_eq_some_iff] at h
-        replace ⟨ v₂, ⟨ hv₂ , h ⟩ ⟩ := @h <;> simp_all
+        replace ⟨ v₂, ⟨ hv₂ , h ⟩ ⟩ := h; simp_all
         replace ih₁ := @ih₁ (st_app₁ i₁).1 (st_app₂ i₂).1 v₁₁ v₁₂
         replace ih₂ := @ih₂ (st_app₁ i₁).2 (st_app₂ i₂).2 v₂₁ v₂₂
         simp_all
@@ -675,7 +676,7 @@ def Term.s_unfold
         apply And.intro
         . exists TermF.abs τ b'
           simp_all [(g b s).property]
-        . simp_all [(g b s).property]
+        . simp_all
     case app t₁ t₂ ih₁ ih₂ =>
       apply Iff.intro <;> intro h
       . replace ⟨ b₁, s₁, b₂, s₂, ⟨ ⟨ t', ⟨ ht' , h ⟩  ⟩, ⟨ h₁, h₂ ⟩ ⟩ ⟩ := h
@@ -688,7 +689,7 @@ def Term.s_unfold
         apply And.intro
         . exists TermF.app b₁ b₂
           simp_all [(g b s).property]
-        . simp_all [(g b s).property]
+        . simp_all
 
 end CorrectGen
 
