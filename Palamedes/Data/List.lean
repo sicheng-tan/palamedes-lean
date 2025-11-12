@@ -182,7 +182,7 @@ theorem List.fold_accu_Option_basic
     List.fold f z xs = v ↔
     List.accuM
       (fun _ _ => ())
-      (fun x xs _ => some (f x xs))
+      (fun x b _ => some (f x b))
       (fun _ => some z)
       xs
       () = some v := by
