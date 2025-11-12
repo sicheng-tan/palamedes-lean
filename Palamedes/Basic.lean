@@ -20,7 +20,6 @@ import Palamedes.Examples.List.LengthK.LengthK
 import Palamedes.Examples.List.LengthKAllTwos.LengthKAllTwos
 import Palamedes.Examples.List.SortedBetween.SortedBetween
 import Palamedes.Examples.List.True.True
-import Palamedes.Examples.List.RBList.RBList
 
 import Palamedes.Examples.List.AllTwos.Fold
 import Palamedes.Examples.List.AllTwosEvenLen.Fold
@@ -30,7 +29,6 @@ import Palamedes.Examples.List.LengthK.Fold
 import Palamedes.Examples.List.LengthKAllTwos.Fold
 import Palamedes.Examples.List.SortedBetween.Fold
 import Palamedes.Examples.List.True.Fold
-import Palamedes.Examples.List.RBList.Fold
 
 import Palamedes.Examples.Tree.AllTwos.AllTwos
 import Palamedes.Examples.Tree.AVL.AVL
