@@ -13,6 +13,8 @@ def isAllTwos : List Nat → Bool
 def isLengthKAllTwos (k : Nat) (xs : List Nat) : Bool :=
   xs.length == k && isAllTwos xs
 
+set_option maxHeartbeats 2000000
+
 @[simp]
 def genLengthKAllTwos (k : Nat) : Gen (List Nat) := by
   generator_search (fun xs => isLengthKAllTwos k xs = true)

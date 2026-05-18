@@ -26,6 +26,8 @@ def isBalanced (t : Tree Nat) (height : Nat) : Bool :=
 def isAVL (height lo hi : Nat) (t : Tree Nat) : Bool :=
   isBalanced t height && isBST t (lo, hi)
 
+set_option maxHeartbeats 2000000
+
 def genAVL (height lo hi : Nat) : Gen (Tree Nat) := by
   generator_search (fun t => isAVL height lo hi t = true) allow_partial
 
